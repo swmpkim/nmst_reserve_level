@@ -3,7 +3,7 @@ title: "Parsing text into equations"
 format: html
 ---
 
-To see if it's possible to let people come up with their own indices, and how.  
+To see if it's possible to let people come up with their own indices, and how.
 
 ```{r}
 library(tidyverse)
@@ -15,7 +15,6 @@ dat <- read_xlsx(here::here("data", "GND_NMST.xlsx"),
                  sheet = "Cover")
 ```
 
-
 ```{r}
 test <- dat %>% 
     filter(Year == 2019) %>% 
@@ -24,19 +23,18 @@ test <- dat %>%
     janitor::remove_empty("cols")
 ```
 
-
-Create an index combining a couple species. If this is read in from an excel input sheet, it will be a character string.    
+Create an index combining a couple species. If this is read in from an excel input sheet, it will be a character string.
 
 ```{r}
 my_weird_index <- "(`Spartina alterniflora` + `Juncus roemerianus`) / 2"
 ```
 
-Can I actually calculate it?  
+Can I actually calculate it?
 
+Solution from [this StackOverflow thread](https://stackoverflow.com/questions/37401132/how-to-parse-a-string-into-real-equation)
 
 ```{r}
 y <- eval(parse(text = my_weird_index), test)
 
 test$my_weird_index <- eval(parse(text = my_weird_index), test)
 ```
-
