@@ -1,0 +1,84 @@
+---
+title: "Data wrangling"
+format: html
+---
+
+## Setup  
+
+```{r}
+library(readxl)
+library(tidyverse)
+
+file_dat <- here::here("data", "GND_NMST.xlsx")
+file_specs <- here::here("metadata", "GNDveg_metadata.xlsx")
+
+source(here::here("R", "functions.R"))
+```
+
+## Pull in different data frames  
+
+```{r}
+dat <- get_data(file_dat)
+stn_tbl <- get_stn_table(file_dat)
+species_info <- get_species_info(file_dat)
+```
+
+
+### add Vegetation Zone to dat  
+
+```{r}
+zones_to_join <- stn_tbl[, c("Reserve", "SiteID", "TransectID", "PlotID", "Vegetation_Zone")]
+
+dat <- dplyr::left_join(dat, zones_to_join) %>% 
+    relocate(Vegetation_Zone, .before = SiteID)
+```
+
+
+
+## Calculate group totals  
+
+```{r}
+test_brack <- sum_category(plant_cat = "B-Brackish")
+test_halo <- sum_category("H-Halophyte")
+```
+
+### Spit out a data frame  
+
+Need to deal with 'NA' as a category  
+
+Can cbind this to identifiers to make a summary data frame  
+
+```{r}
+test2 <- sum_all_categories()
+```
+
+```{r}
+dat_summ <- cbind(dat[, 1:which(names(dat) == "Notes")], test2)
+
+names(dat_summ)[17] <- "Other"
+```
+
+```{r}
+dat_summ2 <- dat_summ %>% 
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Group",
+                 values_to = "Cover")
+```
+
+
+## Plot groups through time  
+
+```{r}
+ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
+    geom_point() +
+    geom_smooth(se = FALSE) +
+    facet_wrap(~Vegetation_Zone)
+```
+
+```{r}
+ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
+    geom_point() +
+    geom_smooth(se = FALSE) +
+    facet_wrap(~SiteID)
+```
+
