@@ -35,3 +35,16 @@ sum_all_categories <- function(data = dat,
     cats_to_summ <- unique(spp_data$Plant_Categories)
     as.data.frame(sapply(cats_to_summ, sum_category, USE.NAMES = TRUE))
 }
+
+
+# Plots ----
+
+plot_through_time <- function(data,
+                              group,
+                              panels){
+    ggplot(data, aes(x = Year, y = Cover, 
+                     group = {{group}}, color = {{group}}, fill = {{group}})) +
+        geom_point() +
+        geom_smooth(method = "loess", se = FALSE) +
+        facet_wrap(enquo(panels))
+}

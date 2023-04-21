@@ -26,6 +26,9 @@ species_info <- get_species_info(file_dat)
 
 ### add Vegetation Zone to dat  
 
+should probably make this a function  
+
+
 ```{r}
 zones_to_join <- stn_tbl[, c("Reserve", "SiteID", "TransectID", "PlotID", "Vegetation_Zone")]
 
@@ -33,30 +36,26 @@ dat <- dplyr::left_join(dat, zones_to_join) %>%
     relocate(Vegetation_Zone, .before = SiteID)
 ```
 
+## Clean data  
 
++  remove rows where all species are NA (plot not measured)  
++  turn other NAs into 0  
++  remove values where F_ column is -3  (do we need to worry about 1? maybe have some type of QAQC in the analysis specs file?)  
 
 ## Calculate group totals  
 
 ```{r}
-test_brack <- sum_category(plant_cat = "B-Brackish")
-test_halo <- sum_category("H-Halophyte")
+cat_sums <- sum_all_categories()
 ```
 
-### Spit out a data frame  
-
-Need to deal with 'NA' as a category  
-
-Can cbind this to identifiers to make a summary data frame  
+### Join to sampling info  
 
 ```{r}
-test2 <- sum_all_categories()
-```
-
-```{r}
-dat_summ <- cbind(dat[, 1:which(names(dat) == "Notes")], test2)
-
+dat_summ <- cbind(dat[, 1:which(names(dat) == "Notes")], cat_sums)
 names(dat_summ)[which(is.na(names(dat_summ)))] <- "Other"
 ```
+
+### Pivot longer for easier plotting  
 
 ```{r}
 dat_summ2 <- dat_summ %>% 
@@ -65,20 +64,42 @@ dat_summ2 <- dat_summ %>%
                  values_to = "Cover")
 ```
 
+Need to do something about NMST abiotic categories, unknown species, unvegetated, etc.  
+
+Probably want data frames by:  
+
+-  species (original)  
+-  vegetation group  
+-  with custom metrics  
+
 
 ## Plot groups through time  
 
+
 ```{r}
-ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
-    geom_point() +
-    geom_smooth(method = "loess", se = FALSE) +
-    facet_wrap(~Vegetation_Zone)
+plot_through_time(data = dat_summ2, group = Group, panels = Vegetation_Zone)
 ```
 
 ```{r}
-ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
-    geom_point() +
-    geom_smooth(method = "loess", se = FALSE) +
-    facet_wrap(~SiteID)
+plot_through_time(data = dat_summ2, group = Group, panels = SiteID)
+```
+
+
+Test that function out on raw species data  
+
+Too many species (but this is why we had Reserves identify which ones are most important)  
+
+```{r}
+dat_long <- dat %>% 
+    select(-starts_with("F"),
+           -starts_with("Average Canopy Height"),
+           -starts_with("Density")) %>% 
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Species",
+                 values_to = "Cover")
+
+plot_through_time(data = dat_long,
+          group = Species,
+          panels = Vegetation_Zone)
 ```
 
