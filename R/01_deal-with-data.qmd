@@ -55,7 +55,7 @@ test2 <- sum_all_categories()
 ```{r}
 dat_summ <- cbind(dat[, 1:which(names(dat) == "Notes")], test2)
 
-names(dat_summ)[17] <- "Other"
+names(dat_summ)[which(is.na(names(dat_summ)))] <- "Other"
 ```
 
 ```{r}
@@ -71,14 +71,14 @@ dat_summ2 <- dat_summ %>%
 ```{r}
 ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
     geom_point() +
-    geom_smooth(se = FALSE) +
+    geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone)
 ```
 
 ```{r}
 ggplot(dat_summ2, aes(x = Year, y = Cover, group = Group, color = Group, fill = Group)) +
     geom_point() +
-    geom_smooth(se = FALSE) +
+    geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~SiteID)
 ```
 
