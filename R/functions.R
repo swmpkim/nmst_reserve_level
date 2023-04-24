@@ -1,8 +1,20 @@
 # Importing ----
 
-get_data <- function(file){
-    readxl::read_xlsx(file,
+get_data <- function(file,
+                     cover_only = FALSE){
+    
+    if(cover_only == FALSE){
+        readxl::read_xlsx(file,
                           sheet = "Cover")
+    } else {
+        readxl::read_xlsx(file,
+                          sheet = "Cover") %>% 
+            dplyr::select(-starts_with("Average Canopy Height"),
+                          -starts_with("Maximum Canopy Height"),
+                          -starts_with("Density"),
+                          -starts_with("Height"),
+                          -starts_with("Diameter"))
+    }
 }
 
 get_stn_table <- function(file){
@@ -28,6 +40,16 @@ get_eis <- function(file){
         arrange(Vegetation_Zone, Species)
 }
 
+remove_unsampleds <- function(data){
+    to_find_empties <- data %>% 
+        dplyr::select(-(Reserve:Notes),
+                      -starts_with("F"))
+    
+    # from code behind janitor::remove_empty; line 12
+    empty_rows <- rowSums(is.na(to_find_empties)) == ncol(to_find_empties)
+    
+    data[!empty_rows, , drop = FALSE]
+}
 
 # Joins ----  
 

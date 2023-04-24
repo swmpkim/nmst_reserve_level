@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "GTM"
+    reserve: "GND"
 ---
 
 ## Setup  
@@ -17,52 +17,36 @@ file_specs <- here::here("metadata", paste0(params$reserve, "veg_metadata.xlsx")
 source(here::here("R", "functions.R"))
 ```
 
-## Pull in different data frames  
+## Prepare data frames  
+
+### Read in  
 
 ```{r}
-dat <- get_data(file_dat)
+dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
 stn_tbl <- get_stn_table(file_dat)
 species_info <- get_species_info(file_dat)
+eis <- get_eis(file_specs)  # ecotone invaders
 ```
 
-### Define Ecotone Invaders  
+### Remove Unsampled Plots  
+
 
 ```{r}
-eis <- get_eis(file_specs)
+dat2 <- remove_unsampleds(dat)
 ```
+
+
+### Replace remaining NAs with 0s  
+
+
+### Remove data points that don't pass QA/QC checks  
+
+
 
 ### add Vegetation Zone to dat  
 
 ```{r}
 dat <- join_zones(dat, stn_tbl)
-```
-
-## Clean data  
-
-+  get rid of density and height columns  
-+  remove rows where all species are NA (plot not measured)  
-+  turn other NAs into 0  
-+  remove values where F_ column is -3  (do we need to worry about 1? maybe have some type of QAQC in the analysis specs file?)  
-
-```{r}
-dat2 <- dat %>% 
-    select(-starts_with("Average Canopy Height"),
-           -starts_with("Maximum Canopy Height"),
-           -starts_with("Density")) 
-
-janitor_no_nas <- dat2 %>% 
-    select(-(Reserve:Notes),
-           -starts_with("F")) %>% 
-    janitor::remove_empty("rows")
-
-to_find_empties <- dat2 %>% 
-    select(-(Reserve:Notes),
-           -starts_with("F"))
-
-# from code behind janitor::remove_empty; line 12
-empty_rows <- which(rowSums(is.na(to_find_empties)) == ncol(to_find_empties))
-
-no_nas <- dat2[-empty_rows, ]
 ```
 
 
