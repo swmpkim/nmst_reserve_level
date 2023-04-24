@@ -1,16 +1,18 @@
 ---
 title: "Data wrangling"
 format: html
+params:
+    reserve: "GND"
 ---
 
 ## Setup  
 
-```{r}
+```{r, warning = FALSE}
 library(readxl)
 library(tidyverse)
 
-file_dat <- here::here("data", "GND_NMST.xlsx")
-file_specs <- here::here("metadata", "GNDveg_metadata.xlsx")
+file_dat <- here::here("data", paste0(params$reserve, "_NMST.xlsx"))
+file_specs <- here::here("metadata", paste0(params$reserve, "veg_metadata.xlsx"))
 
 source(here::here("R", "functions.R"))
 ```
@@ -23,17 +25,16 @@ stn_tbl <- get_stn_table(file_dat)
 species_info <- get_species_info(file_dat)
 ```
 
+### Define Ecotone Invaders  
+
+```{r}
+ei_defs <- get_eis(file_specs)
+```
 
 ### add Vegetation Zone to dat  
 
-should probably make this a function  
-
-
 ```{r}
-zones_to_join <- stn_tbl[, c("Reserve", "SiteID", "TransectID", "PlotID", "Vegetation_Zone")]
-
-dat <- dplyr::left_join(dat, zones_to_join) %>% 
-    relocate(Vegetation_Zone, .before = SiteID)
+dat <- join_zones(dat, stn_tbl)
 ```
 
 ## Clean data  
@@ -45,7 +46,7 @@ dat <- dplyr::left_join(dat, zones_to_join) %>%
 ## Calculate group totals  
 
 ```{r}
-cat_sums <- sum_all_categories()
+cat_sums <- sum_spp_categories()
 ```
 
 ### Join to sampling info  
@@ -77,11 +78,15 @@ Probably want data frames by:
 
 
 ```{r}
-plot_through_time(data = dat_summ2, group = Group, panels = Vegetation_Zone)
+plot_through_time(data = dat_summ2, group = Group, panels = Vegetation_Zone) + ggtitle("By Zone")
 ```
 
 ```{r}
-plot_through_time(data = dat_summ2, group = Group, panels = SiteID)
+plot_through_time(data = dat_summ2, group = Group, panels = SiteID) + ggtitle("By Site")
+```
+
+```{r}
+plot_through_time(data = dat_summ2, group = Vegetation_Zone, panels = Group) + ggtitle("By Species Group")
 ```
 
 
@@ -90,16 +95,58 @@ Test that function out on raw species data
 Too many species (but this is why we had Reserves identify which ones are most important)  
 
 ```{r}
-dat_long <- dat %>% 
+# dat_long <- dat %>% 
+#     select(-starts_with("F"),
+#            -starts_with("Average Canopy Height"),
+#            -starts_with("Density")) %>% 
+#     pivot_longer(-(Reserve:Notes),
+#                  names_to = "Species",
+#                  values_to = "Cover")
+# 
+# plot_through_time(data = dat_long,
+#           group = Species,
+#           panels = Vegetation_Zone)
+```
+
+## Plot overall  
+
+(same as above, just not by zone or site - all on one)  
+
+```{r}
+ggplot(dat_summ2, aes(x = Year, y = Cover, 
+                     group = Group, color = Group, fill = Group)) +
+        geom_point() +
+        geom_smooth(method = "loess", se = FALSE)
+```
+
+
+
+***  
+***  
+
+# Alternate - long first  
+
+Pivot longer, then add in zones, species groups, and Ecotone Invaders  
+
+```{r}
+dat2 <- get_data(file_dat)
+
+dat_long <- dat2 %>% 
     select(-starts_with("F"),
            -starts_with("Average Canopy Height"),
-           -starts_with("Density")) %>% 
+           -starts_with("Maximum Canopy Height"),
+           -starts_with("Density")) %>%
     pivot_longer(-(Reserve:Notes),
                  names_to = "Species",
                  values_to = "Cover")
-
-plot_through_time(data = dat_long,
-          group = Species,
-          panels = Vegetation_Zone)
 ```
+
+
+## Add zones  
+
+```{r}
+dat_long2 <- join_zones(dat_long, stn_tbl)
+```
+
+
 
