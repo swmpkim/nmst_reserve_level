@@ -55,6 +55,7 @@ remove_unsampleds <- function(data){
     data[!empty_rows, , drop = FALSE]
 }
 
+
 na_to_0 <- function(data){
     dat_tmp <- data
     start <- which(names(dat_tmp) == "Notes") + 1  # first species
@@ -65,6 +66,55 @@ na_to_0 <- function(data){
     #     dplyr::mutate(across(all_of(start:end), 
     #                          ~tidyr::replace_na(.x, 0)))
 }
+
+
+remove_suspect_values <- function(data,
+                                  flags){
+    
+    # THIS IS IMPERFECT -
+    # if "1" is given as a flag, -1 will also be removed
+    # negative flags work fine (e.g. specifying 3 will not remove -3)
+    
+    # split data frame into data and qaqc columns
+    qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]
+    data_alone <- data[, 1:(qaqc_cols_start-1)]
+    qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
+    
+    # loop through qaqc columns and find any values containing the flags to be removed
+    outs <- list()
+    for(i in seq_along(qaqc_cols)){
+        non_na <- which(!is.na(qaqc_cols[, i]))
+        vals <- qaqc_cols[non_na, i]
+        tmp <- data.frame(Species = rep(names(qaqc_cols)[i], nrow(vals)),
+                          Rows = non_na,
+                          Codes = vals)
+        names(tmp)[3] <- "Codes"
+        
+        collapsed <- paste(flags, collapse = "|")
+        tmp$kick_out <- grepl(collapsed, tmp$Codes)
+        tmp <- tmp[tmp$kick_out == TRUE, ]
+        
+        outs[[i]] <- tmp
+    }
+    
+    outs2 <- dplyr::bind_rows(outs) %>% 
+        mutate(Species = str_remove(Species, "F_"))
+    
+    # now in the data-only frame, replace with NAs
+    # loop through each species in output, ID rows, and replace
+    for(i in seq_along(unique(outs2$Species))){
+        nm <- unique(outs2$Species)[i]
+        rows <- outs2 %>% 
+            filter(Species == nm) %>% 
+            select(Rows) %>% 
+            unlist()
+        data_alone[rows, nm] <- NA
+    }
+    
+    return(data_alone)
+}
+
+
 
 # Joins ----  
 
