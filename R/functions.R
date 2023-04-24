@@ -5,10 +5,12 @@ get_data <- function(file,
     
     if(cover_only == FALSE){
         readxl::read_xlsx(file,
-                          sheet = "Cover")
+                          sheet = "Cover",
+                          guess_max = 5000)
     } else {
         readxl::read_xlsx(file,
-                          sheet = "Cover") %>% 
+                          sheet = "Cover",
+                          guess_max = 5000) %>% 
             dplyr::select(-starts_with("Average Canopy Height"),
                           -starts_with("Maximum Canopy Height"),
                           -starts_with("Density"),
@@ -40,15 +42,28 @@ get_eis <- function(file){
         arrange(Vegetation_Zone, Species)
 }
 
+
+
+# Modifying ----
+
 remove_unsampleds <- function(data){
     to_find_empties <- data %>% 
         dplyr::select(-(Reserve:Notes),
                       -starts_with("F"))
-    
     # from code behind janitor::remove_empty; line 12
     empty_rows <- rowSums(is.na(to_find_empties)) == ncol(to_find_empties)
-    
     data[!empty_rows, , drop = FALSE]
+}
+
+na_to_0 <- function(data){
+    dat_tmp <- data
+    start <- which(names(dat_tmp) == "Notes") + 1  # first species
+    end <- which(stringr::str_starts(names(dat_tmp), "F_"))[1] - 1  # last species
+    dat_tmp[start:end][is.na(dat_tmp[start:end])] <- 0
+    dat_tmp
+    # data %>% 
+    #     dplyr::mutate(across(all_of(start:end), 
+    #                          ~tidyr::replace_na(.x, 0)))
 }
 
 # Joins ----  

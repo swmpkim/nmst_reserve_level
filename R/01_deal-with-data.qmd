@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "GND"
+    reserve: "GTM"
 ---
 
 ## Setup  
@@ -30,16 +30,85 @@ eis <- get_eis(file_specs)  # ecotone invaders
 
 ### Remove Unsampled Plots  
 
-
 ```{r}
-dat2 <- remove_unsampleds(dat)
+dat <- remove_unsampleds(dat)
 ```
 
 
-### Replace remaining NAs with 0s  
+### Replace NA cover readings with 0  
+
+```{r}
+dat <- na_to_0(dat)
+```
 
 
 ### Remove data points that don't pass QA/QC checks  
+
+
+DO THIS  
+
++  identify columns starting with F_  
++  identify non-NAs in columns starting with F_  
++  identify which species columns and rows match affected F_ columns  
++  replace those values with NA  
+
+```{r}
+data <- dat
+
+qaqc_cols <- which(stringr::str_starts(names(data), "F_"))
+
+for(i in seq_along(qaqc_cols)){
+    data[i]
+}
+
+```
+
+```{r}
+# modified from SWMPr::qaqcchk()
+# https://github.com/fawda123/SWMPr/blob/master/R/qaqcchk.R
+ # qaqc flag columns
+  qaqc_ind <- grep('^F_', names(data))
+  qaqc <- data[, qaqc_ind]
+  
+  # summarize number of qaqc flags by column
+  out <- lapply(c(qaqc), table)
+  
+  # format output as data.frame
+  out <- reshape2::melt(out)
+  names(out) <- c('flag', 'count', 'variable')
+  out <- tidyr::spread(out, 'variable', 'count')
+  out[is.na(out)] <- 0
+  
+```
+
+
+```{r}
+# or from SWMPr::qaqc  
+# https://github.com/fawda123/SWMPr/blob/master/R/qaqc.R
+# which seems to match positionally, which in theory will work on our data frames but in practice I'm too worried about copy-paste errors in the F_ columns so I'd rather match by name
+
+# but the structure could work - splitting off the qaqc columns
+# especially if I then strip "F_" from the column name  
+
+```
+
+```{r}
+qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]
+
+data_alone <- data[, 1:(qaqc_cols_start-1)]
+qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
+
+outs <- list()
+for(i in seq_along(qaqc_cols)){
+    non_na <- which(!is.na(qaqc_cols[, i]))
+    vals <- qaqc_cols[non_na, i]
+    tmp <- data.frame(Species = rep(names(qaqc_cols)[i], nrow(vals)),
+                          Rows = non_na,
+                          Codes = vals)
+    names(tmp)[3] <- "Codes"
+    outs[[i]] <- tmp
+}
+```
 
 
 
