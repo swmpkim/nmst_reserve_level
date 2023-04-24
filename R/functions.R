@@ -20,11 +20,12 @@ get_eis <- function(file){
               sheet = "Ecotone_Invaders") %>% 
         mutate(rownum = row_number()) %>% 
         pivot_longer(-rownum,
-                     names_to = "Zone",
-                     values_to = "Invader") %>% 
-        filter(!is.na(Invader)) %>% 
+                     names_to = "Vegetation_Zone",
+                     values_to = "Species") %>% 
+        filter(!is.na(Species)) %>% 
+        mutate(Invader = 1) %>% 
         select(-rownum) %>% 
-        arrange(Zone, Invader)
+        arrange(Vegetation_Zone, Species)
 }
 
 

@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "GND"
+    reserve: "GTM"
 ---
 
 ## Setup  
@@ -28,7 +28,7 @@ species_info <- get_species_info(file_dat)
 ### Define Ecotone Invaders  
 
 ```{r}
-ei_defs <- get_eis(file_specs)
+eis <- get_eis(file_specs)
 ```
 
 ### add Vegetation Zone to dat  
@@ -39,9 +39,32 @@ dat <- join_zones(dat, stn_tbl)
 
 ## Clean data  
 
++  get rid of density and height columns  
 +  remove rows where all species are NA (plot not measured)  
 +  turn other NAs into 0  
 +  remove values where F_ column is -3  (do we need to worry about 1? maybe have some type of QAQC in the analysis specs file?)  
+
+```{r}
+dat2 <- dat %>% 
+    select(-starts_with("Average Canopy Height"),
+           -starts_with("Maximum Canopy Height"),
+           -starts_with("Density")) 
+
+janitor_no_nas <- dat2 %>% 
+    select(-(Reserve:Notes),
+           -starts_with("F")) %>% 
+    janitor::remove_empty("rows")
+
+to_find_empties <- dat2 %>% 
+    select(-(Reserve:Notes),
+           -starts_with("F"))
+
+# from code behind janitor::remove_empty; line 12
+empty_rows <- which(rowSums(is.na(to_find_empties)) == ncol(to_find_empties))
+
+no_nas <- dat2[-empty_rows, ]
+```
+
 
 ## Calculate group totals  
 
@@ -116,7 +139,8 @@ Too many species (but this is why we had Reserves identify which ones are most i
 ggplot(dat_summ2, aes(x = Year, y = Cover, 
                      group = Group, color = Group, fill = Group)) +
         geom_point() +
-        geom_smooth(method = "loess", se = FALSE)
+        geom_smooth(method = "loess", se = FALSE) +
+    ggtitle("across all plots")
 ```
 
 
@@ -138,7 +162,7 @@ dat_long <- dat2 %>%
            -starts_with("Density")) %>%
     pivot_longer(-(Reserve:Notes),
                  names_to = "Species",
-                 values_to = "Cover")
+                 values_to = "Cover") 
 ```
 
 
@@ -149,4 +173,9 @@ dat_long2 <- join_zones(dat_long, stn_tbl)
 ```
 
 
+## Add Ecotone Invader column  
+
+```{r}
+dat_long2 <- left_join(dat_long2, eis)
+```
 
