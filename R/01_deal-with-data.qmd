@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "GND"
+    reserve: "NIW"
 ---
 
 ## Setup  
@@ -78,6 +78,10 @@ dat <- na_to_0(dat)
 ```{r}
 dat <- remove_suspect_values(dat, flags = c("1", "-3"))
 ```
+
+
+MAY NEED TO re-remove rows of NA values, if a reserve marked all values as NA for a sample  
+
 
 
 ### add Vegetation Zone to dat  
@@ -169,34 +173,41 @@ ggplot(dat_summ2, aes(x = Year, y = Cover,
 ***  
 ***  
 
-# Alternate - long first  
-
-Pivot longer, then add in zones, species groups, and Ecotone Invaders  
-
-```{r}
-dat2 <- get_data(file_dat)
-
-dat_long <- dat2 %>% 
-    select(-starts_with("F"),
-           -starts_with("Average Canopy Height"),
-           -starts_with("Maximum Canopy Height"),
-           -starts_with("Density")) %>%
-    pivot_longer(-(Reserve:Notes),
-                 names_to = "Species",
-                 values_to = "Cover") 
-```
-
-
-## Add zones  
-
-```{r}
-dat_long2 <- join_zones(dat_long, stn_tbl)
-```
 
 
 ## Add Ecotone Invader column  
 
 ```{r}
-dat_long2 <- left_join(dat_long2, eis)
+# dat_long2 <- left_join(dat_long2, eis)
+```
+
+```{r}
+dat_long <- dat %>% 
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Species",
+                 values_to = "Cover") %>% 
+    left_join(eis) %>% 
+    mutate(Invader = case_when(is.na(Invader) ~ 0,
+                               .default = 1))
+
+EIR <- dat_long %>% 
+    select(Reserve:PlotID,
+           Species,
+           Cover,
+           Invader) %>% 
+    mutate(EI_Cover = Cover * Invader) %>% 
+    group_by(Year, Month, Day, Reserve, SiteID, TransectID, PlotID) %>% 
+    summarize(EIR = round(sum(EI_Cover) / sum(Cover), 5))
+
+dat <- left_join(dat, EIR)
+```
+
+```{r}
+ggplot(dat) +
+    geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone)) +
+    facet_wrap(~Vegetation_Zone) +
+    theme(legend.position = "none") +
+    labs(title = "EIR",
+         subtitle = "Species Only (not groups)")
 ```
 
