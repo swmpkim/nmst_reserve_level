@@ -115,6 +115,49 @@ remove_suspect_values <- function(data,
 }
 
 
+lump_species <- function(data, summ_fun, n){
+    summ <- data %>% 
+        group_by(Species) %>% 
+        summarize(y_mean = mean(Cover, na.rm = TRUE),
+                  y_quantile = quantile(Cover, probs = 0.95, na.rm = TRUE),
+                  y_nonzero = sum(Cover != 0, na.rm = TRUE)) %>% 
+        ungroup()
+    
+    if(summ_fun == "mean"){
+        tops <- summ %>% 
+            slice_max(order_by = y_mean, n = n) %>% 
+            select(Species) %>% 
+            unlist()
+    }
+    
+    if(summ_fun == "quantile"){
+        tops <- summ %>% 
+            slice_max(order_by = y_quantile, n = n) %>% 
+            select(Species) %>% 
+            unlist()
+    }
+    
+    if(summ_fun == "nonzero"){
+        tops <- summ %>% 
+            slice_max(order_by = y_nonzero, n = n) %>% 
+            select(Species) %>% 
+            unlist()
+    }
+    
+    out <- data %>% 
+        mutate(Species = case_when(!(Species %in% tops) ~ "Other",
+                                   .default = Species)) %>% 
+        group_by(Reserve, SiteID, TransectID, PlotID,
+                 Vegetation_Zone,
+                 Year, Month, Day,
+                 Species) %>% 
+        summarize(Cover = sum(Cover, na.rm = TRUE)) %>% 
+        ungroup()
+    
+    return(out)
+    
+}
+
 
 # Joins ----  
 

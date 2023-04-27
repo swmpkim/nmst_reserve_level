@@ -130,11 +130,11 @@ plot_through_time(data = dat_summ2, group = Group, panels = Vegetation_Zone) + g
 ```
 
 ```{r}
-# plot_through_time(data = dat_summ2, group = Group, panels = SiteID) + ggtitle("By Site")
+plot_through_time(data = dat_summ2, group = Group, panels = SiteID) + ggtitle("By Site")
 ```
 
 ```{r}
-# plot_through_time(data = dat_summ2, group = Vegetation_Zone, panels = Group) + ggtitle("By Species Group")
+plot_through_time(data = dat_summ2, group = Vegetation_Zone, panels = Group) + ggtitle("By Species Group")
 ```
 
 
@@ -143,18 +143,49 @@ Test that function out on raw species data
 Too many species (but this is why we had Reserves identify which ones are most important)  
 
 ```{r}
-# dat_long <- dat %>% 
-#     select(-starts_with("F"),
-#            -starts_with("Average Canopy Height"),
-#            -starts_with("Density")) %>% 
-#     pivot_longer(-(Reserve:Notes),
-#                  names_to = "Species",
-#                  values_to = "Cover")
-# 
-# plot_through_time(data = dat_long,
-#           group = Species,
-#           panels = Vegetation_Zone)
+dat_long <- dat %>%
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Species",
+                 values_to = "Cover")
 ```
+
+```{r}
+plot_through_time(data = dat_long,
+          group = Species,
+          panels = Vegetation_Zone)
+```
+
+
+### Try combining species  
+
+```{r}
+top_5_mean <- lump_species(dat_long, "mean", 5)
+top_5_quantile <- lump_species(dat_long, "quantile", 5)
+top_5_nonzero <- lump_species(dat_long, "nonzero", 5)
+```
+
+```{r}
+plot_through_time(data = top_5_mean,
+          group = Species,
+          panels = Vegetation_Zone) +
+    ggtitle("Top 5 species by mean cover")
+```
+
+
+```{r}
+plot_through_time(data = top_5_quantile,
+          group = Species,
+          panels = Vegetation_Zone) +
+    ggtitle("Top 5 species by highest 95th percentile of cover")
+```
+
+```{r}
+plot_through_time(data = top_5_nonzero,
+          group = Species,
+          panels = Vegetation_Zone) +
+    ggtitle("Top 5 species - most often detected")
+```
+
 
 ## Plot overall  
 
@@ -198,16 +229,25 @@ EIR <- dat_long %>%
     mutate(EI_Cover = Cover * Invader) %>% 
     group_by(Year, Month, Day, Reserve, SiteID, TransectID, PlotID) %>% 
     summarize(EIR = round(sum(EI_Cover) / sum(Cover), 5))
+# is that the right calculation, or should it be the sum of live vegetation? probably the latter
 
 dat <- left_join(dat, EIR)
 ```
 
 ```{r}
-ggplot(dat) +
-    geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone)) +
-    facet_wrap(~Vegetation_Zone) +
-    theme(legend.position = "none") +
-    labs(title = "EIR",
-         subtitle = "Species Only (not groups)")
+# ggplot(dat) +
+#     geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone)) +
+#     facet_wrap(~Vegetation_Zone) +
+#     theme(legend.position = "none") +
+#     labs(title = "EIR",
+#          subtitle = "Species Only (not groups)")
 ```
 
+```{r}
+# ggplot(dat) +
+#     geom_jitter(aes(x = Year, y = EIR, color = SiteID)) +
+#     facet_wrap(~Vegetation_Zone) +
+#     # theme(legend.position = "none") +
+#     labs(title = "EIR",
+#          subtitle = "Species Only (not groups)")
+```
