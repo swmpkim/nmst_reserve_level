@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "NIW"
+    reserve: "CBV"
 ---
 
 ## Setup  
@@ -213,10 +213,69 @@ ggplot(dat_summ2, aes(x = Year, y = Cover,
 ```
 
 ```{r}
-dat_long <- dat %>% 
-    pivot_longer(-(Reserve:Notes),
-                 names_to = "Species",
-                 values_to = "Cover") %>% 
+names(eis)[2] <- "eiID"
+```
+
+need to know - is `eiID` a species, or a group?  
+
+```{r}
+eis$Species <- eis$eiID %in% species_info$Species
+eis$Group <- eis$eiID %in% species_info$Plant_Categories
+```
+
+
+need Species Group *in* `dat_long` OR need all species in a group in the `eis` data frame, with corresponding vegetation zone.  
+
+```{r}
+
+get_ei_spps_from_groups <- function(){
+    
+    ei_groups <- eis %>% filter(Group == TRUE)
+    
+    to_add <- list()
+    
+    for(i in seq_along(unique(ei_groups$eiID))){
+        ei <- unique(ei_groups$eiID)[i]
+        
+        # find which vegetation zones this group occurs in
+        zones <- ei_groups %>% 
+            filter(eiID == ei) %>% 
+            select(Vegetation_Zone) %>% 
+            unlist()
+        
+        # pull out list of all species in this group
+        spps <- species_info %>% 
+            filter(Plant_Categories == ei) %>% 
+            select(Species) %>% 
+            unlist()
+        
+        # make a data frame of all vegetation zones crossed with all these species; Invader = 1, Species = TRUE, Group = FALSE
+        addls <- expand.grid(zones, spps, stringsAsFactors = FALSE)
+        addls$Invader <- 1
+        addls$Species <- TRUE
+        addls$Group <- FALSE
+        names(addls)[1:2] <- c("Vegetation_Zone", "eiID")
+        
+        to_add[[i]] <- addls
+    }
+    
+    bind_rows(to_add)
+}
+
+```
+
+```{r}
+ei_spps <- get_ei_spps_from_groups()
+eis <- bind_rows(eis, ei_spps) %>% 
+    filter(Species == TRUE) %>% 
+    distinct() %>% 
+    select(-Species, -Group) %>% 
+    rename(Species = eiID)
+```
+
+
+```{r}
+dat_long <- dat_long %>% 
     left_join(eis) %>% 
     mutate(Invader = case_when(is.na(Invader) ~ 0,
                                .default = 1))
@@ -229,25 +288,23 @@ EIR <- dat_long %>%
     mutate(EI_Cover = Cover * Invader) %>% 
     group_by(Year, Month, Day, Reserve, SiteID, TransectID, PlotID) %>% 
     summarize(EIR = round(sum(EI_Cover) / sum(Cover), 5))
-# is that the right calculation, or should it be the sum of live vegetation? probably the latter
+# confirmed at April TWG that denominator is total cover
 
 dat <- left_join(dat, EIR)
 ```
 
 ```{r}
-# ggplot(dat) +
-#     geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone)) +
-#     facet_wrap(~Vegetation_Zone) +
-#     theme(legend.position = "none") +
-#     labs(title = "EIR",
-#          subtitle = "Species Only (not groups)")
+ggplot(dat) +
+    geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone)) +
+    facet_wrap(~Vegetation_Zone) +
+    theme(legend.position = "none") +
+    labs(title = "EIR")
 ```
 
 ```{r}
-# ggplot(dat) +
-#     geom_jitter(aes(x = Year, y = EIR, color = SiteID)) +
-#     facet_wrap(~Vegetation_Zone) +
-#     # theme(legend.position = "none") +
-#     labs(title = "EIR",
-#          subtitle = "Species Only (not groups)")
+ggplot(dat) +
+    geom_jitter(aes(x = Year, y = EIR, color = SiteID)) +
+    facet_wrap(~Vegetation_Zone) +
+    # theme(legend.position = "none") +
+    labs(title = "EIR")
 ```
