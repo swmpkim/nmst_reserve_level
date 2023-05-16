@@ -159,6 +159,62 @@ lump_species <- function(data, summ_fun, n){
 }
 
 
+# Ecotone Invader species - get list by plant category  
+get_ei_spps_from_groups <- function(data){
+    # input is previously created 'eis' data frame
+    ei_groups <- data %>% filter(Group == TRUE)
+    
+    to_add <- list()
+    
+    for(i in seq_along(unique(ei_groups$eiID))){
+        ei <- unique(ei_groups$eiID)[i]
+        
+        # find which vegetation zones this group occurs in
+        zones <- ei_groups %>% 
+            filter(eiID == ei) %>% 
+            select(Vegetation_Zone) %>% 
+            unlist()
+        
+        # pull out list of all species in this group
+        spps <- species_info %>% 
+            filter(Plant_Categories == ei) %>% 
+            select(Species) %>% 
+            unlist()
+        
+        # make a data frame of all vegetation zones crossed with all these species; Invader = 1, Species = TRUE, Group = FALSE
+        addls <- expand.grid(zones, spps, stringsAsFactors = FALSE)
+        addls$Invader <- 1
+        addls$Species <- TRUE
+        addls$Group <- FALSE
+        names(addls)[1:2] <- c("Vegetation_Zone", "eiID")
+        
+        to_add[[i]] <- addls
+    }
+    
+    bind_rows(to_add)
+}
+
+# Ecotone Invaders - do the whole thing
+get_ecotone_invaders <- function(file){
+    eis <- get_eis(file)  # ecotone invaders
+    names(eis)[2] <- "eiID"
+    
+    # figure out whether what's given is a species or a group
+    eis$Species <- eis$eiID %in% species_info$Species
+    eis$Group <- eis$eiID %in% species_info$Plant_Categories
+    
+    # make a data frame including named species as well as all species within named groups
+    ei_spps <- get_ei_spps_from_groups(data = eis)
+    eis <- bind_rows(eis, ei_spps) %>% 
+        filter(Species == TRUE) %>% 
+        distinct() %>% 
+        select(-Species, -Group) %>% 
+        rename(Species = eiID)
+    
+    return(eis)
+}
+
+
 # Joins ----  
 
 join_zones <- function(data = dat,

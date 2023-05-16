@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "CBV"
+    reserve: "NIW"
 ---
 
 ## Setup  
@@ -25,7 +25,7 @@ source(here::here("R", "functions.R"))
 dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
 stn_tbl <- get_stn_table(file_dat)
 species_info <- get_species_info(file_dat)
-eis <- get_eis(file_specs)  # ecotone invaders
+# eis <- get_eis(file_specs)  # ecotone invaders
 ```
 
 ### Remove Unsampled Plots  
@@ -213,64 +213,33 @@ ggplot(dat_summ2, aes(x = Year, y = Cover,
 ```
 
 ```{r}
-names(eis)[2] <- "eiID"
+# names(eis)[2] <- "eiID"
 ```
 
 need to know - is `eiID` a species, or a group?  
 
 ```{r}
-eis$Species <- eis$eiID %in% species_info$Species
-eis$Group <- eis$eiID %in% species_info$Plant_Categories
+# eis$Species <- eis$eiID %in% species_info$Species
+# eis$Group <- eis$eiID %in% species_info$Plant_Categories
 ```
 
 
 need Species Group *in* `dat_long` OR need all species in a group in the `eis` data frame, with corresponding vegetation zone.  
 
+
 ```{r}
-
-get_ei_spps_from_groups <- function(){
-    
-    ei_groups <- eis %>% filter(Group == TRUE)
-    
-    to_add <- list()
-    
-    for(i in seq_along(unique(ei_groups$eiID))){
-        ei <- unique(ei_groups$eiID)[i]
-        
-        # find which vegetation zones this group occurs in
-        zones <- ei_groups %>% 
-            filter(eiID == ei) %>% 
-            select(Vegetation_Zone) %>% 
-            unlist()
-        
-        # pull out list of all species in this group
-        spps <- species_info %>% 
-            filter(Plant_Categories == ei) %>% 
-            select(Species) %>% 
-            unlist()
-        
-        # make a data frame of all vegetation zones crossed with all these species; Invader = 1, Species = TRUE, Group = FALSE
-        addls <- expand.grid(zones, spps, stringsAsFactors = FALSE)
-        addls$Invader <- 1
-        addls$Species <- TRUE
-        addls$Group <- FALSE
-        names(addls)[1:2] <- c("Vegetation_Zone", "eiID")
-        
-        to_add[[i]] <- addls
-    }
-    
-    bind_rows(to_add)
-}
-
+# ei_spps <- get_ei_spps_from_groups()
+# eis <- bind_rows(eis, ei_spps) %>% 
+#     filter(Species == TRUE) %>% 
+#     distinct() %>% 
+#     select(-Species, -Group) %>% 
+#     rename(Species = eiID)
 ```
 
+USING NEW FUNCTION  
+
 ```{r}
-ei_spps <- get_ei_spps_from_groups()
-eis <- bind_rows(eis, ei_spps) %>% 
-    filter(Species == TRUE) %>% 
-    distinct() %>% 
-    select(-Species, -Group) %>% 
-    rename(Species = eiID)
+eis <- get_ecotone_invaders(file = file_specs)
 ```
 
 
@@ -292,6 +261,19 @@ EIR <- dat_long %>%
 
 dat <- left_join(dat, EIR)
 ```
+
+## Plot EIR  
+
+```{r}
+ggplot(dat) +
+    geom_histogram(aes(x = EIR, fill = Vegetation_Zone),
+                   col = "gray40",
+                   binwidth = 0.1) +
+    facet_wrap(~Vegetation_Zone) +
+    labs(title = "Histogram of EIR by Marsh Zone") +
+    theme(legend.position = "none")
+```
+
 
 ```{r}
 ggplot(dat) +
