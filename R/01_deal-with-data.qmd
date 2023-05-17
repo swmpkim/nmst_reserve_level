@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "NIW"
+    reserve: "GND"
 ---
 
 ## Setup  
@@ -10,6 +10,7 @@ params:
 ```{r, warning = FALSE}
 library(readxl)
 library(tidyverse)
+library(lme4)
 
 file_dat <- here::here("data", paste0(params$reserve, "_NMST.xlsx"))
 file_specs <- here::here("metadata", paste0(params$reserve, "veg_metadata.xlsx"))
@@ -290,3 +291,67 @@ ggplot(dat) +
     # theme(legend.position = "none") +
     labs(title = "EIR")
 ```
+
+
+# Play with Linear Models  
+
+## Make a decimal date column  
+
+```{r}
+dat <- dat %>% 
+    mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))))
+```
+
+
+```{r}
+mod1 <- lmer(EIR ~ Date + Vegetation_Zone + Date:Vegetation_Zone + (1|SiteID/TransectID/PlotID),
+             data = dat)
+```
+
+```{r}
+mod1
+summary(mod1)
+```
+
+```{r}
+mod2 <- lmer(`Spartina alterniflora` ~ Date + Vegetation_Zone + Date:Vegetation_Zone + (1|SiteID/TransectID/PlotID),
+             data = dat)
+```
+
+```{r}
+mod2
+summary(mod2)
+```
+
+```{r}
+mod1b <- lm(EIR ~ Date + Vegetation_Zone + Date:Vegetation_Zone,
+             data = dat)
+
+mod2b <- lm(`Spartina alterniflora` ~ Date + Vegetation_Zone + Date:Vegetation_Zone,
+             data = dat)
+```
+
+```{r}
+anova(mod1b)
+summary(mod1b)
+
+anova(mod2b)
+summary(mod2b)
+```
+
+
+# Save data frames in .Rdata file  
+
+```{r}
+bySp <- dat
+byGroup <- dat_summ
+out_file <- here::here("data", "intermediate",paste0(params$reserve, "_dfs.Rdata"))
+save(bySp, byGroup,
+     file = out_file)
+```
+
+
+```{r}
+
+```
+
