@@ -2,7 +2,7 @@
 title: "Data wrangling"
 format: html
 params:
-    reserve: "GND"
+    reserve: "NIW"
 ---
 
 ## Setup  

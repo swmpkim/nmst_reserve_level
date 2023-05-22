@@ -91,7 +91,7 @@ get_trends <- function(model){
 }
 ```
 
-Apply it to all the models  
+## Check for models that didn't run   
 
 ```{r}
 # allow for models that have errored
@@ -130,11 +130,29 @@ check_singularity <- function(model){
 }
 ```
 
+
+of COURSE they already wrote a function for this. If TRUE prints out, the model is singular.  
+```{r}
+if(exists("mod_nested_lme4")){
+    isSingular(mod_nested_lme4)
+}
+```
+
+
 ```{r}
 if(exists("mod_nested_lme4")){check_singularity(mod_nested_lme4)}
 if(exists("mod_nested2_lme4")){check_singularity(mod_nested2_lme4)}
 if(exists("mod_plots_lme4")){check_singularity(mod_plots_lme4)}
 ```
+
+
+Can use VarCorr on nlme or lme4 models to find the problematic variance components  
+
+```{r}
+VarCorr(mod_nested_nlme)
+VarCorr(mod_nested_lme4)
+```
+
 
 
 ## Results Table  
