@@ -1,0 +1,154 @@
+---
+title: ''
+output: html_document
+---
+
+```{r}
+bySp <- bySp  %>%  
+    dplyr::mutate(Date_centered = Date - median(Date),
+                  Years_sinceStart = Date - min(Date),
+                  Transect2 = paste(SiteID, TransectID, sep = "-"),
+                  Plot2 = paste(SiteID, TransectID, PlotID, sep = "-"))
+
+byGroup <- byGroup %>%  
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Date_centered = Date - median(Date),
+                  Years_sinceStart = Date - min(Date))
+```
+
+## Construct Models
+
+### Linear Model (simple)  
+
+```{r}
+mod_lm <- lm(EIR ~ Years_sinceStart*Vegetation_Zone,
+             data = bySp)
+```
+
+
+### Mixed Model, full nesting, lme4  
+
+```{r}
+mod_nested_lme4 <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
+                   data = bySp)
+```
+
+### Mixed Model, full nesting, nlme  
+
+```{r}
+mod_nested_nlme <- lme(EIR ~ Years_sinceStart*Vegetation_Zone, 
+                       random = ~1|SiteID/TransectID/PlotID,
+                       data = bySp,
+                       na.action = na.omit)
+```
+
+### Mixed Model, Transect/Plot, lme4  
+
+```{r}
+mod_nested2_lme4 <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|Transect2/PlotID),
+                   data = bySp)
+```
+
+### Mixed Model, Transect/Plot, nlme  
+
+```{r}
+mod_nested2_nlme <- lme(EIR ~ Years_sinceStart*Vegetation_Zone, 
+                       random = ~1|Transect2/PlotID,
+                       data = bySp,
+                       na.action = na.omit)
+```
+
+### Mixed Model, plots only, lme4  
+
+```{r}
+mod_plots_lme4 <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|Plot2),
+                   data = bySp)
+```
+
+### Mixed Model, plots only, nlme  
+
+```{r}
+mod_plots_nlme <- lme(EIR ~ Years_sinceStart*Vegetation_Zone, 
+                       random = ~1|Plot2,
+                       data = bySp,
+                       na.action = na.omit)
+```
+
+
+## Compare Model Output  
+
+Homemade function to get emtrends out of our models
+
+```{r}
+get_trends <- function(model){
+    nm <- enexpr(model)
+    tmp <- data.frame(emtrends(model, 
+                      pairwise ~ Vegetation_Zone, 
+                      var = "Years_sinceStart")$emtrends)
+    # tmp$mod <- enexpr(model)
+    # tmp$mod <- as.character(nm)
+    return(tmp)
+}
+```
+
+Apply it to all the models  
+
+```{r}
+# allow for models that have errored
+mods <- list()
+
+if(exists("mod_lm")){mods[["lm"]] <- mod_lm}
+if(exists("mod_nested_lme4")){mods[["fully nested lme4"]] <- mod_nested_lme4}
+if(exists("mod_nested_nlme")){mods[["fully nested nlme"]] <- mod_nested_nlme}
+if(exists("mod_nested2_lme4")){mods[["transect/plot lme4"]] <- mod_nested2_lme4}
+if(exists("mod_nested2_nlme")){mods[["transect/plot nlme"]] <- mod_nested2_nlme}
+if(exists("mod_plots_lme4")){mods[["plots only lme4"]] <- mod_plots_lme4}
+if(exists("mod_plots_nlme")){mods[["plots only nlme"]] <- mod_plots_nlme}
+
+trends <- purrr::map(mods, function(x) get_trends(x))
+trends_df <- bind_rows(trends, .id = "model")
+```
+
+## Check for singular fit  
+
+function to test for boundary singularity message and if it is there
+print out.... something???
+
+```{r}
+check_singularity <- function(model){
+    # model needs to be from lme4
+    nm <- enexpr(model)
+    mod <- model
+    cat(paste0(nm, ": \n"))
+    if(!is.null(mod@optinfo$conv$lme4$messages)){
+        cat(mod@optinfo$conv$lme4$messages)
+        cat("\n \n")
+        print(summary(mod)$varcor)
+    } else {
+        cat("fit is okay (not singular)")
+    }
+}
+```
+
+```{r}
+if(exists("mod_nested_lme4")){check_singularity(mod_nested_lme4)}
+if(exists("mod_nested2_lme4")){check_singularity(mod_nested2_lme4)}
+if(exists("mod_plots_lme4")){check_singularity(mod_plots_lme4)}
+```
+
+
+## Results Table  
+
+```{r}
+to_print <- trends_df %>% 
+    arrange(Vegetation_Zone, df, model) %>% 
+    mutate(across(Years_sinceStart.trend:upper.CL, function(x) round(x, 4)),
+           df = round(df, 2)) %>% 
+    rename(TrendPerYear = Years_sinceStart.trend) %>% 
+    relocate(Vegetation_Zone)
+    
+kbl(to_print) %>% 
+    kable_paper(full_width = F) %>%
+    column_spec(1, bold = T) %>%
+    collapse_rows(columns = 1, valign = "top")
+```

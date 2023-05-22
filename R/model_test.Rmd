@@ -1,0 +1,56 @@
+---
+title: "Model comparisons"
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 2
+        code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      error = TRUE)
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(lme4)
+library(nlme)
+library(tidyverse)
+library(emmeans)
+library(kableExtra)
+```
+
+# Grand Bay  
+
+```{r}
+rm(list = ls())
+load(here::here("data", "intermediate", "GND_dfs.Rdata"))
+```
+
+```{r, child = 'model_test_child.Rmd'}
+
+```
+
+
+# CBV  
+
+```{r}
+rm(list = ls())
+load(here::here("data", "intermediate", "CBV_dfs.Rdata"))
+```
+
+```{r, child = 'model_test_child.Rmd'}
+
+```
+
+# NIW  
+
+```{r}
+rm(list = ls())
+load(here::here("data", "intermediate", "NIW_dfs.Rdata"))
+```
+
+```{r, child = 'model_test_child.Rmd'}
+
+```
