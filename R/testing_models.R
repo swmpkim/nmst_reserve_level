@@ -6,11 +6,11 @@ library(lme4)
 library(tidyverse)
 library(emmeans)
 
-bySp <- bySp |> 
+bySp <- bySp  %>%  
     dplyr::mutate(Date_centered = Date - median(Date),
                   Years_sinceStart = Date - min(Date))
 
-byGroup <- byGroup |> 
+byGroup <- byGroup %>%  
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
                   Date_centered = Date - median(Date),
                   Years_sinceStart = Date - min(Date))

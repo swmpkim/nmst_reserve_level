@@ -18,6 +18,8 @@ library(lme4)
 library(nlme)
 library(tidyverse)
 library(emmeans)
+library(multcomp)
+library(multcompView)
 library(kableExtra)
 ```
 
