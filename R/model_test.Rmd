@@ -37,6 +37,10 @@ load(here::here("data", "intermediate", "GND_dfs.Rdata"))
 
 # CBV  
 
+CBV only lists one site in the data, which is why lme4 won't run the Site/Transect/Plot model. nlme happily runs it anyway and seems to get the same results as in the simpler Transect/Plot model.  
+
+Some estimates and CIs are a little bit different between the Transect/Plot model and the plot-as-only-random-effect model. (GND didn't really show any differences at all in different nesting types, but CBV does.)  Both reserves show noticeable differences between regular lm and any of the mixed models.  
+
 ```{r}
 rm(list = ls())
 load(here::here("data", "intermediate", "CBV_dfs.Rdata"))

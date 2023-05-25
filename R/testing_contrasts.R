@@ -53,7 +53,8 @@ ggplot(test3, aes(x = reorder(Vegetation_Zone, Years_sinceStart.trend),
                       ymax = upper.CL),
                     linewidth = 0.8) +
     geom_text(aes(y = max(test3$upper.CL)),
-              nudge_y = max(test3$upper.CL)/10) +
+              nudge_y = max(test3$upper.CL)/10,
+              color = "black") +
     theme(legend.position = "none")
 
 

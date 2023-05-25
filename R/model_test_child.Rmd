@@ -75,7 +75,6 @@ mod_plots_nlme <- lme(EIR ~ Years_sinceStart*Vegetation_Zone,
 ```
 
 
-## Compare Model Output  
 
 Homemade function to get emtrends out of our models
 
@@ -91,28 +90,87 @@ get_trends <- function(model){
 }
 ```
 
-## Check for models that didn't run   
+## Results  
+
+### Models that didn't run  
+
+this code definitely needs to be turned into a function or a loop  
+preferable with informative error messages for the end user  
+(they won't understand this terminology but for now it's what I'm trying to work out)  
 
 ```{r}
-# allow for models that have errored
+# allow for models that have errored and 
+# add models that did work to a list to pull out results
+
 mods <- list()
 
-if(exists("mod_lm")){mods[["lm"]] <- mod_lm}
-if(exists("mod_nested_lme4")){mods[["fully nested lme4"]] <- mod_nested_lme4}
-if(exists("mod_nested_nlme")){mods[["fully nested nlme"]] <- mod_nested_nlme}
-if(exists("mod_nested2_lme4")){mods[["transect/plot lme4"]] <- mod_nested2_lme4}
-if(exists("mod_nested2_nlme")){mods[["transect/plot nlme"]] <- mod_nested2_nlme}
-if(exists("mod_plots_lme4")){mods[["plots only lme4"]] <- mod_plots_lme4}
-if(exists("mod_plots_nlme")){mods[["plots only nlme"]] <- mod_plots_nlme}
 
-trends <- purrr::map(mods, function(x) get_trends(x))
-trends_df <- bind_rows(trends, .id = "model")
+if(exists("mod_lm")){
+    mods[["lm"]] <- mod_lm
+} else {
+    cat("mod_lm errored")
+}
+
+if(exists("mod_nested_lme4")){
+    mods[["fully nested lme4"]] <- mod_nested_lme4
+} else {
+    cat("fully nested model from lme4 errored")
+}
+
+if(exists("mod_nested_nlme")){
+    mods[["fully nested nlme"]] <- mod_nested_nlme
+} else {
+    cat("fully nested model from nlme errored")
+}
+
+
+if(exists("mod_nested2_lme4")){
+    mods[["transect/plot lme4"]] <- mod_nested2_lme4
+} else {
+    cat("transect/plot model from lme4 errored")
+}
+
+
+if(exists("mod_nested2_nlme")){
+    mods[["transect/plot nlme"]] <- mod_nested2_nlme
+} else {
+    cat("transect/plot model from nlme errored")
+}
+
+
+if(exists("mod_plots_lme4")){
+    mods[["plots only lme4"]] <- mod_plots_lme4
+} else {
+    cat("plots only random effect model from lme4 errored")
+}
+
+
+if(exists("mod_plots_nlme")){
+    mods[["plots only nlme"]] <- mod_plots_nlme
+} else {
+    cat("plots only random effect model from nlme errored")
+}
 ```
 
-## Check for singular fit  
 
-function to test for boundary singularity message and if it is there
-print out.... something???
+```{r}
+trends <- purrr::map(mods, function(x) get_trends(x))
+trends_df <- bind_rows(trends, .id = "model") %>% 
+    mutate(model = forcats::as_factor(model))
+```
+
+Pull out marginal and conditional R^2 for mixed models and add columns to df  
+
+```{r, warning = FALSE, message = FALSE}
+rsqds <- purrr::map(mods, function(x) as.data.frame(MuMIn::r.squaredGLMM(x)))
+rsqds_df <- bind_rows(rsqds, .id = "model") %>% 
+    mutate(model = forcats::as_factor(model))
+trends_df <- left_join(trends_df, rsqds_df)
+```
+
+
+
+### Singular Models  
 
 ```{r}
 check_singularity <- function(model){
@@ -120,21 +178,13 @@ check_singularity <- function(model){
     nm <- enexpr(model)
     mod <- model
     cat(paste0(nm, ": \n"))
-    if(!is.null(mod@optinfo$conv$lme4$messages)){
-        cat(mod@optinfo$conv$lme4$messages)
-        cat("\n \n")
+    if(isSingular(mod)){
+        cat("is singular. VarCorr follows. \n \n")
         print(summary(mod)$varcor)
+        cat("\n \n")
     } else {
-        cat("fit is okay (not singular)")
+        cat("fit is okay (not singular) \n \n")
     }
-}
-```
-
-
-of COURSE they already wrote a function for this. If TRUE prints out, the model is singular.  
-```{r}
-if(exists("mod_nested_lme4")){
-    isSingular(mod_nested_lme4)
 }
 ```
 
@@ -145,23 +195,14 @@ if(exists("mod_nested2_lme4")){check_singularity(mod_nested2_lme4)}
 if(exists("mod_plots_lme4")){check_singularity(mod_plots_lme4)}
 ```
 
+### Table  
 
-Can use VarCorr on nlme or lme4 models to find the problematic variance components  
-
-```{r}
-VarCorr(mod_nested_nlme)
-VarCorr(mod_nested_lme4)
-```
-
-
-
-## Results Table  
 
 ```{r}
 to_print <- trends_df %>% 
-    arrange(Vegetation_Zone, df, model) %>% 
-    mutate(across(Years_sinceStart.trend:upper.CL, function(x) round(x, 4)),
+    mutate(across(Years_sinceStart.trend:R2c, function(x) round(x, 4)),
            df = round(df, 2)) %>% 
+    arrange(Vegetation_Zone, model) %>% 
     rename(TrendPerYear = Years_sinceStart.trend) %>% 
     relocate(Vegetation_Zone)
     
@@ -170,3 +211,39 @@ kbl(to_print) %>%
     column_spec(1, bold = T) %>%
     collapse_rows(columns = 1, valign = "top")
 ```
+
+
+### Contrasts plot  
+
+For the model with transect/plot nesting. Some notes from the function. Kenward-Roger method used to estimate denominator degrees of freedom. Confidence level used: 0.95. p-value adjustment: Tukey. alpha = 0.05.  
+
+"If two or more means share the same grouping symbol,
+      then we cannot show them to be different.
+      But we also did not show them to be the same."
+
+```{r}
+if(exists("mod_nested2_lme4")){
+    trnds <- emtrends(mod_nested2_lme4, 
+                  pairwise ~ Vegetation_Zone, 
+                  var = "Years_sinceStart")
+    mod_cld <- cld(trnds, Letters = letters) %>% 
+        mutate(.group = str_trim(.group))
+    
+    ggplot(mod_cld, aes(x = reorder(Vegetation_Zone, Years_sinceStart.trend),
+                        y = Years_sinceStart.trend,
+                        label = .group,
+                        color = Vegetation_Zone)) +
+        geom_pointrange(aes(ymin = lower.CL, 
+                            ymax = upper.CL),
+                        linewidth = 0.8) +
+        geom_text(aes(y = max(mod_cld$upper.CL)),
+                  nudge_y = max(mod_cld$upper.CL)/10,
+                  color = "black") +
+        labs(title = "Rate of change in EIR by zone",
+             x = "Vegetation Zone",
+             y = "change per year") +
+        theme_bw() +
+        theme(legend.position = "none")
+}
+```
+
