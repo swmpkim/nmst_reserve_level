@@ -213,9 +213,71 @@ kbl(to_print) %>%
 ```
 
 
+### Numerical effects  
+
+For the model with transect/plot nesting.
+
+```{r}
+if(exists("mod_nested2_lme4")){
+    print(anova(mod_nested2_lme4))
+    mod <- lmerTest::as_lmerModLmerTest(mod_nested2_lme4)   
+    cat("\n \n Above is anova table of lme4 output; \n Below is anova table from lmerTest. \n \n ")
+    
+    mod_anov <- anova(mod, ddf = "Kenward-Roger")
+    tidied <- broom::tidy(mod_anov)
+    sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
+    print(mod_anov)
+    cat("\n \n")
+    emtrends(mod_nested2_lme4, 
+                  pairwise ~ Vegetation_Zone, 
+                  var = "Years_sinceStart")
+}
+```
+
+
+## Graphs  
+
+```{r, warning = FALSE, message = FALSE}
+if(exists("mod_nested2_lme4")){
+    pdf <- emmip(mod_nested2_lme4, Vegetation_Zone ~ Years_sinceStart,
+                 cov.reduce = range,
+                 linearg = list(size = 1), CIs = TRUE,
+                 plotit = FALSE)
+    
+    p1 <- ggplot() +
+        geom_line(data = pdf, aes(x = Years_sinceStart,
+                                  y = yvar,
+                                  col = Vegetation_Zone,
+                                  linetype = Vegetation_Zone),
+                  linewidth = 0.8) +
+        theme_bw()
+    
+    
+    
+    p2 <- ggplot() +
+        geom_jitter(data = bySp, aes(x = Years_sinceStart, y = EIR,
+                                     col = Vegetation_Zone),
+                    alpha = 0.7) +
+        geom_line(data = pdf, aes(x = Years_sinceStart,
+                                  y = yvar,
+                                  col = Vegetation_Zone,
+                                  linetype = Vegetation_Zone),
+                  linewidth = 0.8) +
+        facet_wrap(~Vegetation_Zone) +
+        theme_bw() +
+        theme(legend.position = "none")
+    
+    print(p1 + ggtitle("Mixed Model fit"))
+    print(p2)
+}
+```
+
+
 ### Contrasts plot  
 
-For the model with transect/plot nesting. Some notes from the function. Kenward-Roger method used to estimate denominator degrees of freedom. Confidence level used: 0.95. p-value adjustment: Tukey. alpha = 0.05.  
+For the model with transect/plot nesting. If the interaction between vegetation zone and time was significant (p < 0.05), letters are used to represent groups of slopes that are not significantly different (via pairwise comparisons). If the interaction was not significant, this plot represents the marginal slopes but no letters are used.
+
+Some notes from the function. Kenward-Roger method used to estimate denominator degrees of freedom. Confidence level used: 0.95. p-value adjustment: Tukey. alpha = 0.05.  
 
 "If two or more means share the same grouping symbol,
       then we cannot show them to be different.
@@ -229,21 +291,26 @@ if(exists("mod_nested2_lme4")){
     mod_cld <- cld(trnds, Letters = letters) %>% 
         mutate(.group = str_trim(.group))
     
-    ggplot(mod_cld, aes(x = reorder(Vegetation_Zone, Years_sinceStart.trend),
-                        y = Years_sinceStart.trend,
-                        label = .group,
-                        color = Vegetation_Zone)) +
+    p <- ggplot(mod_cld, aes(x = reorder(Vegetation_Zone, Years_sinceStart.trend),
+                             y = Years_sinceStart.trend,
+                             label = .group,
+                             color = Vegetation_Zone)) +
         geom_pointrange(aes(ymin = lower.CL, 
                             ymax = upper.CL),
                         linewidth = 0.8) +
-        geom_text(aes(y = max(mod_cld$upper.CL)),
-                  nudge_y = max(mod_cld$upper.CL)/10,
-                  color = "black") +
         labs(title = "Rate of change in EIR by zone",
              x = "Vegetation Zone",
              y = "change per year") +
         theme_bw() +
         theme(legend.position = "none")
+    
+    if(sig_int){
+        p <- p +
+            geom_text(aes(y = max(mod_cld$upper.CL)),
+                      nudge_y = max(mod_cld$upper.CL)/10,
+                      color = "black")
+    }
+    print(p)
 }
 ```
 
