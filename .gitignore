@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+data/
+metadata/
+nmst_reserve_level.Rproj
+
+*.html
+*.docx
+

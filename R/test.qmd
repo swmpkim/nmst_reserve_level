@@ -1,0 +1,32 @@
+---
+title: "1. Data import and combining"
+params:
+    file_name: "GND_NMST.xlsx"
+    reserve_code: "GND"
+    
+
+
+---
+
+```{r}
+# output-file: TUTORIAL
+```
+
+
+# One  
+
+```{r}
+file_name <- params$file_name
+reserve_code <- params$reserve_code
+```
+
+some stuff  
+
+# Two  
+
+some more stuff  
+
+## Names  
+
+`r file_name`  
+`r reserve_code`  
