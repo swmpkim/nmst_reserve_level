@@ -21,7 +21,6 @@ library(emmeans)
 library(multcomp)
 library(multcompView)
 library(kableExtra)
-# random comment because playing with git via source tree
 ```
 
 # Grand Bay  
