@@ -1,0 +1,29 @@
+---
+title: ''
+output: html_document
+---
+
+Identify which factors the reserve was interested in showing on NMDS plots.  
+
+
+
+## PERMANOVA  
+
+```{r}
+
+```
+
+
+## SIMPER  
+
+```{r}
+
+```
+
+
+## NMDS  
+
+```{r}
+
+```
+

@@ -17,33 +17,34 @@ knitr::opts_chunk$set(echo = FALSE,
 library(dplyr)
 library(tidyr)
 library(readxl)
+source("sourced/functions.R")
 ```
 
 
 # QA/QC  
 
-```{r}
+```{r, child = "sourced/001_QAQC.Rmd"}
 
 ```
 
 
 # Summary Figures  
 
-```{r}
+```{r, child = "sourced/002_Summary_Figures.Rmd"}
 
 ```
 
 
 # Univariate Analyses  
 
-```{r}
+```{r, child = "sourced/003_Univariate_Analyses.Rmd"}
 
 ```
 
 
 # Multivariate Analyses  
 
-```{r}
+```{r, child = "sourced/004_Multivariate_Analyses.Rmd"}
 
 ```
 

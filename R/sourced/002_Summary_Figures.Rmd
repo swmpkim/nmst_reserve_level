@@ -1,0 +1,18 @@
+---
+title: ''
+output: html_document
+---
+
+## Averaged Stacked Bar Charts  
+
+```{r}
+
+```
+
+
+## Spatial Bar Charts  
+
+```{r}
+
+```
+

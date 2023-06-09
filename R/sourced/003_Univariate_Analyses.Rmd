@@ -1,0 +1,9 @@
+---
+title: ''
+output: html_document
+---
+
+List parameters of interest, identified in spreadsheet input.  
+
+
+For each parameter of interest, run the model, then display tables and figures of model output (including estimated marginal slopes).  
