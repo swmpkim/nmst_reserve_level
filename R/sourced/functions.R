@@ -50,7 +50,7 @@ find_unsampleds <- function(data){
     # from code behind janitor::remove_empty; line 12
     empty_rows <- rowSums(is.na(to_find_empties)) == ncol(to_find_empties)
     data[empty_rows, ] %>% 
-        dplyr::select(Reserve:Notes)
+        dplyr::select(SiteID, TransectID, PlotID, Year, Month, Day)
 }
 
 # Modifying ----

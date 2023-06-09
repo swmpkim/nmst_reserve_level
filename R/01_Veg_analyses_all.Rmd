@@ -5,7 +5,7 @@ output:
         toc: true
         toc_float: true
 params: 
-    file_code: "GND"
+    file_code: "NIW"
 ---
 
 ```{r setup, include=FALSE}
@@ -37,6 +37,11 @@ eis <- get_ecotone_invaders(file = file_specs)
 
 
 # QA/QC  
+
+
+<details>
+    <summary>Click to expand</summary>
+
 
 ```{r, child = "sourced/001_QAQC.Rmd"}
 

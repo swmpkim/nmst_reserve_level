@@ -11,8 +11,6 @@ Tasks to address from analysis plan:
 +  Something to check percent cover standardization (e.g., max. cover).  
 
 
-
-
 ## Tables  
 
 ### Plots/dates without samples  
