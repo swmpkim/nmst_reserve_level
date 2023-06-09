@@ -1,0 +1,49 @@
+---
+title: "Veg Analysis"
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+params: 
+    file_code: "GND"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      error = TRUE)
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(dplyr)
+library(tidyr)
+library(readxl)
+```
+
+
+# QA/QC  
+
+```{r}
+
+```
+
+
+# Summary Figures  
+
+```{r}
+
+```
+
+
+# Univariate Analyses  
+
+```{r}
+
+```
+
+
+# Multivariate Analyses  
+
+```{r}
+
+```
+
