@@ -20,7 +20,8 @@ There were **`r nrow(find_unsampleds(dat))` rows** with no data. These rows were
 ```{r}
 if(nrow(find_unsampleds(dat)) > 0){
     find_unsampleds(dat) %>% 
-        DT::datatable()
+        DT::datatable(rownames = FALSE,
+                      caption = "Plots/Dates with no sampling information")
 }
 ```
 
@@ -126,7 +127,7 @@ dat2 <- dat %>%
 table(dat2$SiteTransectPlot, dat2$Year) %>%
     kable(caption = "# samples at each plot in each year") %>%
     kable_styling("striped") %>%
-    scroll_box(width = "90%", height = "300px")
+    scroll_box(width = "600px", height = "300px")
 
 # dat2 %>%
 #     group_by(SiteTransectPlot, Year) %>% 
@@ -152,7 +153,9 @@ spp_summ <-
 #     kable_styling("striped") %>% 
 #     scroll_box(width = "500px", height = "300px")
 
-DT::datatable(spp_summ, caption = "Species cover and presence per site, across all years. This table is sortable and searchable.")
+DT::datatable(spp_summ, 
+              rownames = FALSE,
+              caption = "Species cover and presence per site, across all years. This table is sortable and searchable.")
 ```
 
 
