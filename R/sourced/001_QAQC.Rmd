@@ -5,10 +5,15 @@ output: html_document
 
 Tasks to address from analysis plan:  
 
-+  Create summary tables (table (PlotID,SiteID); table (PlotID,Year))  
 +  QAQC flag summary - make it obvious if there are any 1s or -3s in the dataset  
-+  number of rows missing data (plots not measured)  
 +  Something to check percent cover standardization (e.g., max. cover).  
++  Remove plots that haven't been sampled at least X # of times (currently X = 3)  
+
+
+Tasks from analysis plan that have been addressed in this .Rmd:  
+
++  number of rows missing data (plots not measured)  
++  table of plots ~ year  
 
 
 ## Tables  

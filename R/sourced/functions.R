@@ -82,7 +82,7 @@ remove_suspect_values <- function(data,
     
     # THIS IS IMPERFECT -
     # if "1" is given as a flag, -1 will also be removed
-    # negative flags work fine (e.g. specifying 3 will not remove -3)
+    # negative flags work fine (e.g. specifying -3 will not remove 3)
     
     # split data frame into data and qaqc columns
     qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]

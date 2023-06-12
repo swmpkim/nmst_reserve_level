@@ -7,6 +7,10 @@ params:
     file_code: "NIW"
 ---
 
+To-dos:  
+
+-  remove plots with < 3 readings  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       error = TRUE)
