@@ -9,7 +9,8 @@ params:
 
 To-dos:  
 
--  remove plots with < 3 readings  
+-  see sub-list in QAQC child Rmd  
+-  show the list of reserve's choices (which species to highlight, which species represent ecotone invaders in each zone, etc.)  
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,

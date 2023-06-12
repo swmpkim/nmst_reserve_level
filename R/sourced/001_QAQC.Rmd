@@ -12,7 +12,7 @@ Tasks to address from analysis plan:
 
 Tasks from analysis plan that have been addressed in this .Rmd:  
 
-+  number of rows missing data (plots not measured)  
++  Identify rows of missing data (plots not measured)  
 +  table of plots ~ year  
 
 
