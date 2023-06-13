@@ -32,7 +32,8 @@ Brook's code - uses `Hmisc::subplot()`
 
 Pull out top 3 species; will get 3 + other  
 
-Will need to figure out how to do this based on species the reserve chose  
+-  Will need to figure out how to do this based on species the reserve chose  
+-  Need to figure out what the different colors mean  
 
 ```{r, message = FALSE}
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
@@ -54,11 +55,15 @@ stn_tbl <- stn_tbl %>%
     mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
 ```
 
-One plot per Site; only showing 4 evenly spaced samples. Need to adjust the lat/long offsets based on each site's range, maybe? What worked great for DEL-SJR isn't working for GND or NIW. Also need to figure out and identify which color is which.  
+One plot per Site; only showing 4 evenly spaced samples.  
 
-For DEL-SJR, long +/- 0.0005; lat +/- 0.0015
-range of long was .442 to .430 = .012. long offset about 4% (0.042) 
-range of lat about .078 to .090 = 0.012  lat offset 12.5%. 
+
+Adjusted x and y offsets to be calculated based on the range for each site - DEL-SJR's params didn't work at NIW and GND.  
+
+-  For DEL-SJR, long +/- 0.0005; lat +/- 0.0015  
+-  range of long was .442 to .430 = .012. long offset about 4% (0.042)  
+-  range of lat about .078 to .090 = 0.012  lat offset 12.5%.  
+-  using 5% for long and 12.5% for lat (for now).  
 
 ```{r}
 for(st in unique(stn_tbl$SiteID)){

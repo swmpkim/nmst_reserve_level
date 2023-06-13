@@ -7,7 +7,7 @@ Tasks to address from analysis plan:
 
 +  QAQC flag summary - make it obvious if there are any 1s or -3s in the dataset  
 +  Something to check percent cover standardization (e.g., max. cover).  
-+  Remove plots that haven't been sampled at least X # of times (currently X = 3)  
++  Remove plots that haven't been sampled at least X # of times (currently X = 3) - but maybe wait until analysis step to do this, so they show up in stacked and spatial bar charts?    
 
 
 Tasks from analysis plan that have been addressed in this .Rmd:  
@@ -61,7 +61,14 @@ dat_long <- dat %>%
                  values_to = "Cover")
 ```
 
-# HAVEN'T RUN CODE BELOW SINCE RESTRUCTURING  
+*** 
+***  
+
+HAVEN'T RUN CODE BELOW (interactively) SINCE RESTRUCTURING,  
+except for table creation  
+
+***  
+***  
 
 
 Don't forget to make flags to remove some sort of user input in a spreadsheet, and modify function to use user's input (rather than my hard-coded 1 and -3)  
@@ -173,7 +180,7 @@ DT::datatable(spp_summ,
 ```
 
 
-## Graphics  
+## QA/QC Graphics  
 
 ```{r}
 
