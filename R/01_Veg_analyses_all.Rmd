@@ -4,7 +4,7 @@ output:
     html_document:
         toc: true
 params: 
-    file_code: "GTM"
+    file_code: "GND"
 ---
 
 To-dos:  
@@ -25,6 +25,7 @@ library(readxl)
 library(stringr)
 library(kableExtra)
 library(DT)
+library(ggplot2)
 
 file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
 file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))

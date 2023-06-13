@@ -38,12 +38,12 @@ Pull out top 3 species; will get 3 + other
 ```{r, message = FALSE}
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
-                  Years_sinceStart = round(Date - min(Date), 4)) %>% 
-    dplyr::relocate(c(Date, Years_sinceStart), .before = Year)
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    dplyr::relocate(c(PlotID_full, Date, Years_sinceStart), .before = Year)
 
 
 top_3_wide <- top_3_mean %>% 
-        mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
     pivot_wider(names_from = Species,
                 values_from = Cover,
                 values_fill = 0) %>% 
@@ -126,3 +126,97 @@ for(st in unique(stn_tbl$SiteID)){
 }
 ```
 
+
+### Attempt using ggplot.  
+
+Use long format data frame for this.  
+
+Tutorial here: https://www.r-bloggers.com/2019/02/plots-within-plots-with-ggplot2-and-ggmap/  
+
+Want to add all these additional plots as `ggplotGrob`s using `annotation_custom`. Guess I need to make all the plots first??? So I'll need a data frame or list of the grobs, xmin and max values, and ymin and max values for them......
+
+```{r}
+# p1 + annotation_custom(ggplotGrob(p2), xmin = 1, xmax = 3, 
+#                        ymin = -0.3, ymax = 0.6)
+```
+
+
+
+
+```{r}
+for(st in unique(stn_tbl$SiteID)){
+    
+    # subset to the site
+    stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    
+    long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
+    lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.125
+    
+    # blank plot canvas
+    base <- ggplot(stn_tmp, aes(x = Long, y = Lat)) +
+        labs(title = paste(params$file_code, st),
+             x = "Longitude",
+             y = "Latitude") +
+        scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
+        scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
+        theme_bw()
+    
+    
+    # subset the lumped data to the single site
+    dat_tmp <- top_3_mean[top_3_mean$SiteID == st, ]
+    
+ 
+
+    # loop through each plot at the site
+    # make a barplot of the top 3 species + other
+    # and add as subplot to the blank canvas, based on lat/long
+    for (plt in unique(dat_tmp$PlotID_full)){
+        
+        dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
+        yrs <- dat_plt$Years_sinceStart
+            
+        # subset the years: min, max, and as close as possible to the difference/3  
+
+        un_yrs <- unique(yrs)
+        div <- (max(un_yrs) - min(un_yrs)) / 3
+        divs_to_keep <- c(min(un_yrs) + div,
+                          max(un_yrs) - div)
+        
+
+        # figure out what to keep by finding the closest actual measurement to each, using absolute values
+        keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
+        keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
+
+        keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
+        
+        # re-subset the data frame to only those years
+        dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
+
+        # make the subplot
+        subplo <- ggplotGrob(ggplot(dat_plt) +
+                                 geom_col(aes(x = as.factor(Years_sinceStart),
+                                              y = Cover,
+                                              fill = Species),
+                                          # width = 0.8,
+                                          position = "stack",
+                                          show.legend = FALSE) +
+                                 theme_void() + 
+                                 theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
+        
+        # get coordinates for subplot
+        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
+        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
+        
+        # add the subplot to the graph
+        
+        base <- base + 
+            annotation_custom(grob = subplo,
+                              xmin = long - long_offset,
+                              xmax = long + long_offset,
+                              ymin = lat - lat_offset,
+                              ymax = lat + lat_offset)
+         
+    }
+    print(base)
+}
+```
