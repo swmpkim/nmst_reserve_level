@@ -12,7 +12,81 @@ output: html_document
 
 ## Spatial Bar Charts  
 
-```{r}
+Brook's code - uses `Hmisc::subplot()`   
 
+```{r}
+#library(Hmisc)
+# plot(c(min(stn_info$Long)-.0005,max(stn_info$Long)+.0015),c(min(stn_info$Lat)-.0005,max(stn_info$Lat)+.001),
+#      type="n",bty="n",xlab="Longitude",ylab="Latitude",main="DELSJR (DARK = Spartina, MED = Bare, LIGHT = Other)")
+# 
+# for (plt in unique(dat$PlotID)){
+#   dat_plt <- dat[dat$PlotID==plt,]
+#   yrs <- dat_plt$Elapsed_Yrs
+#   lat <- stn_info[stn_info$PlotID==plt,]$Lat
+#   long <- stn_info[stn_info$PlotID==plt,]$Long
+#   subplot(barplot( t(as.matrix(dat_plt[,48:50])),names.arg = rep("",4),xlab = "",axes=FALSE),
+#           x=c(long-.0005,long+.0005),y=c(lat-.0005,lat+.0005))
+# }
+
+```
+
+Pull out top 3 species; will get 3 + other  
+
+```{r, message = FALSE}
+top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4)) %>% 
+    dplyr::relocate(c(Date, Years_sinceStart), .before = Year)
+
+
+top_3_wide <- top_3_mean %>% 
+        mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    pivot_wider(names_from = Species,
+                values_from = Cover,
+                values_fill = 0) %>% 
+    group_by(PlotID_full) %>% 
+    mutate()
+
+
+stn_tbl <- stn_tbl %>% 
+    mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
+```
+
+One plot per Site. Need to cut to 4 yrs. Also need to adjust the lat/long offsets based on each site's range, maybe? What worked great for DEL-SJR isn't working for GND or NIW.  
+
+```{r}
+for(st in unique(stn_tbl$SiteID)){
+    
+    # subset to the site
+    stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    
+    # blank plot canvas
+    plot(c(min(stn_tmp$Long)-.0005,
+       max(stn_tmp$Long)+.0015),
+     c(min(stn_tmp$Lat)-.0005,
+       max(stn_tmp$Lat)+.001),
+     type = "n",
+     bty = "n",
+     xlab = "Longitude", ylab = "Latitude",
+     main = paste(params$file_code, st))
+    
+    # subset the lumped data to the single site
+    dat_tmp <- top_3_wide[top_3_wide$SiteID == st, ]
+
+    # loop through each plot at the site
+    # make a barplot of the top 3 species + other
+    # and add as subplot to the blank canvas, based on lat/long
+    for (plt in unique(dat_tmp$PlotID_full)){
+        dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
+        yrs <- dat_plt$Years_sinceStart
+        lat <- stn_tbl[stn_tbl$PlotID_full==plt, ]$Lat
+        long <- stn_tbl[stn_tbl$PlotID_full==plt, ]$Long
+        subplot(barplot( t(as.matrix(dat_plt[,(ncol(dat_plt)-3):ncol(dat_plt)])),  # last 4 columns are the top 3 species + Other
+                         xlab = "",
+                         axes=FALSE),
+                x = c(long - .0005, long + .0005),
+                y = c(lat - .0005, lat + .0005))
+    }
+}
 ```
 

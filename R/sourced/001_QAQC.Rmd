@@ -61,6 +61,8 @@ dat_long <- dat %>%
                  values_to = "Cover")
 ```
 
+# HAVEN'T RUN CODE BELOW SINCE RESTRUCTURING  
+
 
 Don't forget to make flags to remove some sort of user input in a spreadsheet, and modify function to use user's input (rather than my hard-coded 1 and -3)  
 
