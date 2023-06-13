@@ -4,7 +4,7 @@ output:
     html_document:
         toc: true
 params: 
-    file_code: "GND"
+    file_code: "GTM"
 ---
 
 To-dos:  
@@ -31,7 +31,7 @@ file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
 ```
 
 ```{r}
-source("sourced/functions.R")
+source(here::here("R", "sourced", "functions.R"))
 ```
 
 

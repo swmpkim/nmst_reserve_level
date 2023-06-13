@@ -116,7 +116,7 @@ for(st in unique(stn_tbl$SiteID)){
                          xlab = "",
                          axes=FALSE),
                 x = c(long - long_offset, long + long_offset),
-                y = c(lat - lat_offset, lat + lat_offset))
+                y = c(lat - lat_offset, lat + lat_offset))  
     }
 }
 ```
