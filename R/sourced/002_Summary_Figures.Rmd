@@ -52,7 +52,7 @@ stn_tbl <- stn_tbl %>%
     mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
 ```
 
-One plot per Site. Need to cut to 4 yrs. Also need to adjust the lat/long offsets based on each site's range, maybe? What worked great for DEL-SJR isn't working for GND or NIW.  
+One plot per Site; only showing 4 evenly spaced samples. Need to adjust the lat/long offsets based on each site's range, maybe? What worked great for DEL-SJR isn't working for GND or NIW. Also need to figure out and identify which color is which.  
 
 ```{r}
 for(st in unique(stn_tbl$SiteID)){
@@ -72,13 +72,35 @@ for(st in unique(stn_tbl$SiteID)){
     
     # subset the lumped data to the single site
     dat_tmp <- top_3_wide[top_3_wide$SiteID == st, ]
+    
+ 
 
     # loop through each plot at the site
     # make a barplot of the top 3 species + other
     # and add as subplot to the blank canvas, based on lat/long
     for (plt in unique(dat_tmp$PlotID_full)){
+        
         dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
         yrs <- dat_plt$Years_sinceStart
+            
+        # subset the years: min, max, and as close as possible to the difference/3  
+
+        un_yrs <- unique(yrs)
+        div <- (max(un_yrs) - min(un_yrs)) / 3
+        divs_to_keep <- c(min(un_yrs) + div,
+                          max(un_yrs) - div)
+        
+
+        # figure out what to keep by finding the closest actual measurement to each, using absolute values
+        keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
+        keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
+
+        keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
+        
+        # re-subset the data frame to only those years
+        dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
+        yrs <- dat_plt$Years_sinceStart
+        
         lat <- stn_tbl[stn_tbl$PlotID_full==plt, ]$Lat
         long <- stn_tbl[stn_tbl$PlotID_full==plt, ]$Long
         subplot(barplot( t(as.matrix(dat_plt[,(ncol(dat_plt)-3):ncol(dat_plt)])),  # last 4 columns are the top 3 species + Other
