@@ -180,7 +180,10 @@ DT::datatable(spp_summ,
 ```
 
 
+
 ## QA/QC Graphics  
+
+placeholder text  
 
 ```{r}
 

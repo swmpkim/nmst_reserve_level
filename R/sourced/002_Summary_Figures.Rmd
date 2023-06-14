@@ -12,28 +12,11 @@ output: html_document
 
 ## Spatial Bar Charts  
 
-Brook's code - uses `Hmisc::subplot()`   
-
-```{r}
-#library(Hmisc)
-# plot(c(min(stn_info$Long)-.0005,max(stn_info$Long)+.0015),c(min(stn_info$Lat)-.0005,max(stn_info$Lat)+.001),
-#      type="n",bty="n",xlab="Longitude",ylab="Latitude",main="DELSJR (DARK = Spartina, MED = Bare, LIGHT = Other)")
-# 
-# for (plt in unique(dat$PlotID)){
-#   dat_plt <- dat[dat$PlotID==plt,]
-#   yrs <- dat_plt$Elapsed_Yrs
-#   lat <- stn_info[stn_info$PlotID==plt,]$Lat
-#   long <- stn_info[stn_info$PlotID==plt,]$Long
-#   subplot(barplot( t(as.matrix(dat_plt[,48:50])),names.arg = rep("",4),xlab = "",axes=FALSE),
-#           x=c(long-.0005,long+.0005),y=c(lat-.0005,lat+.0005))
-# }
-
-```
-
 Pull out top 3 species; will get 3 + other  
 
 -  Will need to figure out how to do this based on species the reserve chose  
--  Need to figure out what the different colors mean  
+-  was able to generate legend via `ggplot2`, using a colorblind-friendly palette from `RColorBrewer` ("Paired").  
+-  for some reserves, these might be better by transect rather than by site (e.g. CBV; at least a couple of sites at GTM)  
 
 ```{r, message = FALSE}
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 

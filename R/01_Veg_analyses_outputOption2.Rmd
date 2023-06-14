@@ -1,0 +1,88 @@
+---
+title: "Veg Analysis"
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 1
+        
+params: 
+    file_code: "GND"
+---
+
+To-dos:  
+
+-  see sub-list in QAQC child Rmd  
+-  show the list of reserve's choices (which species to highlight, which species represent ecotone invaders in each zone, etc.)  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      error = TRUE)
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(Hmisc)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(kableExtra)
+library(DT)
+library(ggplot2)
+
+file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
+file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
+```
+
+```{r}
+source(here::here("R", "sourced", "functions.R"))
+```
+
+
+
+```{r}
+# read data
+
+dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
+stn_tbl <- get_stn_table(file_dat)
+species_info <- get_species_info(file_dat)
+eis <- get_ecotone_invaders(file = file_specs)
+
+# add Years elapsed to dat
+dat <- dat %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4)) %>% 
+    dplyr::relocate(c(Date, Years_sinceStart), .before = Year)
+```
+
+
+#  {.tabset}
+
+## QA/QC  
+
+
+```{r, child = "sourced/001_QAQC.Rmd"}
+
+```
+
+
+## Summary Figures  
+
+```{r, child = "sourced/002_Summary_Figures.Rmd"}
+
+```
+
+
+## Univariate Analyses  
+
+```{r, child = "sourced/003_Univariate_Analyses.Rmd"}
+
+```
+
+
+## Multivariate Analyses  
+
+```{r, child = "sourced/004_Multivariate_Analyses.Rmd"}
+
+```
+

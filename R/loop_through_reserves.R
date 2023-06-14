@@ -7,7 +7,7 @@ reserves <- c("GND", "GTM", "CBV", "NIW")
 
 for(i in seq_along(reserves)){
     outname <- paste0("Veg_analyses_", reserves[i], ".html")
-    rmarkdown::render(input = here::here("R", "01_Veg_analyses_all.Rmd"), 
+    rmarkdown::render(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
                       params = list("file_code" = reserves[i]),
                       output_file = here::here("output", outname))
 }
