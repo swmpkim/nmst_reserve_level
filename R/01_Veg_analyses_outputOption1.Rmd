@@ -3,6 +3,8 @@ title: "Veg Analysis"
 output: 
     html_document:
         toc: true
+        toc_float: true
+        toc_depth: 2
 params: 
     file_code: "GND"
 ---
@@ -54,9 +56,13 @@ dat <- dat %>%
 
 # QA/QC  
 
+```{r}
+# uncomment the below and put in main, under heading and above code chunk, to completely fold the child doc's output
 
-<details>
-    <summary>Click to expand</summary>
+# <details>
+#     <summary>Click to expand</summary>
+```
+
 
 
 ```{r, child = "sourced/001_QAQC.Rmd"}
