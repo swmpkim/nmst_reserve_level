@@ -144,6 +144,13 @@ Want to add all these additional plots as `ggplotGrob`s using `annotation_custom
 
 
 ```{r}
+
+palcols <- RColorBrewer::brewer.pal(4, "Paired")
+names(palcols) <- unique(top_3_mean$Species)
+
+# add species into station table for the sole purpose of generating a legend.  
+stn_tbl$Species <- rep_len(unique(top_3_mean$Species), length.out = nrow(stn_tbl))
+
 for(st in unique(stn_tbl$SiteID)){
     
     # subset to the site
@@ -153,13 +160,18 @@ for(st in unique(stn_tbl$SiteID)){
     lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.125
     
     # blank plot canvas
-    base <- ggplot(stn_tmp, aes(x = Long, y = Lat)) +
+    base <- ggplot(stn_tmp, aes(x = Long, y = Lat, 
+                                group = Species,
+                                fill = Species)) +
+        geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
              y = "Latitude") +
         scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
         scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
-        theme_bw()
+        scale_fill_manual(values = palcols) +
+        theme_bw() +
+        theme(legend.position = "right")
     
     
     # subset the lumped data to the single site
@@ -200,6 +212,7 @@ for(st in unique(stn_tbl$SiteID)){
                                           # width = 0.8,
                                           position = "stack",
                                           show.legend = FALSE) +
+                                 scale_fill_manual(values = palcols) +
                                  theme_void() + 
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
