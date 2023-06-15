@@ -4,34 +4,12 @@ output: html_document
 ---
 
 
-```{r, message = FALSE}
-top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
-    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
-                  Years_sinceStart = round(Date - min(Date), 4),
-                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
-    dplyr::relocate(c(PlotID_full, Date, Years_sinceStart), .before = Year)
-
-
-top_3_wide <- top_3_mean %>% 
-    pivot_wider(names_from = Species,
-                values_from = Cover,
-                values_fill = 0) %>% 
-    group_by(PlotID_full) %>% 
-    mutate()
-
-
-stn_tbl <- stn_tbl %>% 
-    mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
-
-# establish color palette for all graphics below
-palcols <- RColorBrewer::brewer.pal(4, "Paired")
-names(palcols) <- unique(top_3_mean$Species)
-```
 
 
 ## Averaged Stacked Bar Charts  
 
-Compiled by zone  
+
+### By Vegetation Zone  
 
 ```{r, message = FALSE}
 top_3_mean %>% 
@@ -46,8 +24,12 @@ top_3_mean %>%
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
+```
 
 
+### By Site  
+
+```{r, message = FALSE}
 top_3_mean %>% 
     group_by(SiteID, Year, Species) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -60,8 +42,12 @@ top_3_mean %>%
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
+```
 
 
+### By Zone within Site  
+
+```{r, message = FALSE}
 top_3_mean %>% 
     group_by(SiteID, Vegetation_Zone, Year, Species) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -75,6 +61,8 @@ top_3_mean %>%
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
 ```
+
+
 
 
 ## Spatial Bar Charts  
@@ -100,64 +88,66 @@ Adjusted x and y offsets to be calculated based on the range for each site - DEL
 Can potentially do this by transect within station as well, and make it a user option in the input spreadsheet. If it's selected, then there will be an additional for loop between the `st in SiteID` and `plt in PlotID` ones, for `tr in TransectID`. For each site -- for each transect -- make base plot, based on coords in transect -- loop through plots to make the subplots and add them to the base plot -- after looping, name base plot based on transect -- use `{patchwork}` to paste together transects within the site so they're all in a row or panel or whatever  
 
 ```{r}
-for(st in unique(stn_tbl$SiteID)){
-    
-    # subset to the site
-    stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
-    
-    long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
-    lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.125
-    
-    # blank plot canvas
-    plot(c(min(stn_tmp$Long) - long_offset,
-           max(stn_tmp$Long) + long_offset),
-         c(min(stn_tmp$Lat) - lat_offset,
-           max(stn_tmp$Lat) + lat_offset),
-         type = "n",
-         bty = "n",
-         xlab = "Longitude", ylab = "Latitude",
-         main = paste(params$file_code, st))
-    
-    # subset the lumped data to the single site
-    dat_tmp <- top_3_wide[top_3_wide$SiteID == st, ]
-    
- 
+# THIS CHUNK IS AN ADAPTATION OF BROOK'S CODE
 
-    # loop through each plot at the site
-    # make a barplot of the top 3 species + other
-    # and add as subplot to the blank canvas, based on lat/long
-    for (plt in unique(dat_tmp$PlotID_full)){
-        
-        dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
-        yrs <- dat_plt$Years_sinceStart
-            
-        # subset the years: min, max, and as close as possible to the difference/3  
-
-        un_yrs <- unique(yrs)
-        div <- (max(un_yrs) - min(un_yrs)) / 3
-        divs_to_keep <- c(min(un_yrs) + div,
-                          max(un_yrs) - div)
-        
-
-        # figure out what to keep by finding the closest actual measurement to each, using absolute values
-        keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
-        keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
-
-        keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
-        
-        # re-subset the data frame to only those years
-        dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
-        yrs <- dat_plt$Years_sinceStart
-        
-        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
-        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
-        subplot(barplot( t(as.matrix(dat_plt[,(ncol(dat_plt)-3):ncol(dat_plt)])),  # last 4 columns are the top 3 species + Other
-                         xlab = "",
-                         axes=FALSE),
-                x = c(long - long_offset, long + long_offset),
-                y = c(lat - lat_offset, lat + lat_offset))  
-    }
-}
+# for(st in unique(stn_tbl$SiteID)){
+#     
+#     # subset to the site
+#     stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+#     
+#     long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
+#     lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.125
+#     
+#     # blank plot canvas
+#     plot(c(min(stn_tmp$Long) - long_offset,
+#            max(stn_tmp$Long) + long_offset),
+#          c(min(stn_tmp$Lat) - lat_offset,
+#            max(stn_tmp$Lat) + lat_offset),
+#          type = "n",
+#          bty = "n",
+#          xlab = "Longitude", ylab = "Latitude",
+#          main = paste(params$file_code, st))
+#     
+#     # subset the lumped data to the single site
+#     dat_tmp <- top_3_wide[top_3_wide$SiteID == st, ]
+#     
+#  
+# 
+#     # loop through each plot at the site
+#     # make a barplot of the top 3 species + other
+#     # and add as subplot to the blank canvas, based on lat/long
+#     for (plt in unique(dat_tmp$PlotID_full)){
+#         
+#         dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
+#         yrs <- dat_plt$Years_sinceStart
+#             
+#         # subset the years: min, max, and as close as possible to the difference/3  
+# 
+#         un_yrs <- unique(yrs)
+#         div <- (max(un_yrs) - min(un_yrs)) / 3
+#         divs_to_keep <- c(min(un_yrs) + div,
+#                           max(un_yrs) - div)
+#         
+# 
+#         # figure out what to keep by finding the closest actual measurement to each, using absolute values
+#         keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
+#         keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
+# 
+#         keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
+#         
+#         # re-subset the data frame to only those years
+#         dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
+#         yrs <- dat_plt$Years_sinceStart
+#         
+#         lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
+#         long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
+#         subplot(barplot( t(as.matrix(dat_plt[,(ncol(dat_plt)-3):ncol(dat_plt)])),  # last 4 columns are the top 3 species + Other
+#                          xlab = "",
+#                          axes=FALSE),
+#                 x = c(long - long_offset, long + long_offset),
+#                 y = c(lat - lat_offset, lat + lat_offset))  
+#     }
+# }
 ```
 
 

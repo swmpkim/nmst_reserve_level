@@ -54,7 +54,8 @@ dat <- dat %>%
 ```
 
 
-# QA/QC  
+
+# Exploration and QA/QC   
 
 ```{r}
 # uncomment the below and put in main, under heading and above code chunk, to completely fold the child doc's output

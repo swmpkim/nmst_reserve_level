@@ -61,18 +61,11 @@ dat_long <- dat %>%
                  values_to = "Cover")
 ```
 
-*** 
-***  
-
-HAVEN'T RUN CODE BELOW (interactively) SINCE RESTRUCTURING,  
-except for table creation  
-
-***  
-***  
-
 
 Don't forget to make flags to remove some sort of user input in a spreadsheet, and modify function to use user's input (rather than my hard-coded 1 and -3)  
 
+
+### Joining by species category  
 
 ```{r}
 # species group totals 
@@ -179,13 +172,98 @@ DT::datatable(spp_summ,
 
 ```
 
+### Lumping top 3 species  
+
+```{r, message = FALSE}
+top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    dplyr::relocate(c(PlotID_full, Date, Years_sinceStart), .before = Year)
 
 
-## QA/QC Graphics  
+top_3_wide <- top_3_mean %>% 
+    pivot_wider(names_from = Species,
+                values_from = Cover,
+                values_fill = 0) %>% 
+    group_by(PlotID_full) %>% 
+    mutate()
 
-placeholder text  
+
+stn_tbl <- stn_tbl %>% 
+    mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
+
+# establish color palette for all graphics in QA/QC child doc
+palcols <- RColorBrewer::brewer.pal(4, "Paired")
+names(palcols) <- unique(top_3_mean$Species)
+```
+
+## Exploratory Graphics - Top 3 Species  
+
+The plot below is essentially the 'averaged stacked bar chart' by zone, but *showing each data point* rather than averaged; and not stacked bars.  
+
+### Top 3 species through time, by zone  
+
+```{r, message = FALSE}
+plot_through_time(data = top_3_mean,
+          group = Species,
+          panels = Vegetation_Zone) +
+    scale_color_manual(values = palcols) +
+    ggtitle("Top 3 species by mean cover") +
+    theme_bw()
+```
+
+
+### Top 3 species through time, all plots combined   
+
+```{r, message = FALSE}
+ggplot(top_3_mean, aes(x = Year, y = Cover, 
+                     group = Species, color = Species, fill = Species)) +
+        geom_jitter(alpha = 0.2) +
+        geom_smooth(method = "loess", se = FALSE) +
+    scale_color_manual(values = palcols) +
+    ggtitle("Top 3 species by mean cover, all plots combined") +
+    theme_bw()
+```
+
+## Exploratory - EIR  
 
 ```{r}
-
+ggplot(dat) +
+    geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone),
+                alpha = 0.4) +
+    facet_wrap(~Vegetation_Zone) +
+    theme(legend.position = "none") +
+    theme_bw() +
+    labs(title = "EIR by Zone",
+         subtitle = "as calculated per plot/date combination")
 ```
+
+
+
+```{r}
+ggplot(dat) +
+    geom_jitter(aes(x = Year, y = EIR, color = SiteID),
+                alpha = 0.4) +
+    facet_wrap(~Vegetation_Zone) +
+    # theme(legend.position = "none") +
+    theme_bw() +
+    labs(title = "EIR by Site, within Zone")
+```
+
+
+```{r}
+ggplot(dat) +
+    geom_histogram(aes(x = EIR, fill = Vegetation_Zone),
+                   col = "gray40",
+                   binwidth = 0.1) +
+    facet_wrap(~Vegetation_Zone) +
+    labs(title = "Histogram of EIR by Marsh Zone") +
+    theme_bw() +
+    theme(legend.position = "none")
+```
+
+
+
+
 
