@@ -75,6 +75,7 @@ dat_long <- dat %>%
                  values_to = "Cover")
 ```
 
+.
 
 ```{r}
 # Joining by species category  
