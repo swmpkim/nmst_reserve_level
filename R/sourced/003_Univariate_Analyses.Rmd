@@ -23,6 +23,10 @@ My original version of this used the wide data file, but I think I'm going to be
 
 ## 1: EIR   
 
+Explanation of what EIR is and how it was calculated.  
+
+Insert table of reserve-identified ecotone invaders, by zone.  
+
 ```{r}
 respn <- "EIR"
 dat$resp <- unlist(dat[which(names(dat) == respn)])
