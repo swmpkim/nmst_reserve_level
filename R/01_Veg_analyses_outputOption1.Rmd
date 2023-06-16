@@ -74,15 +74,6 @@ dat <- dat %>%
 
 # Exploration and QA/QC   
 
-```{r}
-# uncomment the below and put in main, under heading and above code chunk, to completely fold the child doc's output
-
-# <details>
-#     <summary>Click to expand</summary>
-```
-
-
-
 ```{r, child = "sourced/001_QAQC.Rmd"}
 
 ```
@@ -95,7 +86,7 @@ dat <- dat %>%
 ```
 
 
-# Univariate Analyses  
+# Univariate Analyses {.tabset}  
 
 ```{r, child = "sourced/003_Univariate_Analyses.Rmd"}
 

@@ -24,11 +24,12 @@ My original version of this used the wide data file, but I think I'm going to be
 ## EIR   
 
 ```{r}
-resp <- "EIR"
+respn <- "EIR"
+dat$resp <- unlist(dat[which(names(dat) == respn)])
 ```
 
 
-```{r, child = "003a_model_run.Rmd"}
+```{r, child = "sourced/003a_model_run.Rmd"}
 
 ```
 
@@ -36,7 +37,34 @@ resp <- "EIR"
 ## Response 1  
 
 ```{r}
-resp <- "Spartina alterniflora"
+respn <- "Spartina alterniflora"
+dat$resp <- unlist(dat[which(names(dat) == respn)])
+# but really want to make that adapt to user input
+```
+
+```{r, child = "003a_model_run.Rmd"}
+
+```
+
+
+## Response 3  
+
+```{r}
+respn <- "Juncus roemerianus"
+dat$resp <- unlist(dat[which(names(dat) == respn)])
+# but really want to make that adapt to user input
+```
+
+```{r, child = "003a_model_run.Rmd"}
+
+```
+
+
+## Response 4  
+
+```{r}
+respn <- "Spartina alterniflora"
+dat$resp <- unlist(dat[which(names(dat) == respn)])
 # but really want to make that adapt to user input
 ```
 

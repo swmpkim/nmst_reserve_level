@@ -4,13 +4,13 @@ output: html_document
 
 
 ```{r}
-mod_nested_full <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
+mod_nested_full <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
                    data = dat)
 
-mod_nested_trns <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|StTrns/PlotID),
+mod_nested_trns <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrns/PlotID),
                    data = dat)
 
-mod_plts <- lmer(EIR ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
+mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
                    data = dat)
 ```
 
@@ -88,9 +88,7 @@ to_print <- trends_df %>%
     
 kbl(to_print) %>% 
     kable_styling("striped") %>%
-    scroll_box(width = "600px", height = "300px")
-    column_spec(1, bold = T) %>%
-    collapse_rows(columns = 1, valign = "top")
+    scroll_box(width = "600px", height = "300px") 
 ```
 
 
@@ -100,7 +98,7 @@ For the model with transect/plot nesting.
 
 ```{r}
 if(exists("mod_nested_trns")){
-    mod_anov <- anova(mod, ddf = "Kenward-Roger")
+    mod_anov <- anova(mod_nested_trns, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
     sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
     print(mod_anov)
@@ -128,13 +126,13 @@ if(exists("mod_nested_trns")){
                                   linetype = Vegetation_Zone),
                   linewidth = 0.8) +
         labs(x = "Years elapsed", 
-             y = "Predicted EIR") +
+             y = paste("Predicted", respn)) +
         theme_bw()
     
     
     
     p2 <- ggplot() +
-        geom_jitter(data = dat, aes(x = Years_sinceStart, y = EIR,
+        geom_jitter(data = dat, aes(x = Years_sinceStart, y = resp,
                                      col = Vegetation_Zone),
                     alpha = 0.7) +
         geom_line(data = pdf, aes(x = Years_sinceStart,
@@ -144,6 +142,8 @@ if(exists("mod_nested_trns")){
                   linewidth = 0.8) +
         facet_wrap(~Vegetation_Zone) +
         theme_bw() +
+        labs(x = "Years elapsed",
+             y = respn) +
         theme(legend.position = "none")
     
     print(p1 + ggtitle("Mixed Model fit"))
@@ -178,7 +178,7 @@ if(exists("mod_nested_trns")){
         geom_pointrange(aes(ymin = lower.CL, 
                             ymax = upper.CL),
                         linewidth = 0.8) +
-        labs(title = "Rate of change in EIR by zone",
+        labs(title = paste("Rate of change in", respn, "by zone"),
              x = "Vegetation Zone",
              y = "change per year") +
         theme_bw() +
