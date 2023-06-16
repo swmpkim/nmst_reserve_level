@@ -67,25 +67,19 @@ top_3_mean %>%
 
 ## Spatial Bar Charts  
 
-Pull out top 3 species; will get 3 + other  
+One plot per Site; showing 4 evenly spaced-through-time samples.   
+
+<details>
+<summary>Thoughts for further development</summary>
 
 -  Will need to figure out how to do this based on species the reserve chose  
 -  was able to generate legend via `ggplot2`, using a colorblind-friendly palette from `RColorBrewer` ("Paired").  
 -  for some reserves, these might be better by transect rather than by site (e.g. CBV; at least a couple of sites at GTM)  
 
 
-One plot per Site; only showing 4 evenly spaced samples.  
+Can potentially do this by transect within station as well, and make it a user option in the input spreadsheet. If it's selected, then there will be an additional for loop between the `st in SiteID` and `plt in PlotID` ones, for `tr in TransectID`. For each site -- for each transect -- make base plot, based on coords in transect -- loop through plots to make the subplots and add them to the base plot -- after looping, name base plot based on transect -- use `{patchwork}` to paste together transects within the site so they're all in a row or panel or whatever.    
 
-
-Adjusted x and y offsets to be calculated based on the range for each site - DEL-SJR's params didn't work at NIW and GND.  
-
--  For DEL-SJR, long +/- 0.0005; lat +/- 0.0015  
--  range of long was .442 to .430 = .012. long offset about 4% (0.042)  
--  range of lat about .078 to .090 = 0.012  lat offset 12.5%.  
--  using 5% for long and 12.5% for lat (for now).  
-
-
-Can potentially do this by transect within station as well, and make it a user option in the input spreadsheet. If it's selected, then there will be an additional for loop between the `st in SiteID` and `plt in PlotID` ones, for `tr in TransectID`. For each site -- for each transect -- make base plot, based on coords in transect -- loop through plots to make the subplots and add them to the base plot -- after looping, name base plot based on transect -- use `{patchwork}` to paste together transects within the site so they're all in a row or panel or whatever  
+</details>  
 
 ```{r}
 # THIS CHUNK IS AN ADAPTATION OF BROOK'S CODE
@@ -151,19 +145,16 @@ Can potentially do this by transect within station as well, and make it a user o
 ```
 
 
-### Attempt using ggplot.  
 
-Use long format data frame for this.  
 
-Tutorial here: https://www.r-bloggers.com/2019/02/plots-within-plots-with-ggplot2-and-ggmap/  
-
-Want to add all these additional plots as `ggplotGrob`s using `annotation_custom`. Guess I need to make all the plots first??? So I'll need a data frame or list of the grobs, xmin and max values, and ymin and max values for them......
 
 ```{r}
 # p1 + annotation_custom(ggplotGrob(p2), xmin = 1, xmax = 3, 
 #                        ymin = -0.3, ymax = 0.6)
-```
 
+# Tutorial on which the subplot idea below is based:
+# https://www.r-bloggers.com/2019/02/plots-within-plots-with-ggplot2-and-ggmap/  
+```
 
 
 

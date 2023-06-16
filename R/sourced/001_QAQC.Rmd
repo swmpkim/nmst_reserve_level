@@ -3,11 +3,24 @@ title: ''
 output: html_document
 ---
 
+<details>
+<summary>Kim's to-dos</summary>
+
 Tasks to address from analysis plan:  
 
 +  QAQC flag summary - make it obvious if there are any 1s or -3s in the dataset  
 +  Something to check percent cover standardization (e.g., max. cover).  
 +  Remove plots that haven't been sampled at least X # of times (currently X = 3) - but maybe wait until analysis step to do this, so they show up in stacked and spatial bar charts?    
++  Remove flagged data. Make row in input spreadsheet so user can specify which flagged data to remove. Modify function to use user's input (rather than my hard-coded -3)  
+
+
+Need to do something about NMST abiotic categories, unknown species, unvegetated, etc.  
+
+Probably want data frames by:  
+
+-  species (original)  
+-  vegetation group  
+-  with custom metrics  
 
 
 Tasks from analysis plan that have been addressed in this .Rmd:  
@@ -15,6 +28,7 @@ Tasks from analysis plan that have been addressed in this .Rmd:
 +  Identify rows of missing data (plots not measured)  
 +  table of plots ~ year  
 
+</details>
 
 ## Tables  
 
@@ -62,8 +76,6 @@ dat_long <- dat %>%
 ```
 
 
-Don't forget to make flags to remove some sort of user input in a spreadsheet, and modify function to use user's input (rather than my hard-coded 1 and -3)  
-
 
 ### Joining by species category  
 
@@ -84,13 +96,6 @@ dat_summ_long <- dat_summ %>%
 ```
 
 
-Need to do something about NMST abiotic categories, unknown species, unvegetated, etc.  
-
-Probably want data frames by:  
-
--  species (original)  
--  vegetation group  
--  with custom metrics  
 
 ```{r, message = FALSE}
 # combine species  
@@ -119,10 +124,6 @@ EIR <- dat_long %>%
 
 dat <- left_join(dat, EIR)
 ```
-
-
-
-
 
 
 ### Sites and sample dates  
@@ -166,14 +167,6 @@ DT::datatable(spp_summ,
 ```
 
 
-
-
-```{r}
-
-```
-
-### Lumping top 3 species  
-
 ```{r, message = FALSE}
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
@@ -198,11 +191,13 @@ palcols <- RColorBrewer::brewer.pal(4, "Paired")
 names(palcols) <- unique(top_3_mean$Species)
 ```
 
-## Exploratory Graphics - Top 3 Species  
+## Exploratory Graphics   
+
+In the final output, the species highlighted in these graphics will be those specified by each Reserve in their input spreadsheet. For development, I've been using the most common 3 species and grouping everything else into Other.  
 
 The plot below is essentially the 'averaged stacked bar chart' by zone, but *showing each data point* rather than averaged; and not stacked bars.  
 
-### Top 3 species through time, by zone  
+### Through time, by zone  
 
 ```{r, message = FALSE}
 plot_through_time(data = top_3_mean,
@@ -214,7 +209,7 @@ plot_through_time(data = top_3_mean,
 ```
 
 
-### Top 3 species through time, all plots combined   
+### Through time, all plots combined   
 
 ```{r, message = FALSE}
 ggplot(top_3_mean, aes(x = Year, y = Cover, 
