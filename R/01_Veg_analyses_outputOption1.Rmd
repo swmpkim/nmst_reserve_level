@@ -72,14 +72,14 @@ dat <- dat %>%
 
 
 
-# Exploration and QA/QC   
+# Exploration and QA/QC {.tabset}  
 
 ```{r, child = "sourced/001_QAQC.Rmd"}
 
 ```
 
 
-# Summary Figures  
+# Summary Figures {.tabset}  
 
 ```{r, child = "sourced/002_Summary_Figures.Rmd"}
 
@@ -93,7 +93,7 @@ dat <- dat %>%
 ```
 
 
-# Multivariate Analyses  
+# Multivariate Analyses {.tabset}  
 
 ```{r, child = "sourced/004_Multivariate_Analyses.Rmd"}
 

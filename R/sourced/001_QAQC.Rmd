@@ -3,6 +3,13 @@ title: ''
 output: html_document
 ---
 
+## About  
+
+This section has tables and graphs, in separate tabs.  
+
+Anything we definitely want to show up here in the explanation?  
+
+
 <details>
 <summary>Kim's to-dos</summary>
 
@@ -210,7 +217,7 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
     theme_bw()
 ```
 
-## Exploratory - EIR  
+### Exploratory - EIR  
 
 ```{r}
 ggplot(dat) +

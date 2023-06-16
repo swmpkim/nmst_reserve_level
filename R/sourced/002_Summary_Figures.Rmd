@@ -3,7 +3,9 @@ title: ''
 output: html_document
 ---
 
+## About  
 
+This section has summary graphics. The color palette is meant to be colorblind-friendly but please reach out if you are colorblind and it's not working for you.  
 
 
 ## Averaged Stacked Bar Charts  

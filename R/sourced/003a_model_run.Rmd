@@ -110,7 +110,7 @@ if(exists("mod_nested_trns")){
 ```
 
 
-## Graphs  
+### Graphs  
 
 ```{r, warning = FALSE, message = FALSE}
 if(exists("mod_nested_trns")){
