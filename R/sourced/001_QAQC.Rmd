@@ -128,20 +128,10 @@ dat <- left_join(dat, EIR)
 ### Sites and sample dates  
 
 ```{r}
-dat2 <- dat %>% 
-    mutate(SiteTransectPlot = paste(SiteID, TransectID, PlotID, sep = "-"))
-
-table(dat2$SiteTransectPlot, dat2$Year) %>%
+table(dat$StTrnsPlt, dat$Year) %>%
     kable(caption = "# samples at each plot in each year") %>%
     kable_styling("striped") %>%
     scroll_box(width = "600px", height = "300px")
-
-# dat2 %>%
-#     group_by(SiteTransectPlot, Year) %>% 
-#     summarize(count = n()) %>% 
-#     arrange(SiteTransectPlot, Year) %>% 
-#     pivot_wider(names_from = Year, values_from = count, values_fill = 0) %>% 
-#     DT::datatable(caption = "# samples at each plot in each year")
 ```
 
 ### Species  

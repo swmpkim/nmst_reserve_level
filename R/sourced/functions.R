@@ -266,3 +266,31 @@ plot_through_time <- function(data,
         geom_smooth(method = "loess", se = FALSE) +
         facet_wrap(enquo(panels))
 }
+
+
+# Models ----
+
+# homemade function to get marginal trends out of models  
+get_trends <- function(model){
+    nm <- enexpr(model)
+    tmp <- data.frame(emtrends(model, 
+                               pairwise ~ Vegetation_Zone, 
+                               var = "Years_sinceStart")$emtrends)
+    # tmp$mod <- enexpr(model)
+    # tmp$mod <- as.character(nm)
+    return(tmp)
+}
+
+check_singularity <- function(model){
+    # model needs to be from lme4
+    nm <- enexpr(model)
+    mod <- model
+    cat(paste0(nm, ": \n"))
+    if(isSingular(mod)){
+        cat("is singular. VarCorr follows. \n \n")
+        print(summary(mod)$varcor)
+        cat("\n \n")
+    } else {
+        cat("fit is okay (not singular) \n \n")
+    }
+}

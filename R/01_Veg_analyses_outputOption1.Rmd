@@ -29,7 +29,11 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r, message = FALSE, warning = FALSE}
-library(Hmisc)
+# library(Hmisc)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+library(lmerTest)
 library(dplyr)
 library(tidyr)
 library(readxl)
@@ -37,6 +41,7 @@ library(stringr)
 library(kableExtra)
 library(DT)
 library(ggplot2)
+
 
 file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
 file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
@@ -55,11 +60,14 @@ stn_tbl <- get_stn_table(file_dat)
 species_info <- get_species_info(file_dat)
 eis <- get_ecotone_invaders(file = file_specs)
 
-# add Years elapsed to dat
+# add some columns to dat
 dat <- dat %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
-                  Years_sinceStart = round(Date - min(Date), 4)) %>% 
-    dplyr::relocate(c(Date, Years_sinceStart), .before = Year)
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  StTrns = paste(SiteID, TransectID, sep = "-"),
+                  StTrnsPlt = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    dplyr::relocate(c(Date, Years_sinceStart), .before = Year) %>% 
+    dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
 ```
 
 
