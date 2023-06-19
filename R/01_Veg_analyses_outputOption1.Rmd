@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "GND"
+    file_code: "CBV"
 ---
 
 <details>
@@ -97,5 +97,17 @@ dat <- dat %>%
 
 ```{r, child = "sourced/004_Multivariate_Analyses.Rmd"}
 
+```
+
+
+# Documentation and cleanup  
+
+
+```{r}
+sessionInfo()
+
+keeps <- c("i", "reserves")
+removes <- ls()[!(ls() %in% keeps)]
+rm(list = removes)
 ```
 

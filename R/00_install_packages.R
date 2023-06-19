@@ -1,0 +1,13 @@
+pkgs <- c(emmeans,
+          multcomp,
+          multcompView,
+          lme4,
+          lmerTest,
+          dplyr,
+          tidyr,
+          readxl,
+          stringr,
+          kableExtra,
+          DT,
+          ggplot2,
+          fields)

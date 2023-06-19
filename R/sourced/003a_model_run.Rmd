@@ -7,6 +7,9 @@ output: html_document
 mod_nested_full <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
                    data = dat)
 
+mod_nested_siteplot <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/StTrnsPlt),
+                   data = dat)
+
 mod_nested_trns <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrns/PlotID),
                    data = dat)
 
@@ -17,9 +20,7 @@ mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
 
 ### Models that didn't run  
 
-this code definitely needs to be turned into a function or a loop  
-preferable with informative error messages for the end user  
-(they won't understand this terminology but for now it's what I'm trying to work out)  
+ 
 
 ```{r}
 # allow for models that have errored and 
@@ -28,21 +29,27 @@ preferable with informative error messages for the end user
 mods <- list()
 
 
-if(exists("mod_nested_full")){
+if(exists("mod_nested_full", inherits = FALSE)){
     mods[["fully nested"]] <- mod_nested_full
 } else {
     cat("fully nested model errored")
 }
 
+if(exists("mod_nested_siteplot", inherits = FALSE)){
+    mods[["site/plot"]] <- mod_nested_siteplot
+} else {
+    cat("site/plot model errored")
+}
 
-if(exists("mod_nested_trns")){
+
+if(exists("mod_nested_trns", inherits = FALSE)){
     mods[["transect/plot"]] <- mod_nested_trns
 } else {
     cat("transect/plot model errored")
 }
 
 
-if(exists("mod_plts")){
+if(exists("mod_plts", inherits = FALSE)){
     mods[["plots only"]] <- mod_plts
 } else {
     cat("plots only random effect model errored")
@@ -71,6 +78,7 @@ trends_df <- left_join(trends_df, rsqds_df)
 
 ```{r}
 if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
+if(exists("mod_nested_siteplot")){check_singularity(mod_nested_siteplot)}
 if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
 if(exists("mod_plts")){check_singularity(mod_plts)}
 ```
@@ -89,6 +97,15 @@ to_print <- trends_df %>%
 kbl(to_print) %>% 
     kable_styling("striped") %>%
     scroll_box(width = "600px", height = "300px") 
+```
+
+### Random effects by plot  
+
+Drawn from the model where only plot is used as a random effect.  
+
+```{r, fig.width = 8, fig.height = 7}
+fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)$StTrnsPlt),
+                   nx = 128, ny = 128)
 ```
 
 
