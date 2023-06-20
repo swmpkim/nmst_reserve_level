@@ -7,9 +7,19 @@ reserves <- c("GND", "GTM", "CBV", "NIW")
 
 for(i in seq_along(reserves)){
     outname <- paste0("Veg_analyses_", reserves[i], ".html")
-    rmarkdown::render(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
-                      params = list("file_code" = reserves[i]),
-                      output_file = here::here("output", outname))
+    
+    xfun::Rscript_call(
+        rmarkdown::render,
+        list(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
+             params = list("file_code" = reserves[i]),
+             output_file = here::here("output", outname))
+    )
+    # per Yihui Xie, this function is equivalent to hitting the 'Knit' button -
+    # it will run each markdown doc in a new R session
+    # and so won't pollute one reserve's results with another's
+    # https://bookdown.org/yihui/rmarkdown-cookbook/rmarkdown-render.html
+    
+
 }
 
 

@@ -100,14 +100,12 @@ dat <- dat %>%
 ```
 
 
-# Documentation and cleanup  
+# Documentation   
 
+<details><summary>R Session Info; click to expand</summary>
 
 ```{r}
 sessionInfo()
-
-keeps <- c("i", "reserves")
-removes <- ls()[!(ls() %in% keeps)]
-rm(list = removes)
 ```
 
+</details>
