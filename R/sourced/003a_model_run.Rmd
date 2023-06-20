@@ -18,7 +18,7 @@ mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
 ```
 
 
-### Models that didn't run  
+### Problems will show up here  
 
  
 
@@ -63,9 +63,11 @@ trends_df <- bind_rows(trends, .id = "model") %>%
     mutate(model = forcats::as_factor(model))
 ```
 
-Pull out marginal and conditional R^2 for mixed models and add columns to df  
+
 
 ```{r, warning = FALSE, message = FALSE}
+# Pull out marginal and conditional R^2 for mixed models and add columns to df  
+
 rsqds <- purrr::map(mods, function(x) as.data.frame(MuMIn::r.squaredGLMM(x)))
 rsqds_df <- bind_rows(rsqds, .id = "model") %>% 
     mutate(model = forcats::as_factor(model))
@@ -74,7 +76,7 @@ trends_df <- left_join(trends_df, rsqds_df)
 
 
 
-### Singular Models  
+#### Singular Models  
 
 ```{r}
 if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
@@ -111,16 +113,16 @@ fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)
 
 ### Numerical effects  
 
-For the model with transect/plot nesting.
+For simplicity, using model where plot is the only random effect.
 
 ```{r}
-if(exists("mod_nested_trns")){
-    mod_anov <- anova(mod_nested_trns, ddf = "Kenward-Roger")
+if(exists("mod_plts")){
+    mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
     sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
     print(mod_anov)
     cat("\n \n")
-    emtrends(mod_nested_trns, 
+    emtrends(mod_plts, 
                   pairwise ~ Vegetation_Zone, 
                   var = "Years_sinceStart")$emtrends
 }
@@ -130,8 +132,8 @@ if(exists("mod_nested_trns")){
 ### Graphs  
 
 ```{r, warning = FALSE, message = FALSE}
-if(exists("mod_nested_trns")){
-    pdf <- emmip(mod_nested_trns, Vegetation_Zone ~ Years_sinceStart,
+if(exists("mod_plts")){
+    pdf <- emmip(mod_plts, Vegetation_Zone ~ Years_sinceStart,
                  cov.reduce = range,
                  linearg = list(size = 1), CIs = TRUE,
                  plotit = FALSE)
@@ -180,8 +182,8 @@ Some notes from the function. Kenward-Roger method used to estimate denominator 
       But we also did not show them to be the same."
 
 ```{r}
-if(exists("mod_nested_trns")){
-    trnds <- emtrends(mod_nested_trns, 
+if(exists("mod_plts")){
+    trnds <- emtrends(mod_plts, 
                   pairwise ~ Vegetation_Zone, 
                   var = "Years_sinceStart")
     mod_cld <- cld(trnds, Letters = letters) %>% 
