@@ -5,6 +5,7 @@
 
 reserves <- c("GND", "GTM", "CBV", "NIW")
 
+strt<-Sys.time()
 for(i in seq_along(reserves)){
     outname <- paste0("Veg_analyses_", reserves[i], ".html")
     
@@ -22,4 +23,5 @@ for(i in seq_along(reserves)){
 
 }
 
-
+Sys.time() - strt
+# 2.26 minutes for these 4 reserves
