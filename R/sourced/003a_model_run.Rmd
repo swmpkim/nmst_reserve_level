@@ -212,3 +212,18 @@ if(exists("mod_plts")){
     print(p)
 }
 ```
+
+
+```{r}
+# cleanup before next response var
+rm(p, p1, p2, 
+   mod_nested_full, mod_nested_siteplot,
+   mod_nested_trns, mod_plts,
+   mods,
+   trends, trends_df,
+   rsqds, rsqds_df, 
+   to_print,
+   trnds, mod_cld,
+   mod_anov, tidied, sig_int, pdf)
+```
+

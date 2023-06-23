@@ -2,12 +2,144 @@
 title: ''
 output: html_document
 ---
+```{r}
+library(vegan)
+library(ggrepel)
+library(ggiraph)
+```
+
 
 ## About  
 
 These tabs are the multivariate analyses.  
 
 Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.  
+
+```{r}
+# get data into a matrix.......
+# response matrix will be column number (Notes + 1) through EIR
+# explanatory matrix will be column 1 through Notes
+# vegetation zone is present, as is ortho height
+
+# how to best restrict permutations? should i at all?
+
+# also for this part, probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
+
+# and center/scale before calculating distance matrix????? or at least multiply EIR by 100 so it's on the same scale as the cover variables....
+
+
+# null hypothesis is that the community is not changing through time
+```
+
+```{r}
+expl <- dat[, 1:which(names(dat) == "Notes")]
+resp <- dat[, (1 + which(names(dat) == "Notes")):which(names(dat) == "EIR")]
+
+resp$EIR <- resp$EIR * 100  # put it on the same scale as the others
+
+expl$Zone_Year <- paste(expl$Vegetation_Zone, expl$Year)
+
+env <- expl %>% 
+    select(Vegetation_Zone, Year,
+           Zone_Year) %>% 
+    mutate(across(everything(), as.factor))
+    
+
+```
+
+### NMDS  
+
+<details><summary>NMDS stress for each iteration</summary>
+
+```{r}
+mds_resp <- metaMDS(resp, distance = "bray", k = 3)
+
+plot(mds_resp, type = "t")
+
+data.scores <- as.data.frame(scores(mds_resp)$sites)
+species.scores <- as.data.frame(scores(mds_resp)$species)
+species.scores$species <- rownames(species.scores) 
+
+# data.scores$Vegetation_Zone <- expl$Vegetation_Zone
+# data.scores$Year <- expl$Year
+data.scores <- data.scores %>%
+    mutate(Zone = expl$Vegetation_Zone,
+           Year = as.factor(expl$Year)) %>% 
+    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+             sep = "-")
+```
+
+</details>
+
+#### Envfit
+
+```{r}
+
+en <- envfit(mds_resp, env, permutations = 999)
+en_coord_cat <-  as.data.frame(scores(en, "factors")) 
+
+en_coord_cat <- en_coord_cat %>% 
+    mutate(Factor = rownames(.)) %>% 
+    filter(str_starts(Factor, "Zone_Year")) %>% 
+    mutate(Grp = str_remove(Factor, "Zone_Year"),
+           Year = str_sub(Factor, start = -4),
+           Zone = str_sub(Grp, end = -6)) %>% 
+    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+             sep = "-")
+
+```
+
+#### Plot  
+
+```{r}
+ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+                        col = Zone_abbrev)) +
+    geom_point(size = 2, alpha = 0.5) +
+    theme_bw() +
+    ggtitle("Ordination colored by Vegetation Zone")
+
+ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+                        col = Year)) +
+    geom_point(size = 2, alpha = 0.5) +
+    theme_bw() +
+    ggtitle("Ordination colored by Year")
+
+ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+                        col = Zone_abbrev)) +
+    geom_point(aes(shape = Year),
+               size = 2, alpha = 0.5) +
+    theme_bw() +
+    ggtitle("Ordination colored by Zone; shapes by Year")
+```
+
+
+
+```{r, fig.width = 7, fig.height = 4}
+p <- ggplot() +
+    geom_point(data = data.scores,
+               aes(x = NMDS1, y = NMDS2,
+                   col = Zone_abbrev,
+                   shape = Year),
+               size = 1, alpha = 0.4) +
+    geom_point_interactive(data = en_coord_cat, 
+                           aes(x = NMDS1, y = NMDS2,
+                               tooltip = Grp, data_id = Grp), 
+                           shape = "diamond", 
+                           size = 4, alpha = 0.8, colour = "navy") +
+    geom_text_repel(data = en_coord_cat,
+                    aes(x = NMDS1, y = NMDS2 + 0.04,
+                        col = Zone_abbrev),
+                    label = paste(en_coord_cat$Zone_abbrev, en_coord_cat$Year),
+                    alpha = 1,
+                    size = 4,
+                    fontface = "bold",
+                    max.overlaps = 20) +
+    theme_bw() +
+    ggtitle("Ordination with Zone/Year centroids")
+
+girafe(ggobj = p)
+
+```
 
 
 ## PERMANOVA  

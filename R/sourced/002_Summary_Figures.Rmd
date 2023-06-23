@@ -248,3 +248,13 @@ for(st in unique(stn_tbl$SiteID)){
     print(base)
 }
 ```
+
+```{r}
+# cleanup
+rm(plt, st,
+   stn_tmp, long_offset, lat_offset, base,
+   dat_tmp, dat_plt, yrs, un_yrs, div,
+   divs_to_keep, keeps2, keeps3, keeps,
+   subplo, lat, long)
+```
+
