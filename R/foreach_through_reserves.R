@@ -25,4 +25,7 @@ Sys.time() - strt
 # 1.2 mins (vs 2.26 mins with 'for' loop) with 6 cores
 # 1.4 mins with 9 cores (?) guess more isn't necessarily better
 
+# after adding multivariate: 
+# 1.9 min; 2.1 min
+
 stopCluster(cl)
