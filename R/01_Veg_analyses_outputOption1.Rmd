@@ -59,6 +59,7 @@ dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height co
 stn_tbl <- get_stn_table(file_dat)
 species_info <- get_species_info(file_dat)
 eis <- get_ecotone_invaders(file = file_specs)
+anaSpecs <- get_anaSpecs(file = file_specs)
 
 # add some columns to dat
 dat <- dat %>% 

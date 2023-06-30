@@ -42,6 +42,12 @@ get_eis <- function(file){
         arrange(Vegetation_Zone, Species)
 }
 
+get_anaSpecs <- function(file){
+    read_xlsx(file,
+              sheet = "Analysis_Specs") %>% 
+        select(R_anaName, R_varName, Choice) 
+}
+
 
 find_unsampleds <- function(data){
     to_find_empties <- data %>% 
