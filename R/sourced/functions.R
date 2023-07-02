@@ -131,6 +131,7 @@ remove_suspect_values <- function(data,
 
 
 lump_species <- function(data, summ_fun, n){
+    # 'data' input is a long data frame, 'dat_long'
     summ <- data %>% 
         group_by(Species) %>% 
         summarize(y_mean = mean(Cover, na.rm = TRUE),
