@@ -2,7 +2,7 @@
 #                  sheet = "Analysis_Specs") %>% 
 #     select(R_anaName, R_varName, Choice)
 
-tmp_list <- split(anaSpecs, anaSpecs$R_anaName)
+anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
 
 # for each of the list components, want to:
 # remove rows with NA (if, e.g., they didn't pick all the choices)
@@ -16,10 +16,10 @@ tmp_list <- split(anaSpecs, anaSpecs$R_anaName)
 # get those vars as columns in the main data frame 
 
 show_choices <- function(x){
-    test <- tmp_list[[x]]
+    test <- anaSpec_list[[x]]
     test2 <- filter(test, !is.na(Choice))
     cat("There were", nrow(test), "variables that could be specified for", 
-        names(tmp_list)[x], "and", nrow(test2), "was/were. They are:", "\n", 
+        names(anaSpec_list)[x], "and", nrow(test2), "was/were. They are:", "\n", 
         paste(test2$Choice, collapse = "\n"), "\n\n\n")
     
     # figure out whether what's given is a species or a group
@@ -40,27 +40,23 @@ show_choices <- function(x){
     return(test2)
 }
 
-revised_list <- purrr::map(1:length(tmp_list), show_choices)
-names(revised_list) <- names(tmp_list)
+revised_list <- purrr::map(1:length(anaSpec_list), show_choices)
+names(revised_list) <- names(anaSpec_list)
 
-
-
-# need long data frame? With column for "grouping for this analysis"?
+# need long data frame, With column for "grouping for this analysis"
 # start with species; only evaluates what hasn't been assigned, so then do group next
 # everything else becomes other
 # then pivot wider
 
 # don't know yet how to make it show "Other Brackish" or whatever
 
-df = dat_long
-specs = tmp_list[["univar"]]$Choice
 
 make_spec_df <- function(data, specs){
     # data is long data frame
-    # specs is a vector of choices???
+    # specs is a vector of choices, from the user input file
     df <- data
     tmp <- specs
-    df2 <- df %>% 
+    df %>% 
         left_join(species_info, by = "Species") %>% 
         mutate(GroupForThis = case_when(Species %in% tmp ~ Species,
                                         Plant_Categories %in% tmp ~ Plant_Categories,
@@ -76,6 +72,5 @@ make_spec_df <- function(data, specs){
                     values_from = Cover)
 }
 
-univar_df <- make_spec_df(dat_long, tmp_list$univar$Choice)
-multivar_df <- make_spec_df(dat_long, tmp_list$multivar$Choice)
-spat_df <- make_spec_df(dat_long, tmp_list$spat$Choice)
+
+anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
