@@ -74,7 +74,7 @@ remove_unsampleds <- function(data){
 na_to_0 <- function(data){
     dat_tmp <- data
     start <- which(names(dat_tmp) == "Notes") + 1  # first species
-    end <- which(stringr::str_starts(names(dat_tmp), "F_"))[1] - 1  # last species
+    end <- ncol(data)  # last species (F_ columns should already have been removed)
     dat_tmp[start:end][is.na(dat_tmp[start:end])] <- 0
     dat_tmp
     # data %>% 
