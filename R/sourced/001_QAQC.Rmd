@@ -41,45 +41,29 @@ Tasks from analysis plan that have been addressed in this .Rmd:
 
 ### Plots/dates without samples  
 
-There were **`r nrow(find_unsampleds(dat))` rows** with no data. These rows were removed from the dataset before further processing. If rows were removed, relevant information is in a table below.   
+There were **`r nrow(unsampds)` rows** with no data. These rows were removed from the dataset before further processing. If rows were removed, relevant information is in a table below.   
 
 ```{r}
-if(nrow(find_unsampleds(dat)) > 0){
-    find_unsampleds(dat) %>% 
+if(nrow(unsampds) > 0){
+    unsampds %>% 
         DT::datatable(rownames = FALSE,
-                      caption = "Plots/Dates with no sampling information")
+                      caption = "Plots/Dates with no sampling information") 
 }
 ```
 
 
-```{r}
-# get rid of unsampled rows and turn remaining NAs into 0s
-dat <- remove_unsampleds(dat)  # get rid of rows full of NA
-dat <- na_to_0(dat)  # turn remaining NAs into 0s
-```
-
 
 ### Data flagged suspect or reject  
 
+There were **`r nrow(susps)` data points** that were removed due to QA/QC flags. If data points were removed, relevant information is in a table below.
 
 
 ```{r, message = FALSE}
-
-dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values
-
-# may need to re-remove rows of NA values, in case removing suspect values turned a whole row into NAs
-```
-
-
-
-
-```{r, message = FALSE}
-dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
-
-dat_long <- dat %>%
-    pivot_longer(-(Reserve:Notes),
-                 names_to = "Species",
-                 values_to = "Cover")
+if(nrow(susps) > 0){
+    susps %>% 
+        DT::datatable(rownames = FALSE,
+                      caption = "Removed data points") 
+}
 ```
 
 .

@@ -83,6 +83,52 @@ na_to_0 <- function(data){
 }
 
 
+find_suspect_values <- function(data, flags){
+    
+    # THIS IS IMPERFECT -
+    # if "1" is given as a flag, -1 will also be found
+    # negative flags work fine (e.g. specifying -3 will not remove 3)
+    
+    # split data frame into data and qaqc columns
+    qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]
+    data_alone <- data[, 1:(qaqc_cols_start-1)]
+    qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
+    sampling_info <- data[, c("SiteID", "TransectID", "PlotID", 
+                              "Year", "Month", "Day")]
+    
+    # loop through qaqc columns and find any values containing the flags to be removed
+    outs <- list()
+    for(i in seq_along(qaqc_cols)){
+        non_na <- which(!is.na(qaqc_cols[, i]))
+        vals <- qaqc_cols[non_na, i]
+        tmp <- data.frame(Species = rep(names(qaqc_cols)[i], nrow(vals)),
+                          Rows = non_na,
+                          Codes = vals)
+        names(tmp)[3] <- "Codes"
+        
+        collapsed <- paste(flags, collapse = "|")
+        tmp$kick_out <- grepl(collapsed, tmp$Codes)
+        tmp <- tmp[tmp$kick_out == TRUE, ]
+        
+        outs[[i]] <- tmp
+    }
+    
+    outs2 <- dplyr::bind_rows(outs) %>% 
+        mutate(Species = str_remove(Species, "F_"))
+    
+    meta_flags <- sampling_info %>% 
+        mutate(Rows = row_number()) %>% 
+        filter(Rows %in% outs2$Rows)
+    
+    final_flags <- left_join(outs2, meta_flags) %>% 
+        select(SiteID, TransectID, PlotID,
+               Year, Month, Day,
+               Species, "Flag" = Codes) %>% 
+        arrange(Year, Month, Day, SiteID, TransectID, PlotID, Species)
+    return(final_flags)
+}
+
+
 remove_suspect_values <- function(data,
                                   flags){
     

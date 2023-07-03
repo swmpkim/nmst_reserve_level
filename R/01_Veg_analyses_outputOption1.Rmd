@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "TST"
+    file_code: "NIW"
 ---
 
 <details>
@@ -69,6 +69,29 @@ dat <- dat %>%
                   StTrnsPlt = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
     dplyr::relocate(c(Date, Years_sinceStart), .before = Year) %>% 
     dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
+```
+
+
+```{r}
+# clean up data but keep some remnants for QA/QC tables
+unsampds <- find_unsampleds(dat)
+# find suspect data for later reporting
+# NEED TO MAKE FLAG VALUES FLEXIBLE
+susps <- find_suspect_values(dat, "-3")
+
+
+dat <- remove_unsampleds(dat)  # get rid of rows full of NA
+dat <- na_to_0(dat)  # turn remaining NAs into 0s
+dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values
+dat <- remove_unsampleds(dat)  # just in case a whole sample date was removed due to flagging - don't want a whole row of NAs
+
+
+
+dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
+dat_long <- dat %>%
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Species",
+                 values_to = "Cover")
 ```
 
 
