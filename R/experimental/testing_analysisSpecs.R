@@ -40,35 +40,42 @@ show_choices <- function(x){
     return(test2)
 }
 
-
-#purrr::walk(1:length(tmp_list), show_choices)
-
 revised_list <- purrr::map(1:length(tmp_list), show_choices)
 names(revised_list) <- names(tmp_list)
 
 
-# if a species in the choices also belongs to a group in the choices, subtract it out
-# first have to go analysis-by-analysis, then group-by-group and get a vector of species in each
-# then see if a species is in it, and subtract it
-test <- revised_list$multivar
-test2 <- test %>% 
-    select(Choice, SpeciesInGroup) %>% 
-    pivot_wider(names_from = Choice,
-                values_from = SpeciesInGroup)
 
-# need a vector of species names for each group
-# if (one of the other Choices) %in% that vector - 
-# then make a vector of 'Other [Choice of group]' 
-# that removes any of those
-# and get rid of the vector that contains them
+# need long data frame? With column for "grouping for this analysis"?
+# start with species; only evaluates what hasn't been assigned, so then do group next
+# everything else becomes other
+# then pivot wider
 
-test8 <- species_info %>% 
-    filter(Plant_Categories == "H-Halophyte") %>% 
-    select(Species) %>% 
-    unlist()
-test9 <- revised_list$multivar$Choice[revised_list$multivar$Choice %in% test8]
-test10 <- test8[!(test8 %in% test9)]
-names(test10) <- NULL
-test10  # this is the shortened vector
+# don't know yet how to make it show "Other Brackish" or whatever
 
+df = dat_long
+specs = tmp_list[["univar"]]$Choice
 
+make_spec_df <- function(data, specs){
+    # data is long data frame
+    # specs is a vector of choices???
+    df <- data
+    tmp <- specs
+    df2 <- df %>% 
+        left_join(species_info, by = "Species") %>% 
+        mutate(GroupForThis = case_when(Species %in% tmp ~ Species,
+                                        Plant_Categories %in% tmp ~ Plant_Categories,
+                                        .default = "Other")) %>% 
+        group_by(Reserve, SiteID, TransectID, PlotID,
+                 StTrns, StTrnsPlt,
+                 Vegetation_Zone,
+                 Year, Month, Day, Years_sinceStart,
+                 GroupForThis) %>% 
+        summarize(Cover = sum(Cover, na.rm = TRUE)) %>% 
+        ungroup() %>% 
+        pivot_wider(names_from = GroupForThis,
+                    values_from = Cover)
+}
+
+univar_df <- make_spec_df(dat_long, tmp_list$univar$Choice)
+multivar_df <- make_spec_df(dat_long, tmp_list$multivar$Choice)
+spat_df <- make_spec_df(dat_long, tmp_list$spat$Choice)
