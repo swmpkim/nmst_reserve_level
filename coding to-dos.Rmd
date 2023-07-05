@@ -1,0 +1,28 @@
+---
+title: "To-do"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+To-dos  
+
++  Decisions:  
+    +  do we want to keep "top 3" plots 
+    +  find out exactly what the data frame should look like going into the multivariate analyses  
+    +  which nesting structure to use  
+    +  do we want richness and diversity for each plot on each date? can use in univariate analyses  
+    
++  Documentation:  
+    +  will remove quilt plot  
+    +  combine namaste groups etc.  
+    +  more descriptive model names and information  
+    +  show which species are within each category used in the anaSpec_df data frames - for each application (spatial plots, univariate responses, multivariate responses)  
++  Other:  
+    +  after exploration but before statistical analyses, remove any plots without at least [X] readings.  
+    +  univariate analyses might barf if a reserve doesn't specify at least 3 species or groups  
+    +  figure out how to look at the provided Plant_Categories and see if any species were removed because they were named separately - and if so, rename it to "Other [category]" in all anaSpec_df data frames  
+    +  incorporate CIs into model fit plots?  

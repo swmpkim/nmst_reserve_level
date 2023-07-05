@@ -13,6 +13,21 @@ The reserve-identified response variables are:
 cat(paste("*", anaSpec_list$univar$Choice), sep="\n")
 ```
 
+```{r}
+# widen out the univar data frame
+# it's grouped appropriately for these analyses  
+dat_univar <- anaSpec_dfs$univar %>% 
+    pivot_wider(names_from = Species_or_Group,
+                values_from = Cover)
+
+# join EIR - use a join because might not be in same order
+EIR_df <- dat %>% 
+    select(StTrnsPlt, Year, Month, Day, EIR)
+dat_univar <- left_join(dat_univar, EIR_df)
+
+# can join any other metrics here - e.g. richness, diversity  
+```
+
 
 ### Statistical Model  
 
@@ -68,7 +83,7 @@ Insert table of reserve-identified ecotone invaders, by zone.
 
 ```{r}
 respn <- "EIR"
-dat$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
@@ -80,8 +95,7 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 
 ```{r}
 respn <- anaSpec_list$univar$Choice[1]
-# respn <- "Spartina alterniflora"
-dat$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 ## 2: `r respn`  
@@ -94,8 +108,7 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 
 ```{r}
 respn <- anaSpec_list$univar$Choice[2]
-# respn <- "Juncus roemerianus"
-dat$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 ## 3: `r respn`  
@@ -109,8 +122,7 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 
 ```{r}
 respn <- anaSpec_list$univar$Choice[3]
-# respn <- "Spartina alterniflora"
-dat$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
@@ -129,7 +141,7 @@ if(is.na(respn)){
     respn <- unique(top_3_mean$Species)[1]
 }
 
-dat$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
 ```
 
 

@@ -108,9 +108,11 @@ DT::datatable(spp_summ,
 ```
 
 
-## Time-series, by zone  
+## Time-series - Species 
 
-### Top 3 species by mean cover across the entire dataset  
+### By Zone  
+
+#### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 plot_through_time(data = top_3_mean,
@@ -121,7 +123,7 @@ plot_through_time(data = top_3_mean,
     theme_bw()
 ```
 
-### User-chosen species  
+#### User-chosen species  
 
 ```{r}
 plot_through_time(data = anaSpec_dfs$univar,
@@ -134,9 +136,9 @@ plot_through_time(data = anaSpec_dfs$univar,
 
 
 
-## Time-series, all plots combined   
+### All plots combined  
 
-### Top 3 species by mean cover across the entire dataset  
+#### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 ggplot(top_3_mean, aes(x = Year, y = Cover, 
@@ -148,7 +150,7 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
     theme_bw()
 ```
 
-### User-chosen species  
+#### User-chosen species  
 
 ```{r}
 ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover, 
@@ -160,7 +162,7 @@ ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover,
     theme_bw()
 ```
 
-## Time Series - EIR  
+## EIR graphics  
 
 ```{r}
 ggplot(dat) +
