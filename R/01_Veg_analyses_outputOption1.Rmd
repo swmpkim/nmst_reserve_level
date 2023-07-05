@@ -95,6 +95,12 @@ dat_long <- dat %>%
 ```
 
 ```{r}
+# generate a list of data frames based on user's analysis specs
+anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
+```
+
+
+```{r}
 # summarize species present
 spp_summ <- 
     dat_long %>% 
@@ -140,6 +146,11 @@ top_3_wide <- top_3_mean %>%
     mutate()
 ```
 
+```{r, message = FALSE}
+# establish color palette for graphics in child docs
+palcols <- RColorBrewer::brewer.pal(4, "Paired")
+names(palcols) <- unique(top_3_mean$Species)
+```
 
 # Exploration and QA/QC {.tabset}  
 

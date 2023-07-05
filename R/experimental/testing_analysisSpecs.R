@@ -51,26 +51,7 @@ names(revised_list) <- names(anaSpec_list)
 # don't know yet how to make it show "Other Brackish" or whatever
 
 
-make_spec_df <- function(data, specs){
-    # data is long data frame
-    # specs is a vector of choices, from the user input file
-    df <- data
-    tmp <- specs
-    df %>% 
-        left_join(species_info, by = "Species") %>% 
-        mutate(GroupForThis = case_when(Species %in% tmp ~ Species,
-                                        Plant_Categories %in% tmp ~ Plant_Categories,
-                                        .default = "Other")) %>% 
-        group_by(Reserve, SiteID, TransectID, PlotID,
-                 StTrns, StTrnsPlt,
-                 Vegetation_Zone,
-                 Year, Month, Day, Years_sinceStart,
-                 GroupForThis) %>% 
-        summarize(Cover = sum(Cover, na.rm = TRUE)) %>% 
-        ungroup() %>% 
-        pivot_wider(names_from = GroupForThis,
-                    values_from = Cover)
-}
 
 
-anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
+
+
