@@ -3,12 +3,6 @@ title: ''
 output: html_document
 ---
 
-```{r, message = FALSE}
-# establish color palette for all graphics in QA/QC child doc
-palcols <- RColorBrewer::brewer.pal(4, "Paired")
-names(palcols) <- unique(top_3_mean$Species)
-```
-
 
 ## About  
 

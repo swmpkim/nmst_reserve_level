@@ -7,6 +7,13 @@ output: html_document
 
 Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EIR, will have its results appear in its own tab. You will see the same tables and graphics for each.  
 
+The reserve-identified response variables are:  
+
+```{r, results = 'asis'}
+cat(paste("*", anaSpec_list$univar$Choice), sep="\n")
+```
+
+
 ### Statistical Model  
 
 The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Site/Transect/Plot`, where `y` is the response variable given in the tab. For various reasons this might not work as well as we'd hoped, so less complicated models have also been run.  
@@ -70,10 +77,11 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 ```
 
 
+
 ```{r}
-respn <- "Spartina alterniflora"
+respn <- anaSpec_list$univar$Choice[1]
+# respn <- "Spartina alterniflora"
 dat$resp <- unlist(dat[which(names(dat) == respn)])
-# but really want to make that adapt to user input
 ```
 
 ## 2: `r respn`  
@@ -83,10 +91,11 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 ```
 
 
+
 ```{r}
-respn <- "Juncus roemerianus"
+respn <- anaSpec_list$univar$Choice[2]
+# respn <- "Juncus roemerianus"
 dat$resp <- unlist(dat[which(names(dat) == respn)])
-# but really want to make that adapt to user input
 ```
 
 ## 3: `r respn`  
@@ -97,14 +106,34 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 
 
 
+
 ```{r}
-respn <- "Spartina alterniflora"
+respn <- anaSpec_list$univar$Choice[3]
+# respn <- "Spartina alterniflora"
 dat$resp <- unlist(dat[which(names(dat) == respn)])
-# but really want to make that adapt to user input
 ```
 
 
 ## 4: `r respn`  
+
+```{r, child = "003a_model_run.Rmd"}
+
+```
+
+
+
+```{r}
+respn <- anaSpec_list$univar$Choice[4]
+
+if(is.na(respn)){
+    respn <- unique(top_3_mean$Species)[1]
+}
+
+dat$resp <- unlist(dat[which(names(dat) == respn)])
+```
+
+
+## 5: `r respn`  
 
 ```{r, child = "003a_model_run.Rmd"}
 

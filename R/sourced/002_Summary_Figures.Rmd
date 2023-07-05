@@ -9,13 +9,10 @@ This section has summary graphics. The color palette is meant to be colorblind-f
 
 **NOTE:** for development, I'm including 2 versions of all bar charts. The versions that involve "top 3 species by mean cover across the entire dataset" can be removed to only show user-selected species, or retained if the TWG and users think it would be valuable to see both.  
 
+## Averaged: By Veg Zone  
 
-## Averaged Stacked Bar Charts  
 
-
-### By Vegetation Zone  
-
-#### Top 3 species by mean cover across the entire dataset  
+### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 top_3_mean %>% 
@@ -26,14 +23,14 @@ top_3_mean %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~Vegetation_Zone) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_top) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
 ```
 
 
-#### User-specified species  
+### User-specified species  
 
 The species/groups identified by the Reserve for these graphs are:  
 
@@ -59,16 +56,16 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~Vegetation_Zone) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_spec) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
 ```
 
 
-### By Site  
+## Averaged: By Site  
 
-#### Top 3 species by mean cover across the entire dataset  
+### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 top_3_mean %>% 
@@ -79,13 +76,13 @@ top_3_mean %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~SiteID) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_top) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
 ```
 
-#### User-specified species  
+### User-specified species  
 
 ```{r, message = FALSE}
 anaSpec_dfs$spat %>% 
@@ -96,16 +93,16 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~SiteID) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_spec) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
 ```
 
 
-### By Zone within Site  
+## Averaged: Zone within Site  
 
-#### Top 3 species by mean cover across the entire dataset  
+### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 top_3_mean %>% 
@@ -116,13 +113,13 @@ top_3_mean %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_grid(Vegetation_Zone~SiteID) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_top) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
 ```
 
-#### User-specified species  
+### User-specified species  
 
 ```{r, message = FALSE}
 anaSpec_dfs$spat %>% 
@@ -133,14 +130,14 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_grid(Vegetation_Zone~SiteID) +
-    scale_fill_manual(values = palcols) +
+    scale_fill_manual(values = palcols_spec) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
 ```
 
 
-## Spatial Bar Charts  
+## Spatial  
 
 One plot per Site; showing 4 evenly spaced-through-time samples.   
 
@@ -256,7 +253,7 @@ for(st in unique(stn_tbl$SiteID)){
              y = "Latitude") +
         scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
         scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
-        scale_fill_manual(values = palcols) +
+        scale_fill_manual(values = palcols_top) +
         theme_bw() +
         theme(legend.position = "right")
     
@@ -300,7 +297,7 @@ for(st in unique(stn_tbl$SiteID)){
                                           position = "stack",
                                           alpha = 0.8,
                                           show.legend = FALSE) +
-                                 scale_fill_manual(values = palcols) +
+                                 scale_fill_manual(values = palcols_top) +
                                  theme_void() + 
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
@@ -341,15 +338,15 @@ for(st in unique(stn_tbl$SiteID)){
     
     # blank plot canvas
     base <- ggplot(stn_tmp, aes(x = Long, y = Lat, 
-                                group = Species,
-                                fill = Species)) +
+                                group = Species_or_Group,
+                                fill = Species_or_Group)) +
         geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
              y = "Latitude") +
         scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
         scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
-        scale_fill_manual(values = palcols) +
+        scale_fill_manual(values = palcols_spec) +
         theme_bw() +
         theme(legend.position = "right")
     
@@ -393,7 +390,7 @@ for(st in unique(stn_tbl$SiteID)){
                                           position = "stack",
                                           alpha = 0.8,
                                           show.legend = FALSE) +
-                                 scale_fill_manual(values = palcols) +
+                                 scale_fill_manual(values = palcols_spec) +
                                  theme_void() + 
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         

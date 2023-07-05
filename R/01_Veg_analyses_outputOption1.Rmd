@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "NIW"
+    file_code: "GND"
 ---
 
 <details>
@@ -146,10 +146,18 @@ top_3_wide <- top_3_mean %>%
     mutate()
 ```
 
-```{r, message = FALSE}
-# establish color palette for graphics in child docs
-palcols <- RColorBrewer::brewer.pal(4, "Paired")
-names(palcols) <- unique(top_3_mean$Species)
+
+
+```{r}
+# define color palettes - used in both QAQC and Summary Graphic child rmds
+
+# top 3 species + other
+palcols_top <- RColorBrewer::brewer.pal(4, "Paired")
+names(palcols_top) <- unique(top_3_mean$Species)
+
+# spatial barplots: up to 3 species/groups + other
+palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
+names(palcols_spec) <- unique(anaSpec_dfs$spat$Species_or_Group)
 ```
 
 # Exploration and QA/QC {.tabset}  
@@ -159,7 +167,7 @@ names(palcols) <- unique(top_3_mean$Species)
 ```
 
 
-# Summary Figures {.tabset}  
+# Summary Bar Charts {.tabset}  
 
 ```{r, child = "sourced/002_Summary_Figures.Rmd"}
 

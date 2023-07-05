@@ -1,7 +1,8 @@
 library(foreach)
 library(doParallel)
 
-reserves <- c("GND", "GTM", "CBV", "NIW")
+reserves <- c("GND", "CBV", "NIW", "TST")
+# removed GTM until I can figure out why it took so long on the last run
 
 
 cl<-makeCluster(6)  
