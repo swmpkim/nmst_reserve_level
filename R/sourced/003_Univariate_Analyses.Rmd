@@ -135,6 +135,8 @@ dat$resp <- unlist(dat[which(names(dat) == respn)])
 
 ## 5: `r respn`  
 
+**NOTE:** If only 3 species were chosen, rather than 4, this tab defaults to the first species in the list of "top 3 species by mean cover across the entire dataset".  
+
 ```{r, child = "003a_model_run.Rmd"}
 
 ```

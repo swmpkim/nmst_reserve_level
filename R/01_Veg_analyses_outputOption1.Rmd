@@ -158,6 +158,10 @@ names(palcols_top) <- unique(top_3_mean$Species)
 # spatial barplots: up to 3 species/groups + other
 palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
 names(palcols_spec) <- unique(anaSpec_dfs$spat$Species_or_Group)
+
+# univariate exploration: up to 4 species/groups + other
+palcols_univar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$univar$Species_or_Group)), "Paired")
+names(palcols_univar) <- unique(anaSpec_dfs$univar$Species_or_Group)
 ```
 
 # Exploration and QA/QC {.tabset}  

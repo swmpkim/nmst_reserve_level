@@ -67,7 +67,6 @@ if(nrow(susps) > 0){
 }
 ```
 
-.
 
 ```{r}
 # all commented out 7/3/23 because I don't think we'll use it
@@ -109,37 +108,59 @@ DT::datatable(spp_summ,
 ```
 
 
-## Exploratory Graphics   
+## Time-series, by zone  
 
-In the final output, the species highlighted in these graphics will be those specified by each Reserve in their input spreadsheet. For development, I've been using the most common 3 species and grouping everything else into Other.  
-
-The plot below is essentially the 'averaged stacked bar chart' by zone, but *showing each data point* rather than averaged; and not stacked bars.  
-
-### Through time, by zone  
+### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 plot_through_time(data = top_3_mean,
           group = Species,
           panels = Vegetation_Zone) +
-    scale_color_manual(values = palcols) +
+    scale_color_manual(values = palcols_top) +
     ggtitle("Top 3 species by mean cover") +
     theme_bw()
 ```
 
+### User-chosen species  
 
-### Through time, all plots combined   
+```{r}
+plot_through_time(data = anaSpec_dfs$univar,
+          group = Species_or_Group,
+          panels = Vegetation_Zone) +
+    scale_color_manual(values = palcols_univar) +
+    ggtitle("User-chosen species") +
+    theme_bw()
+```
+
+
+
+## Time-series, all plots combined   
+
+### Top 3 species by mean cover across the entire dataset  
 
 ```{r, message = FALSE}
 ggplot(top_3_mean, aes(x = Year, y = Cover, 
                      group = Species, color = Species, fill = Species)) +
         geom_jitter(alpha = 0.2) +
         geom_smooth(method = "loess", se = FALSE) +
-    scale_color_manual(values = palcols) +
+    scale_color_manual(values = palcols_top) +
     ggtitle("Top 3 species by mean cover, all plots combined") +
     theme_bw()
 ```
 
-### Exploratory - EIR  
+### User-chosen species  
+
+```{r}
+ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover, 
+                     group = Species_or_Group, color = Species_or_Group, fill = Species_or_Group)) +
+        geom_jitter(alpha = 0.2) +
+        geom_smooth(method = "loess", se = FALSE) +
+    scale_color_manual(values = palcols_univar) +
+    ggtitle("User-chosen species, all plots combined") +
+    theme_bw()
+```
+
+## Time Series - EIR  
 
 ```{r}
 ggplot(dat) +
