@@ -9,11 +9,11 @@ Each of the (up to) 4 response variables identified in the Analysis Specs spread
 
 The reserve-identified response variables are:  
 
-```{r, results = 'asis'}
+```{r show-userChoice-univar, results = 'asis'}
 cat(paste("*", anaSpec_list$univar$Choice), sep="\n")
 ```
 
-```{r}
+```{r mod-univar-df}
 # widen out the univar data frame
 # it's grouped appropriately for these analyses  
 dat_univar <- anaSpec_dfs$univar %>% 
@@ -81,46 +81,46 @@ Explanation of what EIR is and how it was calculated.
 
 Insert table of reserve-identified ecotone invaders, by zone.  
 
-```{r}
+```{r define-univar-EIR}
 respn <- "EIR"
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
-```{r, child = "003a_model_run.Rmd"}
+```{r source-003-EIR, child = "003a_model_run.Rmd"}
 
 ```
 
 
 
-```{r}
+```{r define-univar-userChosen1}
 respn <- anaSpec_list$univar$Choice[1]
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 ## 2: `r respn`  
 
-```{r, child = "003a_model_run.Rmd"}
+```{r source-003a-userChosen1, child = "003a_model_run.Rmd"}
 
 ```
 
 
 
-```{r}
+```{r define-univar-userChosen2}
 respn <- anaSpec_list$univar$Choice[2]
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 ## 3: `r respn`  
 
-```{r, child = "003a_model_run.Rmd"}
+```{r source-003a-userChosen2, child = "003a_model_run.Rmd"}
 
 ```
 
 
 
 
-```{r}
+```{r define-univar-userChosen3}
 respn <- anaSpec_list$univar$Choice[3]
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
@@ -128,17 +128,18 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 ## 4: `r respn`  
 
-```{r, child = "003a_model_run.Rmd"}
+```{r source-003a-userChosen3, child = "003a_model_run.Rmd"}
 
 ```
 
 
 
-```{r}
+```{r define-univar-userChosen4}
 respn <- anaSpec_list$univar$Choice[4]
 
 if(is.na(respn)){
     respn <- unique(top_3_mean$Species)[1]
+    !(top_5_spps %in% anaSpec_list$univar$Choice)
 }
 
 dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
@@ -149,6 +150,6 @@ dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
 
 **NOTE:** If only 3 species were chosen, rather than 4, this tab defaults to the first species in the list of "top 3 species by mean cover across the entire dataset".  
 
-```{r, child = "003a_model_run.Rmd"}
+```{r source-003a-userChosen4, child = "003a_model_run.Rmd"}
 
 ```

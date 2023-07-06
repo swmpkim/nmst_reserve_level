@@ -14,7 +14,7 @@ This section has summary graphics. The color palette is meant to be colorblind-f
 
 ### Top 3 species by mean cover across the entire dataset  
 
-```{r, message = FALSE}
+```{r graph-avgBar-top3, message = FALSE}
 top_3_mean %>% 
     group_by(Vegetation_Zone, Year, Species) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -34,20 +34,18 @@ top_3_mean %>%
 
 The species/groups identified by the Reserve for these graphs are:  
 
-```{r, results = 'asis'}
+```{r show-userChoices, results = 'asis'}
 cat(paste("*", anaSpec_list$spat$Choice), sep="\n")
 ```
 
 And so the groups showing up in the plots should be:  
 
-```{r, results = 'asis'}
+```{r show-userChoices-groups, results = 'asis'}
 cat(paste("*", unique(anaSpec_dfs$spat$Species_or_Group)), sep="\n")
 ```
 
-Would be great to put "Other" at the very end, and unvegetated (if present) 2nd to last.  
 
-```{r}
-# the df to use is
+```{r graph-avgBar-userChoices}
 anaSpec_dfs$spat %>% 
     group_by(Vegetation_Zone, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -67,7 +65,7 @@ anaSpec_dfs$spat %>%
 
 ### Top 3 species by mean cover across the entire dataset  
 
-```{r, message = FALSE}
+```{r graph-avgBar-top3-Site, message = FALSE}
 top_3_mean %>% 
     group_by(SiteID, Year, Species) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -84,7 +82,7 @@ top_3_mean %>%
 
 ### User-chosen species  
 
-```{r, message = FALSE}
+```{r graph-avgBar-userChosen-Site, message = FALSE}
 anaSpec_dfs$spat %>% 
     group_by(SiteID, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -104,7 +102,7 @@ anaSpec_dfs$spat %>%
 
 ### Top 3 species by mean cover across the entire dataset  
 
-```{r, message = FALSE}
+```{r graph-avgBar-top3-Zone, message = FALSE}
 top_3_mean %>% 
     group_by(SiteID, Vegetation_Zone, Year, Species) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -121,7 +119,7 @@ top_3_mean %>%
 
 ### User-chosen species  
 
-```{r, message = FALSE}
+```{r graph-avgBar-userChosen-Zone, message = FALSE}
 anaSpec_dfs$spat %>% 
     group_by(SiteID, Vegetation_Zone, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
@@ -153,7 +151,7 @@ Can potentially do this by transect within station as well, and make it a user o
 
 </details>  
 
-```{r}
+```{r graph-spatial-base}
 # THIS CHUNK IS AN ADAPTATION OF BROOK'S CODE
 
 # for(st in unique(stn_tbl$SiteID)){
@@ -217,20 +215,9 @@ Can potentially do this by transect within station as well, and make it a user o
 ```
 
 
-
-
-
-```{r}
-# p1 + annotation_custom(ggplotGrob(p2), xmin = 1, xmax = 3, 
-#                        ymin = -0.3, ymax = 0.6)
-
-# Tutorial on which the subplot idea below is based:
-# https://www.r-bloggers.com/2019/02/plots-within-plots-with-ggplot2-and-ggmap/  
-```
-
 #### Top 3 species by mean cover across the entire dataset  
 
-```{r, fig.width = 8, fig.height = 4}
+```{r graph-spatial-top3, fig.width = 8, fig.height = 4}
 
 # add species into station table for the sole purpose of generating a legend.  
 stn_tbl$Species <- rep_len(unique(top_3_mean$Species), length.out = nrow(stn_tbl))
@@ -323,7 +310,7 @@ for(st in unique(stn_tbl$SiteID)){
 
 #### User-chosen species  
 
-```{r, fig.width = 8, fig.height = 4}
+```{r graph-spatial-userChosen, fig.width = 8, fig.height = 4}
 
 # add species into station table for the sole purpose of generating a legend.  
 stn_tbl$Species_or_Group <- rep_len(unique(anaSpec_dfs$spat$Species_or_Group), length.out = nrow(stn_tbl))
@@ -415,7 +402,7 @@ for(st in unique(stn_tbl$SiteID)){
 
 
 
-```{r}
+```{r cleanup-002}
 # cleanup
 rm(plt, st,
    stn_tmp, long_offset, lat_offset, base,

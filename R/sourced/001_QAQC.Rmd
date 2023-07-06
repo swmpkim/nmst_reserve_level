@@ -17,7 +17,7 @@ Anything we definitely want to show up here in the explanation?
 
 There were **`r nrow(unsampds)` rows** with no data. These rows were removed from the dataset before further processing. If rows were removed, relevant information is in a table below.   
 
-```{r}
+```{r show-unsampleds}
 if(nrow(unsampds) > 0){
     unsampds %>% 
         DT::datatable(rownames = FALSE,
@@ -32,7 +32,7 @@ if(nrow(unsampds) > 0){
 There were **`r nrow(susps)` data points** that were removed due to QA/QC flags. If data points were removed, relevant information is in a table below.
 
 
-```{r, message = FALSE}
+```{r show-flagged, message = FALSE}
 if(nrow(susps) > 0){
     susps %>% 
         DT::datatable(rownames = FALSE,
@@ -41,7 +41,7 @@ if(nrow(susps) > 0){
 ```
 
 
-```{r}
+```{r mod-categories}
 # all commented out 7/3/23 because I don't think we'll use it
 
 # # Joining by species category  
@@ -65,7 +65,7 @@ if(nrow(susps) > 0){
 
 ### Sites and sample dates  
 
-```{r}
+```{r show-sampling-info}
 table(dat$StTrnsPlt, dat$Year) %>%
     kable(caption = "# samples at each plot in each year") %>%
     kable_styling("striped") %>%
@@ -74,7 +74,7 @@ table(dat$StTrnsPlt, dat$Year) %>%
 
 ### Species  
 
-```{r, message = FALSE}
+```{r show-species, message = FALSE}
 DT::datatable(spp_summ, 
               rownames = FALSE,
               caption = "Species cover and presence per site, across all years. This table is sortable and searchable.")
@@ -87,7 +87,7 @@ DT::datatable(spp_summ,
 
 #### Top 3 species by mean cover across the entire dataset  
 
-```{r, message = FALSE}
+```{r graph-time-top3, message = FALSE}
 plot_through_time(data = top_3_mean,
           group = Species,
           panels = Vegetation_Zone) +
@@ -98,7 +98,7 @@ plot_through_time(data = top_3_mean,
 
 #### User-chosen species  
 
-```{r}
+```{r graph-time-userChosen}
 plot_through_time(data = anaSpec_dfs$univar,
           group = Species_or_Group,
           panels = Vegetation_Zone) +
@@ -113,7 +113,7 @@ plot_through_time(data = anaSpec_dfs$univar,
 
 #### Top 3 species by mean cover across the entire dataset  
 
-```{r, message = FALSE}
+```{r graph-time-top3-onePanel, message = FALSE}
 ggplot(top_3_mean, aes(x = Year, y = Cover, 
                      group = Species, color = Species, fill = Species)) +
         geom_jitter(alpha = 0.2) +
@@ -125,7 +125,7 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
 
 #### User-chosen species  
 
-```{r}
+```{r graph-time-userChosen-onePanel}
 ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover, 
                      group = Species_or_Group, color = Species_or_Group, fill = Species_or_Group)) +
         geom_jitter(alpha = 0.2) +
@@ -137,7 +137,7 @@ ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover,
 
 ## EIR graphics  
 
-```{r}
+```{r graph-time-EIR}
 ggplot(dat) +
     geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone),
                 alpha = 0.4) +
@@ -150,7 +150,7 @@ ggplot(dat) +
 
 
 
-```{r}
+```{r graph-time-EIR2}
 ggplot(dat) +
     geom_jitter(aes(x = Year, y = EIR, color = SiteID),
                 alpha = 0.4) +
@@ -161,7 +161,7 @@ ggplot(dat) +
 ```
 
 
-```{r}
+```{r graph-hist-EIR}
 ggplot(dat) +
     geom_histogram(aes(x = EIR, fill = Vegetation_Zone),
                    col = "gray40",
