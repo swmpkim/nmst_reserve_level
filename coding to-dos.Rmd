@@ -21,6 +21,7 @@ To-dos
     +  combine namaste groups etc.  
     +  more descriptive model names and information  
     +  show which species are within each category used in the anaSpec_df data frames - for each application (spatial plots, univariate responses, multivariate responses)  
+    +  make a glossary about how code chunks are named (read, source, define, mod, graph, stats)  
 +  Other:  
     +  after exploration but before statistical analyses, remove any plots without at least [X] readings.  
     +  univariate analyses might barf if a reserve doesn't specify at least 3 species or groups  

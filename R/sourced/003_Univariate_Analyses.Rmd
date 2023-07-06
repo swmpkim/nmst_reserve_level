@@ -136,10 +136,12 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 ```{r define-univar-userChosen4}
 respn <- anaSpec_list$univar$Choice[4]
+autoChoice <- FALSE
 
 if(is.na(respn)){
-    respn <- unique(top_3_mean$Species)[1]
-    !(top_5_spps %in% anaSpec_list$univar$Choice)
+    top_unused <- top_5_spps[!(top_5_spps %in% anaSpec_list$univar$Choice) & top_5_spps != "Other"]
+    respn <- top_unused[1]
+    autoChoice <- TRUE
 }
 
 dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
@@ -148,7 +150,12 @@ dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
 
 ## 5: `r respn`  
 
-**NOTE:** If only 3 species were chosen, rather than 4, this tab defaults to the first species in the list of "top 3 species by mean cover across the entire dataset".  
+```{r show-if-automatedChoice, results = 'asis'}
+if(autoChoice){
+    cat("Only 3 species were identified, rather than 4. The response variable for this tab has defaulted to the first species alphabetically, out of the 5 most common species across the entire dataset, that was not already one of the user's choices. \n\nTHIS SPECIES WAS NOT REMOVED FROM ANY GROUP TOTALS THAT HAVE BEEN ANALYZED ELSEWHERE IN THIS DOCUMENT.")
+}
+```
+
 
 ```{r source-003a-userChosen4, child = "003a_model_run.Rmd"}
 
