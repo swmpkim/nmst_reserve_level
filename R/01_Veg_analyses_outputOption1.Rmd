@@ -9,17 +9,6 @@ params:
     file_code: "TST"
 ---
 
-<details>
-<summary>General to-dos</summary>
-
-To-dos:  
-
--  see sub-list in QAQC child Rmd  
--  show the list of reserve's choices (which species to highlight, which species represent ecotone invaders in each zone, etc.)    
--  make a script to install necessary packages, and a script to make sure packages are installed and loading  
--  general documentation on how a reserve can run this - will be a single script calling this .Rmd; actually should be easier for Reserves than SETr  
-
-</details>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
@@ -28,7 +17,7 @@ knitr::opts_chunk$set(echo = FALSE,
                       error = TRUE)
 ```
 
-```{r, message = FALSE, warning = FALSE}
+```{r pkgs-paths, message = FALSE, warning = FALSE}
 # library(Hmisc)
 library(emmeans)
 library(multcomp)
@@ -49,12 +38,12 @@ file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
 file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
 ```
 
-```{r}
+```{r source-fns}
 source(here::here("R", "sourced", "functions.R"))
 ```
 
 
-```{r}
+```{r import-data-meta}
 # read data, metadata, and analysis specifications
 dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
 stn_tbl <- get_stn_table(file_dat)
@@ -76,7 +65,7 @@ dat <- dat %>%
 ```
 
 
-```{r}
+```{r mod-clean-data}
 # clean up data but keep some remnants for QA/QC tables
 unsampds <- find_unsampleds(dat)
 # find suspect data for later reporting
@@ -96,13 +85,13 @@ dat_long <- dat %>%
                  values_to = "Cover")
 ```
 
-```{r}
+```{r define-user-choices}
 # generate a list of data frames based on user's analysis specs
 anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
 ```
 
 
-```{r}
+```{r mod-spp-summary}
 # summarize species present
 spp_summ <- 
     dat_long %>% 
@@ -114,7 +103,7 @@ spp_summ <-
     arrange(Species, SiteID)
 ```
 
-```{r}
+```{r mod-attach-EIR}
 # attach EIR to data frame
 EIR <- dat_long %>% 
     left_join(eis) %>% 
@@ -129,10 +118,15 @@ dat <- left_join(dat, EIR)
 ```
 
 
-```{r, message = FALSE}
+```{r mod-lump-spps, message = FALSE}
 # combine species  
-top_5_mean <- lump_species(dat_long, "mean", 5)  # species with highest 5 overall means
 
+# top 5, if needed
+# might use these species to supplement univariate analysis tabs  
+top_5_mean <- lump_species(dat_long, "mean", 5)  
+top_5_spps <- unique(top_5_mean$Species)
+
+# top 3, for use in exploratory/spatial graphics
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
                   Years_sinceStart = round(Date - min(Date), 4),
@@ -150,7 +144,7 @@ top_3_wide <- top_3_mean %>%
 
 
 
-```{r}
+```{r define-color-pals}
 # define color palettes - used in both QAQC and Summary Graphic child rmds
 
 # top 3 species + other
@@ -168,28 +162,28 @@ names(palcols_univar) <- unique(anaSpec_dfs$univar$Species_or_Group)
 
 # Exploration and QA/QC {.tabset}  
 
-```{r, child = "sourced/001_QAQC.Rmd"}
+```{r source-001-QAQC, child = "sourced/001_QAQC.Rmd"}
 
 ```
 
 
 # Summary Bar Charts {.tabset}  
 
-```{r, child = "sourced/002_Summary_Figures.Rmd"}
+```{r source-002-Figs, child = "sourced/002_Summary_Figures.Rmd"}
 
 ```
 
 
 # Univariate Analyses {.tabset}  
 
-```{r, child = "sourced/003_Univariate_Analyses.Rmd"}
+```{r source-003-univarAna, child = "sourced/003_Univariate_Analyses.Rmd"}
 
 ```
 
 
 # Multivariate Analyses {.tabset}  
 
-```{r, child = "sourced/004_Multivariate_Analyses.Rmd"}
+```{r source-004-multivarAna, child = "sourced/004_Multivariate_Analyses.Rmd"}
 
 ```
 
@@ -198,7 +192,7 @@ names(palcols_univar) <- unique(anaSpec_dfs$univar$Species_or_Group)
 
 <details><summary>R Session Info; click to expand</summary>
 
-```{r}
+```{r define-sessionInfo}
 sessionInfo()
 ```
 

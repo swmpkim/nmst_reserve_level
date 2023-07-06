@@ -11,33 +11,6 @@ This section has tables and graphs, in separate tabs.
 Anything we definitely want to show up here in the explanation?  
 
 
-<details>
-<summary>Kim's to-dos</summary>
-
-Tasks to address from analysis plan:  
-
-+  QAQC flag summary - make it obvious if there are any 1s or -3s in the dataset  
-+  Something to check percent cover standardization (e.g., max. cover).  
-+  Remove plots that haven't been sampled at least X # of times (currently X = 3) - but maybe wait until analysis step to do this, so they show up in stacked and spatial bar charts?    
-+  Remove flagged data. Make row in input spreadsheet so user can specify which flagged data to remove. Modify function to use user's input (rather than my hard-coded -3)  
-
-
-Need to do something about NMST abiotic categories, unknown species, unvegetated, etc.  
-
-Probably want data frames by:  
-
--  species (original)  
--  vegetation group  
--  with custom metrics  
-
-
-Tasks from analysis plan that have been addressed in this .Rmd:  
-
-+  Identify rows of missing data (plots not measured)  
-+  table of plots ~ year  
-
-</details>
-
 ## Missing/Removed Data  
 
 ### Plots/dates without samples  

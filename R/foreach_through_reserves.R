@@ -11,7 +11,7 @@ strt<-Sys.time()
 
 # process all stations
 foreach(res = reserves) %dopar% {
-    outname <- paste0("Veg_analyses_", res, ".html")
+    outname <- paste0("Veg_analyses_", res, "_", Sys.Date(), ".html")
     
     xfun::Rscript_call(
         rmarkdown::render,
