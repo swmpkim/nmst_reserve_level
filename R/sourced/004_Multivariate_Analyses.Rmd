@@ -2,18 +2,18 @@
 title: ''
 output: html_document
 ---
+
 ```{r}
 library(vegan)
 library(ggrepel)
 library(ggiraph)
 ```
 
+## About
 
-## About  
+These tabs are the multivariate analyses.
 
-These tabs are the multivariate analyses.  
-
-Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.  
+Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.
 
 ```{r show-userChoice-multivar, results = 'asis'}
 cat(paste("*", anaSpec_list$multivar$Choice), sep="\n")
@@ -34,7 +34,7 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 # can join any other metrics here - e.g. richness, diversity  
 ```
 
-Also talk about what the response matrix looks like going into these analyses.  
+Also talk about what the response matrix looks like going into these analyses.
 
 ```{r}
 # get data into a matrix.......
@@ -70,8 +70,7 @@ env <- expl %>%
     mutate(across(everything(), as.factor))
 ```
 
-
-## PERMANOVA  
+## PERMANOVA
 
 ```{r mod-first-last-years}
 # subset data frame to 'first two years' and 'last two years' (?) 
@@ -108,7 +107,11 @@ pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
 pmv
 ```
 
+Follow-up: which zones have experienced significant change? Start vs. End within each zone, don't need all pairwise comparisons.
 
+`pairwiseAdonis` package is a wrapper for such comparisons but can only be installed [via GitHub](https://github.com/pmartinezarbizu/pairwiseAdonis), which is a problem for some NERR users.
+
+And what are the species driving that change? (the latter will be answered by SIMPER)
 
 ```{r}
 # mod <- metaMDS(resp_pm, trace = FALSE)
@@ -126,19 +129,19 @@ pmv
 # with(expl_pm, ordiellipse(mod, Zone_Timegroup, kind = "ehull", show.groups = c("T-Transition Beginning", "T-Transition End"), label = TRUE))
 ```
 
-
-## SIMPER  
+## SIMPER
 
 ```{r}
 
 ```
 
+## NMDS
 
-## NMDS  
+Again using only first 2 and last 2 years (or first and last only) - whatever combination was in the PERMANOVA. Using 3 dimensions for NMDS.
 
-Again using only first 2 and last 2 years (or first and last only) - whatever combination was in the PERMANOVA. Using 3 dimensions for NMDS.   
+<details>
 
-<details><summary>NMDS stress for each iteration</summary>
+<summary>NMDS stress for each iteration</summary>
 
 ```{r stats-run-nmds}
 mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
@@ -148,6 +151,10 @@ mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
 data.scores <- as.data.frame(scores(mds_resp)$sites)
 species.scores <- as.data.frame(scores(mds_resp)$species)
 species.scores$species <- rownames(species.scores) 
+
+# only keep the species listed as reserve choices, to reduce clutter on graphic
+species.scores <- species.scores %>% 
+    filter(species %in% unique(anaSpec_list$multivar$Choice))
 
 # data.scores$Vegetation_Zone <- expl$Vegetation_Zone
 # data.scores$Year <- expl$Year
@@ -160,10 +167,9 @@ data.scores <- data.scores %>%
              sep = "-")
 ```
 
-
 </details>
 
-NMDS stress was `r round(mds_resp$stress, 4)`.  
+NMDS stress was `r round(mds_resp$stress, 4)`.
 
 ```{r stats-run-envfit}
 en <- envfit(mds_resp, env_pm, permutations = 999)
@@ -182,68 +188,97 @@ en_coord_cat <- en_coord_cat %>%
 ```
 
 ```{r stats-graph-nmds}
-ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-                        col = Zone_abbrev)) +
-    geom_point(size = 2, alpha = 0.5) +
-    theme_bw() +
-    ggtitle("Ordination colored by Vegetation Zone")
-
-ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-                        col = Time_group)) +
-    geom_point(size = 2, alpha = 0.5) +
-    theme_bw() +
-    ggtitle("Ordination colored by Time Period")
+# ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+#                         col = Zone_abbrev)) +
+#     geom_point(size = 2, alpha = 0.5) +
+#     theme_bw() +
+#     ggtitle("Ordination colored by Vegetation Zone")
+# 
+# ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+#                         col = Time_group)) +
+#     geom_point(size = 2, alpha = 0.5) +
+#     theme_bw() +
+#     ggtitle("Ordination colored by Time Period")
 ```
-
-### NMDS Plot with Species  
 
 ```{r}
-ggplot() +
-    geom_point(data = data.scores, aes(x = NMDS1, y = NMDS2,
-                                col = Zone_abbrev,
-                                shape = Time_group),
-               size = 2, alpha = 0.5) +
-    geom_point(data = species.scores, aes(x = NMDS1, y = NMDS2),
-               col = "navyblue",
-               shape = "diamond",
-               size = 4) +
-    geom_text_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
-                    label = species.scores$species,
-                    col = "navyblue",
-                    size = 3,
-                    fontface = "bold") +
-    theme_bw() +
-    ggtitle("Ordination colored by Vegetation Zone")
+# ggplot() +
+#     geom_point(data = data.scores, aes(x = NMDS1, y = NMDS2,
+#                                 col = Zone_abbrev,
+#                                 shape = Time_group),
+#                size = 2, alpha = 0.5) +
+#     # geom_point(data = species.scores, aes(x = NMDS1, y = NMDS2),
+#     #            col = "navyblue",
+#     #            shape = "circle",
+#     #            size = 4) +
+#     geom_segment(data = species.scores, aes(
+#         x = 0, y = 0,
+#         xend = NMDS1, yend = NMDS2),
+#         col = "navyblue",
+#         arrow = arrow(),
+#         linewidth = 0.8) +
+#     geom_text_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
+#                     label = species.scores$species,
+#                     col = "navyblue",
+#                     size = 3,
+#                     fontface = "bold") +
+#     theme_bw() +
+#     ggtitle("Ordination colored by Vegetation Zone")
 ```
 
-
-
-### NMDS Plot with Zone/Time Centroids  
+### NMDS Plot 
 
 ```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 4}
 p <- ggplot() +
     geom_point(data = data.scores,
                aes(x = NMDS1, y = NMDS2,
                    col = Zone_abbrev),
-               size = 1, alpha = 0.4) +
+               size = 1, alpha = 0.3) +
+    geom_segment_interactive(data = species.scores, aes(
+        x = 0, y = 0,
+        xend = NMDS1, yend = NMDS2,
+        tooltip = species),
+        col = "black",
+        arrow = arrow(),
+        linewidth = 0.4) +
+    geom_label_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
+                    label = species.scores$species,
+                    col = "black",
+                    size = 3,
+                    force_pull = 0.5,
+                    force = 1.5,
+                    label.size = NA,
+                    label.padding = 0.1,
+                    fill = alpha(c("white"),0.5)) +    
     geom_point_interactive(data = en_coord_cat, 
                            aes(x = NMDS1, y = NMDS2,
                                tooltip = Zone_Timegroup, data_id = Zone_Timegroup), 
                            shape = "diamond", 
                            size = 4, alpha = 0.8, colour = "navy") +
-    geom_text_repel(data = en_coord_cat,
-                    aes(x = NMDS1, y = NMDS2 + 0.04,
-                        col = Zone_abbrev),
+    geom_label_repel(data = en_coord_cat,
+                    aes(x = NMDS1, y = NMDS2,
+                        col = Zone_abbrev
+                        ),
                     label = en_coord_cat$Zone_Timegroup,
-                    alpha = 1,
                     size = 3,
                     fontface = "bold",
-                    max.overlaps = 20) +
-    theme_bw() +
-    ggtitle("Ordination with Zone/Year centroids")
+                    max.overlaps = 20,
+                    min.segment.length = 0.1,
+                    force = 1.5,
+                    force_pull = 0.5,
+                    label.size = NA,
+                    label.padding = 0.2,
+                    fill = alpha(c("white"),0.6)) +
+    # theme_bw() +
+    ggtitle("Ordination with Zone/Time centroids and Species arrows") +
+    theme(legend.position = "none")
 
 girafe(ggobj = p)
 # geom_text_repel is not yet implemented in plotly
 ```
 
+```{r}
 
+```
+
+Is the primary use for this plot going to be on-screen (interactive = good), or printed? - separate graphics.
