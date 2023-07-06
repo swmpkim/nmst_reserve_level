@@ -15,15 +15,35 @@ These tabs are the multivariate analyses.
 
 Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.  
 
+```{r show-userChoice-multivar, results = 'asis'}
+cat(paste("*", anaSpec_list$multivar$Choice), sep="\n")
+```
+
+```{r mod-multivar-df}
+# widen out the univar data frame
+# it's grouped appropriately for these analyses  
+dat_multivar <- anaSpec_dfs$multivar %>% 
+    pivot_wider(names_from = Species_or_Group,
+                values_from = Cover)
+
+# join EIR - use a join because might not be in same order
+EIR_df <- dat %>% 
+    select(StTrnsPlt, Year, Month, Day, EIR)
+dat_multivar <- left_join(dat_multivar, EIR_df)
+
+# can join any other metrics here - e.g. richness, diversity  
+```
+
+Also talk about what the response matrix looks like going into these analyses.  
+
 ```{r}
 # get data into a matrix.......
 # response matrix will be column number (Notes + 1) through EIR
+
 # explanatory matrix will be column 1 through Notes
 # vegetation zone is present, as is ortho height
 
 # how to best restrict permutations? should i at all?
-
-# also for this part, probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 
 # and center/scale before calculating distance matrix????? or at least multiply EIR by 100 so it's on the same scale as the cover variables....
 
@@ -31,9 +51,14 @@ Need to write up some explanation of what we did statistically. Also identify wh
 # null hypothesis is that the community is not changing through time
 ```
 
-```{r}
-expl <- dat[, 1:which(names(dat) == "Notes")]
-resp <- dat[, (1 + which(names(dat) == "Notes")):which(names(dat) == "EIR")]
+```{r stats-define-matrices}
+# these were originally done with dat, not dat_multivar
+# using dat_multivar GREATLY reduces the number of columns in the matrix
+# and probably isn't what we want....  
+expl <- dat_multivar[, 1:which(names(dat_multivar) == "Years_sinceStart")]
+resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Years_sinceStart")):which(names(dat_multivar) == "EIR")]
+
+# probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 
 resp$EIR <- resp$EIR * 100  # put it on the same scale as the others
 
@@ -43,110 +68,62 @@ env <- expl %>%
     select(Vegetation_Zone, Year,
            Zone_Year) %>% 
     mutate(across(everything(), as.factor))
-    
-
-```
-
-### NMDS  
-
-<details><summary>NMDS stress for each iteration</summary>
-
-```{r}
-mds_resp <- metaMDS(resp, distance = "bray", k = 3,
-                    autotransform = FALSE)
-
-plot(mds_resp, type = "t")
-
-data.scores <- as.data.frame(scores(mds_resp)$sites)
-species.scores <- as.data.frame(scores(mds_resp)$species)
-species.scores$species <- rownames(species.scores) 
-
-# data.scores$Vegetation_Zone <- expl$Vegetation_Zone
-# data.scores$Year <- expl$Year
-data.scores <- data.scores %>%
-    mutate(Zone = expl$Vegetation_Zone,
-           Year = as.factor(expl$Year)) %>% 
-    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
-             sep = "-")
-```
-
-</details>
-
-#### Envfit
-
-```{r}
-
-en <- envfit(mds_resp, env, permutations = 999)
-en_coord_cat <-  as.data.frame(scores(en, "factors")) 
-
-en_coord_cat <- en_coord_cat %>% 
-    mutate(Factor = rownames(.)) %>% 
-    filter(str_starts(Factor, "Zone_Year")) %>% 
-    mutate(Grp = str_remove(Factor, "Zone_Year"),
-           Year = str_sub(Factor, start = -4),
-           Zone = str_sub(Grp, end = -6)) %>% 
-    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
-             sep = "-")
-
-```
-
-#### Plot  
-
-```{r}
-ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-                        col = Zone_abbrev)) +
-    geom_point(size = 2, alpha = 0.5) +
-    theme_bw() +
-    ggtitle("Ordination colored by Vegetation Zone")
-
-ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-                        col = Year)) +
-    geom_point(size = 2, alpha = 0.5) +
-    theme_bw() +
-    ggtitle("Ordination colored by Year")
-
-ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-                        col = Zone_abbrev)) +
-    geom_point(aes(shape = Year),
-               size = 2, alpha = 0.5) +
-    theme_bw() +
-    ggtitle("Ordination colored by Zone; shapes by Year")
-```
-
-
-
-```{r, fig.width = 7, fig.height = 4}
-p <- ggplot() +
-    geom_point(data = data.scores,
-               aes(x = NMDS1, y = NMDS2,
-                   col = Zone_abbrev,
-                   shape = Year),
-               size = 1, alpha = 0.4) +
-    geom_point_interactive(data = en_coord_cat, 
-                           aes(x = NMDS1, y = NMDS2,
-                               tooltip = Grp, data_id = Grp), 
-                           shape = "diamond", 
-                           size = 4, alpha = 0.8, colour = "navy") +
-    geom_text_repel(data = en_coord_cat,
-                    aes(x = NMDS1, y = NMDS2 + 0.04,
-                        col = Zone_abbrev),
-                    label = paste(en_coord_cat$Zone_abbrev, en_coord_cat$Year),
-                    alpha = 1,
-                    size = 3,
-                    fontface = "bold",
-                    max.overlaps = 20) +
-    theme_bw() +
-    ggtitle("Ordination with Zone/Year centroids")
-
-girafe(ggobj = p)
-
 ```
 
 
 ## PERMANOVA  
 
-```{r}
+```{r mod-first-last-years}
+# subset data frame to 'first two years' and 'last two years' (?) 
+yrs_smpld <- sort(unique(expl$Year))
+first_yrs <- yrs_smpld[c(1, 2)]
+last_yrs <- yrs_smpld[c(length(yrs_smpld)-1, length(yrs_smpld))]
 
+if(sum(first_yrs %in% last_yrs) > 0){
+    print("Not enough years to compare 2 years at the beginning to 2 years at the end; only comparing first year to last year.")
+    first_yrs <- first_yrs[1]
+    last_yrs <- last_yrs[2]
+}
+
+# to only work with first and last years:
+# use expl to index and subset both that and resp
+fl_index <- which(expl$Year %in% c(first_yrs, last_yrs))
+expl_pm <- expl[fl_index, ]
+resp_pm <- resp[fl_index, ]
+
+# give them a label for 'beginning' or 'end'
+expl_pm$Time_group <- ifelse(expl_pm$Year %in% first_yrs, "Start", "End")
+expl_pm$Zone_Timegroup <- paste(expl_pm$Vegetation_Zone, expl_pm$Time_group, sep = "; ")
+
+env_pm <- expl_pm %>% 
+    select(Vegetation_Zone, Time_group,
+           Zone_Timegroup) %>% 
+    mutate(across(everything(), as.factor))
+```
+
+```{r stats-run-permanova}
+pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
+        method = "bray",
+        permutations = 999)
+pmv
+```
+
+
+
+```{r}
+# mod <- metaMDS(resp_pm, trace = FALSE)
+# plot(mod)
+# ### Ellipsoid hulls show treatment
+# with(expl_pm, ordiellipse(mod, Zone_Timegroup, kind = "ehull", label = TRUE, col = Zone_Timegroup))
+# ### Spider shows fields
+# with(expl_pm, ordispider(mod, Zone_Timegroup, lty=3, col="red"))
+# 
+# with(expl_pm, ordicluster(mod, Zone_Timegroup))
+# 
+# 
+# 
+# plot(mod)
+# with(expl_pm, ordiellipse(mod, Zone_Timegroup, kind = "ehull", show.groups = c("T-Transition Beginning", "T-Transition End"), label = TRUE))
 ```
 
 
@@ -159,7 +136,114 @@ girafe(ggobj = p)
 
 ## NMDS  
 
-```{r}
+Again using only first 2 and last 2 years (or first and last only) - whatever combination was in the PERMANOVA. Using 3 dimensions for NMDS.   
+
+<details><summary>NMDS stress for each iteration</summary>
+
+```{r stats-run-nmds}
+mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
+                    autotransform = FALSE)
+# plot(mds_resp, type = "t")
+
+data.scores <- as.data.frame(scores(mds_resp)$sites)
+species.scores <- as.data.frame(scores(mds_resp)$species)
+species.scores$species <- rownames(species.scores) 
+
+# data.scores$Vegetation_Zone <- expl$Vegetation_Zone
+# data.scores$Year <- expl$Year
+data.scores <- data.scores %>%
+    mutate(Zone = expl_pm$Vegetation_Zone,
+           Year = as.factor(expl_pm$Year),
+           Time_group = as.factor(expl_pm$Time_group),
+           Zone_Timegroup = as.factor(expl_pm$Zone_Timegroup)) %>% 
+    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+             sep = "-")
+```
+
+
+</details>
+
+NMDS stress was `r round(mds_resp$stress, 4)`.  
+
+```{r stats-run-envfit}
+en <- envfit(mds_resp, env_pm, permutations = 999)
+en_coord_cat <-  as.data.frame(scores(en, "factors")) 
+
+en_coord_cat <- en_coord_cat %>% 
+    mutate(Factor = rownames(.)) %>% 
+    filter(str_starts(Factor, "Zone_Timegroup")) %>% 
+    mutate(Grp = str_remove(Factor, "Zone_Timegroup")) %>% 
+    separate(Grp, into = c("Zone", "Time_group"),
+             sep = "; ") %>% 
+    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+             sep = "-") %>% 
+    mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group))
 
 ```
+
+```{r stats-graph-nmds}
+ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+                        col = Zone_abbrev)) +
+    geom_point(size = 2, alpha = 0.5) +
+    theme_bw() +
+    ggtitle("Ordination colored by Vegetation Zone")
+
+ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
+                        col = Time_group)) +
+    geom_point(size = 2, alpha = 0.5) +
+    theme_bw() +
+    ggtitle("Ordination colored by Time Period")
+```
+
+### NMDS Plot with Species  
+
+```{r}
+ggplot() +
+    geom_point(data = data.scores, aes(x = NMDS1, y = NMDS2,
+                                col = Zone_abbrev,
+                                shape = Time_group),
+               size = 2, alpha = 0.5) +
+    geom_point(data = species.scores, aes(x = NMDS1, y = NMDS2),
+               col = "navyblue",
+               shape = "diamond",
+               size = 4) +
+    geom_text_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
+                    label = species.scores$species,
+                    col = "navyblue",
+                    size = 3,
+                    fontface = "bold") +
+    theme_bw() +
+    ggtitle("Ordination colored by Vegetation Zone")
+```
+
+
+
+### NMDS Plot with Zone/Time Centroids  
+
+```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 4}
+p <- ggplot() +
+    geom_point(data = data.scores,
+               aes(x = NMDS1, y = NMDS2,
+                   col = Zone_abbrev),
+               size = 1, alpha = 0.4) +
+    geom_point_interactive(data = en_coord_cat, 
+                           aes(x = NMDS1, y = NMDS2,
+                               tooltip = Zone_Timegroup, data_id = Zone_Timegroup), 
+                           shape = "diamond", 
+                           size = 4, alpha = 0.8, colour = "navy") +
+    geom_text_repel(data = en_coord_cat,
+                    aes(x = NMDS1, y = NMDS2 + 0.04,
+                        col = Zone_abbrev),
+                    label = en_coord_cat$Zone_Timegroup,
+                    alpha = 1,
+                    size = 3,
+                    fontface = "bold",
+                    max.overlaps = 20) +
+    theme_bw() +
+    ggtitle("Ordination with Zone/Year centroids")
+
+girafe(ggobj = p)
+# geom_text_repel is not yet implemented in plotly
+```
+
 
