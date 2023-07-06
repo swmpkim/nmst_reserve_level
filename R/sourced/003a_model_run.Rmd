@@ -3,7 +3,7 @@ output: html_document
 ---
 
 
-```{r stats-run-models}
+```{r}
 mod_nested_full <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
                    data = dat_univar)
 
@@ -22,7 +22,7 @@ mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
 
  
 
-```{r stats-find-errors}
+```{r}
 # allow for models that have errored and 
 # add models that did work to a list to pull out results
 
@@ -57,7 +57,7 @@ if(exists("mod_plts", inherits = FALSE)){
 ```
 
 
-```{r stats-find-trends}
+```{r}
 trends <- purrr::map(mods, function(x) get_trends(x))
 trends_df <- bind_rows(trends, .id = "model") %>% 
     mutate(model = forcats::as_factor(model))
@@ -65,7 +65,7 @@ trends_df <- bind_rows(trends, .id = "model") %>%
 
 
 
-```{r stats-find-r2, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE}
 # Pull out marginal and conditional R^2 for mixed models and add columns to df  
 
 rsqds <- purrr::map(mods, function(x) as.data.frame(MuMIn::r.squaredGLMM(x)))
@@ -78,7 +78,7 @@ trends_df <- left_join(trends_df, rsqds_df)
 
 #### Singular Models  
 
-```{r stats-find-singularities}
+```{r}
 if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
 if(exists("mod_nested_siteplot")){check_singularity(mod_nested_siteplot)}
 if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
@@ -88,7 +88,7 @@ if(exists("mod_plts")){check_singularity(mod_plts)}
 ### Table  
 
 
-```{r stats-show-results-diffMods}
+```{r}
 to_print <- trends_df %>% 
     mutate(across(Years_sinceStart.trend:R2c, function(x) round(x, 4)),
            df = round(df, 2)) %>% 
@@ -105,7 +105,7 @@ kbl(to_print) %>%
 
 Drawn from the model where only plot is used as a random effect.  
 
-```{r stats-graph-quiltplot, fig.width = 8, fig.height = 7}
+```{r, fig.width = 8, fig.height = 7}
 fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)$StTrnsPlt),
                    nx = 128, ny = 128)
 ```
@@ -115,7 +115,7 @@ fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)
 
 For simplicity, using model where plot is the only random effect.
 
-```{r stats-show-results}
+```{r}
 if(exists("mod_plts")){
     mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
@@ -131,7 +131,7 @@ if(exists("mod_plts")){
 
 ### Graphs  
 
-```{r stats-graph-predictions, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE}
 if(exists("mod_plts")){
     pdf <- emmip(mod_plts, Vegetation_Zone ~ Years_sinceStart,
                  cov.reduce = range,
@@ -197,7 +197,7 @@ Some notes from the function. Kenward-Roger method used to estimate denominator 
       then we cannot show them to be different.
       But we also did not show them to be the same."
 
-```{r stats-graph-contrasts}
+```{r}
 if(exists("mod_plts")){
     trnds <- emtrends(mod_plts, 
                   pairwise ~ Vegetation_Zone, 
@@ -230,7 +230,7 @@ if(exists("mod_plts")){
 ```
 
 
-```{r cleanup-models}
+```{r}
 # cleanup before next response var
 rm(p, p1, p2, p3,
    mod_nested_full, mod_nested_siteplot,

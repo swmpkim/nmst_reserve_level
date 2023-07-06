@@ -9,9 +9,11 @@ library(ggrepel)
 library(ggiraph)
 ```
 
-## About
+## About  
 
-These tabs are the multivariate analyses.
+These tabs are the multivariate analyses.  
+
+**NOTE:** during development, I'm only using columns identified by reserves to highlight in their multivariate analyses. I'm not sure it's okay to ignore everything else - we probably should combine into Namaste categories and maybe some other things - so we need to discuss what the actual data frame will look like. The identified columns will still be the only ones that show up on species arrows and the like though.  
 
 Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.
 
@@ -228,7 +230,7 @@ en_coord_cat <- en_coord_cat %>%
 
 ### NMDS Plot 
 
-```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 4}
+```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7}
 p <- ggplot() +
     geom_point(data = data.scores,
                aes(x = NMDS1, y = NMDS2,
