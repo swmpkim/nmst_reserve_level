@@ -348,6 +348,84 @@ plot_through_time <- function(data,
 }
 
 
+# the next two functions are so geom_label_repel in 2 layers will recognize each other
+# https://github.com/slowkow/ggrepel/issues/153#issuecomment-866866201
+# many thanks to Atusy in Posit forums for this code
+geom_label_repel2 <- function(...) {
+    layer <- ggrepel::geom_label_repel(...)
+    layer$ggrepel <- TRUE
+    class(layer) <- c("ggrepel", class(layer))
+    return(layer)
+}
+
+ggplot_add.ggrepel <- function(object, plot, object_name) {
+    if (any(do.call(c, lapply(plot$layer, function(x) x$ggrepel)))) {
+        warning(
+            "There is more than one ggrepel layers. ",
+            "This may cause overlap of labels"
+        )
+    }
+    # Optionally, one may modify `object` here.
+    NextMethod("ggplot_add")
+}
+
+
+plot_nmds <- function(scores = data.scores,
+                      species = species.scores,
+                      env.vars = en_coord_cat,
+                      axes = c(1, 2)){
+    xax <- paste0("NMDS", axes[1])
+    yax <- paste0("NMDS", axes[2])
+    
+    ggplot() +
+        geom_point(data = scores,
+                   aes(x = !!ensym(xax), y = !!ensym(yax),
+                       col = Zone_abbrev),
+                   size = 1, alpha = 0.5) +
+        geom_segment_interactive(data = species, 
+                                 aes(x = 0, y = 0,
+                                     xend = !!ensym(xax), yend = !!ensym(yax),
+                                     tooltip = species),
+                                 col = "black",
+                                 arrow = arrow(length = unit(0.15, "inches")),
+                                 linewidth = 0.4)  +
+        geom_point_interactive(data = env.vars, 
+                               aes(x = !!ensym(xax), y = !!ensym(yax),
+                                   tooltip = Zone_Years, data_id = Zone_Timegroup), 
+                               shape = "diamond", 
+                               size = 4, alpha = 0.8, colour = "navy")  +
+        geom_label_repel2(data = species, aes(x = !!ensym(xax), y = !!ensym(yax)),
+                          label = species$species,
+                          col = "black",
+                          size = 3,
+                          force_pull = 0.2,
+                          force = 2,
+                          label.size = NA,
+                          label.padding = 0.1,
+                          fill = alpha(c("white"),0.5)) + 
+        geom_label_repel2(data = env.vars,
+                          aes(x = !!ensym(xax), y = !!ensym(yax),
+                              col = Zone_abbrev
+                          ),
+                          label = env.vars$Zone_Timegroup,
+                          size = 3,
+                          fontface = "bold",
+                          max.overlaps = 20,
+                          min.segment.length = 0.1,
+                          force = 2,
+                          force_pull = 0.2,
+                          label.size = NA,
+                          label.padding = 0.2,
+                          fill = alpha(c("white"),0.7)) +
+        # theme_bw() +
+        labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
+             subtitle = "Diamonds: Zone/Time centroids. Arrows: Species.") +
+        theme(legend.position = "none")
+}
+
+
+
+
 # Models ----
 
 # homemade function to get marginal trends out of models  

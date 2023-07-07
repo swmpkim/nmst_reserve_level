@@ -18,7 +18,10 @@ These tabs are the multivariate analyses.
 Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.
 
 ```{r show-userChoice-multivar, results = 'asis'}
-cat(paste("*", anaSpec_list$multivar$Choice), sep="\n")
+choices <- anaSpec_list$multivar$Choice
+choices <- choices[!is.na(choices)]
+cat("Up to 8 species/groups could be identified specifically in outputs of these multivariate analyses. Those identified were: \n")
+cat(paste("*", choices), sep="\n")
 ```
 
 ```{r mod-multivar-df}
@@ -169,118 +172,73 @@ data.scores <- data.scores %>%
              sep = "-")
 ```
 
-</details>
+</details>  
 
-NMDS stress was `r round(mds_resp$stress, 4)`.
 
-```{r stats-run-envfit}
-en <- envfit(mds_resp, env_pm, permutations = 999)
-en_coord_cat <-  as.data.frame(scores(en, "factors")) 
 
-en_coord_cat <- en_coord_cat %>% 
-    mutate(Factor = rownames(.)) %>% 
-    filter(str_starts(Factor, "Zone_Timegroup")) %>% 
-    mutate(Grp = str_remove(Factor, "Zone_Timegroup")) %>% 
-    separate(Grp, into = c("Zone", "Time_group"),
-             sep = "; ") %>% 
-    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
-             sep = "-") %>% 
-    mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group))
+Final NMDS stress was `r round(mds_resp$stress, 4)`.
 
-```
-
-```{r stats-graph-nmds}
-# ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-#                         col = Zone_abbrev)) +
-#     geom_point(size = 2, alpha = 0.5) +
-#     theme_bw() +
-#     ggtitle("Ordination colored by Vegetation Zone")
-# 
-# ggplot(data.scores, aes(x = NMDS1, y = NMDS2,
-#                         col = Time_group)) +
-#     geom_point(size = 2, alpha = 0.5) +
-#     theme_bw() +
-#     ggtitle("Ordination colored by Time Period")
-```
 
 ```{r}
-# ggplot() +
-#     geom_point(data = data.scores, aes(x = NMDS1, y = NMDS2,
-#                                 col = Zone_abbrev,
-#                                 shape = Time_group),
-#                size = 2, alpha = 0.5) +
-#     # geom_point(data = species.scores, aes(x = NMDS1, y = NMDS2),
-#     #            col = "navyblue",
-#     #            shape = "circle",
-#     #            size = 4) +
-#     geom_segment(data = species.scores, aes(
-#         x = 0, y = 0,
-#         xend = NMDS1, yend = NMDS2),
-#         col = "navyblue",
-#         arrow = arrow(),
-#         linewidth = 0.8) +
-#     geom_text_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
-#                     label = species.scores$species,
-#                     col = "navyblue",
-#                     size = 3,
-#                     fontface = "bold") +
-#     theme_bw() +
-#     ggtitle("Ordination colored by Vegetation Zone")
+# get centroids for each time/zone group
+# https://stackoverflow.com/a/47523181
+cent <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Timegroup, data = data.scores, FUN = mean)
+
+en_coord_cat <- cent %>%
+    separate(Zone_Timegroup, into = c("Zone", "Time_group"),
+             sep = "; ") %>%
+    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+             sep = "-") %>%
+    mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group),
+           Zone_Years = case_when(
+               Time_group == "Start" ~ paste0(Zone_full, ": ", paste(first_yrs, collapse = ", ")),
+               Time_group == "End" ~ paste0(Zone_full, ": ", paste(last_yrs, collapse = ", "))
+               )
+    )
+```
+
+
+```{r stats-run-envfit}
+# get centroids for each group
+# note this only works on first 2 NMDS axes
+
+# en <- envfit(mds_resp, env_pm, permutations = 999)
+# en_coord_cat <-  as.data.frame(scores(en, "factors")) 
+# 
+# en_coord_cat <- en_coord_cat %>% 
+#     mutate(Factor = rownames(.)) %>% 
+#     filter(str_starts(Factor, "Zone_Timegroup")) %>% 
+#     mutate(Grp = str_remove(Factor, "Zone_Timegroup")) %>% 
+#     separate(Grp, into = c("Zone", "Time_group"),
+#              sep = "; ") %>% 
+#     separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+#              sep = "-") %>% 
+#     mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group),
+#            Zone_Years = case_when(
+#                Time_group == "Start" ~ paste0(Zone_full, ": ", paste(first_yrs, collapse = ", ")),
+#                Time_group == "End" ~ paste0(Zone_full, ": ", paste(last_yrs, collapse = ", "))
+#                )
+#     )
+
 ```
 
 ### NMDS Plot 
 
-```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7}
-p <- ggplot() +
-    geom_point(data = data.scores,
-               aes(x = NMDS1, y = NMDS2,
-                   col = Zone_abbrev),
-               size = 1, alpha = 0.3) +
-    geom_segment_interactive(data = species.scores, aes(
-        x = 0, y = 0,
-        xend = NMDS1, yend = NMDS2,
-        tooltip = species),
-        col = "black",
-        arrow = arrow(),
-        linewidth = 0.4) +
-    geom_label_repel(data = species.scores, aes(x = NMDS1, y = NMDS2),
-                    label = species.scores$species,
-                    col = "black",
-                    size = 3,
-                    force_pull = 0.5,
-                    force = 1.5,
-                    label.size = NA,
-                    label.padding = 0.1,
-                    fill = alpha(c("white"),0.5)) +    
-    geom_point_interactive(data = en_coord_cat, 
-                           aes(x = NMDS1, y = NMDS2,
-                               tooltip = Zone_Timegroup, data_id = Zone_Timegroup), 
-                           shape = "diamond", 
-                           size = 4, alpha = 0.8, colour = "navy") +
-    geom_label_repel(data = en_coord_cat,
-                    aes(x = NMDS1, y = NMDS2,
-                        col = Zone_abbrev
-                        ),
-                    label = en_coord_cat$Zone_Timegroup,
-                    size = 3,
-                    fontface = "bold",
-                    max.overlaps = 20,
-                    min.segment.length = 0.1,
-                    force = 1.5,
-                    force_pull = 0.5,
-                    label.size = NA,
-                    label.padding = 0.2,
-                    fill = alpha(c("white"),0.6)) +
-    # theme_bw() +
-    ggtitle("Ordination with Zone/Time centroids and Species arrows") +
-    theme(legend.position = "none")
 
+```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 6}
+p <- plot_nmds()
 girafe(ggobj = p)
 # geom_text_repel is not yet implemented in plotly
+
+p2 <- plot_nmds(axes = c(1, 3))
+girafe(ggobj = p2)
+
+p3 <- plot_nmds(axes = c(2, 3))
+girafe(ggobj = p3)
+
+
+# would like to add this caption but it's too long:
+# "Navy diamonds represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Upon hover, the full Vegetation Zone name and year(s) represented will be provided. Black arrows and text represent Species or Categories of vegetation. Hovering over the arrow will provide the Species or Category name. Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points."
 ```
 
-```{r}
 
-```
-
-Is the primary use for this plot going to be on-screen (interactive = good), or printed? - separate graphics.
