@@ -31,3 +31,5 @@ Sys.time() - strt
 # 1.9 min; 2.1 min
 
 stopCluster(cl)
+
+beepr::beep(sound = 8)

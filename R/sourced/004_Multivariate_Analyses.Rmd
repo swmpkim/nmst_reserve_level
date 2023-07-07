@@ -20,9 +20,13 @@ Need to write up some explanation of what we did statistically. Also identify wh
 ```{r show-userChoice-multivar, results = 'asis'}
 choices <- anaSpec_list$multivar$Choice
 choices <- choices[!is.na(choices)]
-cat("Up to 8 species/groups could be identified specifically in outputs of these multivariate analyses. Those identified were: \n")
+cat("Up to 8 species/groups could be identified specifically in outputs of these multivariate analyses. Reserve choices are: \n")
+```
+
+```{r userChoice-2, results = 'asis'}
 cat(paste("*", choices), sep="\n")
 ```
+
 
 ```{r mod-multivar-df}
 # widen out the univar data frame
@@ -39,7 +43,7 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 # can join any other metrics here - e.g. richness, diversity  
 ```
 
-Also talk about what the response matrix looks like going into these analyses.
+Also talk about what the response matrix looks like going into these analyses, and the "2 years at the beginning vs. 2 years at the end" thing.
 
 ```{r}
 # get data into a matrix.......
@@ -114,35 +118,77 @@ pmv
 
 Follow-up: which zones have experienced significant change? Start vs. End within each zone, don't need all pairwise comparisons.
 
-`pairwiseAdonis` package is a wrapper for such comparisons but can only be installed [via GitHub](https://github.com/pmartinezarbizu/pairwiseAdonis), which is a problem for some NERR users.
 
 And what are the species driving that change? (the latter will be answered by SIMPER)
 
-```{r}
-# mod <- metaMDS(resp_pm, trace = FALSE)
-# plot(mod)
-# ### Ellipsoid hulls show treatment
-# with(expl_pm, ordiellipse(mod, Zone_Timegroup, kind = "ehull", label = TRUE, col = Zone_Timegroup))
-# ### Spider shows fields
-# with(expl_pm, ordispider(mod, Zone_Timegroup, lty=3, col="red"))
-# 
-# with(expl_pm, ordicluster(mod, Zone_Timegroup))
-# 
-# 
-# 
-# plot(mod)
-# with(expl_pm, ordiellipse(mod, Zone_Timegroup, kind = "ehull", show.groups = c("T-Transition Beginning", "T-Transition End"), label = TRUE))
+```{r, results = 'asis'}
+# for both follow-ups, want each zone on its own, start vs. end
+
+zones <- unique(expl_pm$Vegetation_Zone)
+pmvs <- list()
+simps <- list()
+
+for(i in seq_along(zones)){
+    # subset data to this zone
+    zn = zones[i]
+    tmp_index <- which(expl_pm$Vegetation_Zone == zn)
+    tmp_resp <- resp_pm[tmp_index, ]
+    tmp_expl <- expl_pm[tmp_index, ]
+    
+    # run permanova
+    pmvt <- adonis2(tmp_resp ~ Time_group, data = tmp_expl,
+                    method = "bray")
+    
+    # save formatted output to list
+    pmvs[[i]] <- broom::tidy(pmvt)
+    names(pmvs)[[i]] <- zn
+    
+    # if permanova was significant, run SIMPER
+    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.05){
+        # run simper
+        simp <- simper(tmp_resp, tmp_expl$Time_group)
+        
+        # format output
+        simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p")]
+        simp_smaller <- data.frame(lapply(simp_df, round, 4))
+        row.names(simp_smaller) <- row.names(simp_df)
+        
+        # save output to list
+        simps[[i]] <- simp_smaller
+        
+        # if permanova wasn't significant, save a placeholder in the list   
+    } else {
+        simps[[i]] <- "No significant difference"
+    }
+    
+    names(simps)[[i]] <- zn
+}
 ```
 
-## SIMPER
+
+### Post-hoc output  
+
+Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
+
 
 ```{r}
+print(pmvs)
+```
 
+
+
+## SIMPER  
+
+If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
+
+"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. p" is a p-value for that species based on permutation tests.  
+
+```{r}
+print(simps)
 ```
 
 ## NMDS
 
-Again using only first 2 and last 2 years (or first and last only) - whatever combination was in the PERMANOVA. Using 3 dimensions for NMDS.
 
 <details>
 
@@ -174,9 +220,15 @@ data.scores <- data.scores %>%
 
 </details>  
 
+***  
 
+Final 3-dimensional NMDS stress was `r round(mds_resp$stress, 4)`.  
 
-Final NMDS stress was `r round(mds_resp$stress, 4)`.
+#### How to read these NMDS plots  
+
+-  Navy diamonds represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
+-  Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte). Hovering over the arrow will provide the Species or Category name.  
+-  Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points.
 
 
 ```{r}
@@ -198,47 +250,31 @@ en_coord_cat <- cent %>%
 ```
 
 
-```{r stats-run-envfit}
-# get centroids for each group
-# note this only works on first 2 NMDS axes
 
-# en <- envfit(mds_resp, env_pm, permutations = 999)
-# en_coord_cat <-  as.data.frame(scores(en, "factors")) 
-# 
-# en_coord_cat <- en_coord_cat %>% 
-#     mutate(Factor = rownames(.)) %>% 
-#     filter(str_starts(Factor, "Zone_Timegroup")) %>% 
-#     mutate(Grp = str_remove(Factor, "Zone_Timegroup")) %>% 
-#     separate(Grp, into = c("Zone", "Time_group"),
-#              sep = "; ") %>% 
-#     separate(Zone, into = c("Zone_abbrev", "Zone_full"),
-#              sep = "-") %>% 
-#     mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group),
-#            Zone_Years = case_when(
-#                Time_group == "Start" ~ paste0(Zone_full, ": ", paste(first_yrs, collapse = ", ")),
-#                Time_group == "End" ~ paste0(Zone_full, ": ", paste(last_yrs, collapse = ", "))
-#                )
-#     )
-
-```
-
-### NMDS Plot 
-
-
-```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 6}
+```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7}
 p <- plot_nmds()
-girafe(ggobj = p)
+girafe(ggobj = p,
+       width_svg = 6,
+       height_svg = 5,
+       width = 0.8,
+       height = 0.6
+       )
 # geom_text_repel is not yet implemented in plotly
 
 p2 <- plot_nmds(axes = c(1, 3))
-girafe(ggobj = p2)
+girafe(ggobj = p2,
+       width_svg = 6,
+       height_svg = 5,
+       width = 0.8,
+       height = 0.6)
 
 p3 <- plot_nmds(axes = c(2, 3))
-girafe(ggobj = p3)
+girafe(ggobj = p3,
+       width_svg = 6,
+       height_svg = 5,
+       width = 0.8,
+       height = 0.6)
 
-
-# would like to add this caption but it's too long:
-# "Navy diamonds represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Upon hover, the full Vegetation Zone name and year(s) represented will be provided. Black arrows and text represent Species or Categories of vegetation. Hovering over the arrow will provide the Species or Category name. Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points."
 ```
 
 

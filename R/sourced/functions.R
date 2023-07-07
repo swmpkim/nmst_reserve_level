@@ -394,16 +394,18 @@ plot_nmds <- function(scores = data.scores,
                                    tooltip = Zone_Years, data_id = Zone_Timegroup), 
                                shape = "diamond", 
                                size = 4, alpha = 0.8, colour = "navy")  +
-        geom_label_repel2(data = species, aes(x = !!ensym(xax), y = !!ensym(yax)),
+        geom_label_repel2(data = species,  # species labels
+                          aes(x = !!ensym(xax), y = !!ensym(yax)),
                           label = species$species,
                           col = "black",
-                          size = 3,
+                          size = 2.5,
                           force_pull = 0.2,
                           force = 2,
+                          direction = "both",
                           label.size = NA,
                           label.padding = 0.1,
                           fill = alpha(c("white"),0.5)) + 
-        geom_label_repel2(data = env.vars,
+        geom_label_repel2(data = env.vars,  # zone/time labels
                           aes(x = !!ensym(xax), y = !!ensym(yax),
                               col = Zone_abbrev
                           ),
@@ -412,11 +414,13 @@ plot_nmds <- function(scores = data.scores,
                           fontface = "bold",
                           max.overlaps = 20,
                           min.segment.length = 0.1,
-                          force = 2,
+                          force = 5,
                           force_pull = 0.2,
+                          direction = "both",
+                          point.padding = 0.5,
                           label.size = NA,
                           label.padding = 0.2,
-                          fill = alpha(c("white"),0.7)) +
+                          fill = alpha(c("white"),0.9)) +
         # theme_bw() +
         labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
              subtitle = "Diamonds: Zone/Time centroids. Arrows: Species.") +
