@@ -18,7 +18,7 @@ mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
 ```
 
 
-### Problems will show up here  
+#### Model errors, if any, will show up here  
 
  
 
@@ -76,41 +76,6 @@ trends_df <- left_join(trends_df, rsqds_df)
 
 
 
-#### Singular Models  
-
-```{r}
-if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
-if(exists("mod_nested_siteplot")){check_singularity(mod_nested_siteplot)}
-if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
-if(exists("mod_plts")){check_singularity(mod_plts)}
-```
-
-### Table  
-
-
-```{r}
-to_print <- trends_df %>% 
-    mutate(across(Years_sinceStart.trend:R2c, function(x) round(x, 4)),
-           df = round(df, 2)) %>% 
-    arrange(Vegetation_Zone, model) %>% 
-    rename(TrendPerYear = Years_sinceStart.trend) %>% 
-    relocate(Vegetation_Zone)
-    
-kbl(to_print) %>% 
-    kable_styling("striped") %>%
-    scroll_box(width = "600px", height = "300px") 
-```
-
-### Random effects by plot  
-
-Drawn from the model where only plot is used as a random effect.  
-
-```{r, fig.width = 8, fig.height = 7}
-fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)$StTrnsPlt),
-                   nx = 128, ny = 128)
-```
-
-
 ### Numerical effects  
 
 For simplicity, using model where plot is the only random effect.
@@ -120,12 +85,27 @@ if(exists("mod_plts")){
     mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
     sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
-    print(mod_anov)
-    cat("\n \n")
-    emtrends(mod_plts, 
+    mod_trnds <- data.frame(emtrends(mod_plts, 
                   pairwise ~ Vegetation_Zone, 
-                  var = "Years_sinceStart")$emtrends
+                  var = "Years_sinceStart")$emtrends)
+    
+    
 }
+
+    kableExtra::kable(mod_anov, 
+                      caption = paste("Type III Analysis of Variance Table, using Kenward-Rogers method:", respn),
+                      digits = c(4, 4, 1, 2, 2, 5)) %>%
+        kable_styling("striped") 
+    
+    cat("\n \n \n")
+    
+    kableExtra::kable(mod_trnds, 
+                      digits = c(4, 4, 4, 2, 4, 4), 
+                      col.names = c("Veg Zone", "Trend (per year)",
+                                    "SE", "df", "CI lower", "CI upper"),
+                      caption = paste("Estimated marginal slopes (change per year for each zone):", respn)) %>%
+        kable_styling("striped") 
+
 ```
 
 
@@ -166,7 +146,7 @@ if(exists("mod_plts")){
         theme(legend.position = "none")
     
     print(p1 + ggtitle("Mixed Model fit"))
-    print(p2)
+    # print(p2)
     
     
     model <- mod_plts
@@ -197,7 +177,7 @@ Some notes from the function. Kenward-Roger method used to estimate denominator 
       then we cannot show them to be different.
       But we also did not show them to be the same."
 
-```{r}
+```{r, fig.height = 5, fig.width = 6}
 if(exists("mod_plts")){
     trnds <- emtrends(mod_plts, 
                   pairwise ~ Vegetation_Zone, 
@@ -229,6 +209,41 @@ if(exists("mod_plts")){
 }
 ```
 
+### Comparing nesting structures  
+
+#### Singular Models  
+
+```{r}
+if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
+if(exists("mod_nested_siteplot")){check_singularity(mod_nested_siteplot)}
+if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
+if(exists("mod_plts")){check_singularity(mod_plts)}
+```
+
+#### Table  
+
+
+```{r}
+to_print <- trends_df %>% 
+    mutate(across(Years_sinceStart.trend:R2c, function(x) round(x, 4)),
+           df = round(df, 2)) %>% 
+    arrange(Vegetation_Zone, model) %>% 
+    rename(TrendPerYear = Years_sinceStart.trend) %>% 
+    relocate(Vegetation_Zone)
+    
+kbl(to_print) %>% 
+    kable_styling("striped") %>%
+    scroll_box(width = "600px", height = "300px") 
+```
+
+#### Random effects by plot  
+
+Drawn from the model where only plot is used as a random effect.  
+
+```{r, fig.width = 8, fig.height = 7}
+fields::quilt.plot(x = stn_tbl$Long, y = stn_tbl$Lat, z = unlist(ranef(mod_plts)$StTrnsPlt),
+                   nx = 128, ny = 128)
+```
 
 ```{r}
 # cleanup before next response var

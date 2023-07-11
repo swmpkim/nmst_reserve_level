@@ -22,6 +22,7 @@ In this section, we use ordination to visualize and analyze plant communities th
 
 -  Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?  
     -  addressed with PERMANOVA, comparing first two and most recent two years of monitoring. (If there are <4 years of data, only the first and last year are compared)  
+    -  if overall PERMANOVA indicated significant change (p < 0.05), follow-up pairwise PERMANOVAs were run comparing first vs. last years for each zone.  
 -  Which species/groups contribute most to these shifts?  
     -  addressed using SIMPER, comparing first and last year(s) of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.  
 -  Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
@@ -125,15 +126,12 @@ env_pm <- expl_pm %>%
 pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
         method = "bray",
         permutations = 999)
+cat("\n \nPERMANOVA table \n \n")
 pmv
 ```
 
-Follow-up: which zones have experienced significant change? Start vs. End within each zone, don't need all pairwise comparisons.
 
-
-And what are the species driving that change? (the latter will be answered by SIMPER)
-
-```{r, results = 'asis'}
+```{r}
 # for both follow-ups, want each zone on its own, start vs. end
 
 zones <- unique(expl_pm$Vegetation_Zone)

@@ -155,17 +155,6 @@ anaSpec_dfs$spat %>%
 
 One plot per Site; showing 4 evenly spaced-through-time samples.   
 
-<details>
-<summary>Thoughts for further development</summary>
-
--  Will need to figure out how to do this based on species the reserve chose  
--  was able to generate legend via `ggplot2`, using a colorblind-friendly palette from `RColorBrewer` ("Paired").  
--  for some reserves, these might be better by transect rather than by site (e.g. CBV; at least a couple of sites at GTM)  
-
-
-Can potentially do this by transect within station as well, and make it a user option in the input spreadsheet. If it's selected, then there will be an additional for loop between the `st in SiteID` and `plt in PlotID` ones, for `tr in TransectID`. For each site -- for each transect -- make base plot, based on coords in transect -- loop through plots to make the subplots and add them to the base plot -- after looping, name base plot based on transect -- use `{patchwork}` to paste together transects within the site so they're all in a row or panel or whatever.    
-
-</details>  
 
 ```{r graph-spatial-base}
 # THIS CHUNK IS AN ADAPTATION OF BROOK'S CODE
