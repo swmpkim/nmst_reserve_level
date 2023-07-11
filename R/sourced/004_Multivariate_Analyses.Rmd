@@ -13,9 +13,23 @@ library(ggiraph)
 
 These tabs are the multivariate analyses.  
 
+In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use  similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
+
 **NOTE:** during development, I'm only using columns identified by reserves to highlight in their multivariate analyses. I'm not sure it's okay to ignore everything else - we probably should combine into Namaste categories and maybe some other things - so we need to discuss what the actual data frame will look like. The identified columns will still be the only ones that show up on species arrows and the like though.  
 
-Need to write up some explanation of what we did statistically. Also identify which factors the reserve was interested in showing on NMDS plots.
+
+### Questions addressed  
+
+-  Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?  
+    -  addressed with PERMANOVA, comparing first two and most recent two years of monitoring. (If there are <4 years of data, only the first and last year are compared)  
+-  Which species/groups contribute most to these shifts?  
+    -  addressed using SIMPER, comparing first and last year(s) of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.  
+-  Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
+    -  visualized via NMDS.  
+
+### Reserve output choices  
+
+The following species/groups were identified by the reserve as important loading factors to display on NMDS outputs.  
 
 ```{r show-userChoice-multivar, results = 'asis'}
 choices <- anaSpec_list$multivar$Choice
@@ -42,8 +56,6 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 
 # can join any other metrics here - e.g. richness, diversity  
 ```
-
-Also talk about what the response matrix looks like going into these analyses, and the "2 years at the beginning vs. 2 years at the end" thing.
 
 ```{r}
 # get data into a matrix.......

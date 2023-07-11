@@ -8,7 +8,17 @@ output: html_document
 
 This section has tables and graphs, in separate tabs.  
 
-Anything we definitely want to show up here in the explanation?  
+To detect errors in data sets, the information in this section should be reviewed by Reserve data practitioners. These results are meant to help you find issues that need to be corrected in the raw data, and decide whether plots or data should be removed from analyses (e.g., “off season” surveys, plots no longer monitored, restoration sites).
+
+
+### Ask yourself:  
+
+-  Do you see the correct number of sampling events per year? If not, what is missing or extra? This implies a correction needs to be made in the raw data file.  
+-  Do you see the correct number of plots per site?  
+-  Are species names spelled correctly? Are there any close variants or duplicates (e.g., capital vs lowercase, misspelled)?   
+-  General percent cover in plots - is anything unusual (e.g., over 100% when standardized, sudden drops or spikes in species)?  
+
+
 
 
 ## Missing/Removed Data  

@@ -9,6 +9,16 @@ params:
     file_code: "TST"
 ---
 
+# About this Document  
+
+On the left is a floating table of contents for navigating between major sections of output:  
+
+-  Exploration and QA/QC  
+-  Summary bar charts  
+-  Univariate analyses  
+-  Multivariate analyses  
+
+Within each major section, content is split into **tabs** that are spread **horizontally** across the screen. By default, the *About* tab for each section is showing. Click on any tab to see specifics.  
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,

@@ -7,7 +7,15 @@ output: html_document
 
 Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EIR, will have its results appear in its own tab. You will see the same tables and graphics for each.  
 
-The reserve-identified response variables are:  
+### Questions addressed  
+
+-  Are there shifts in key vegetation species/groups over time?  
+-  Do these shifts vary by vegetation zone?  
+-  Follow-up: Where is the plant community changing (which plots) and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
+
+### Reserve-identified response variables:  
+
+The reserve-identified univariate response variables are:  
 
 ```{r show-userChoice-univar, results = 'asis'}
 cat(paste("*", anaSpec_list$univar$Choice), sep="\n")
@@ -59,20 +67,6 @@ Estimated marginal slopes (change within each zone)
 
 Contrasts plot  
 
-
-
-<details>
-<summary>Kim to-dos and notes</summary>  
-
-List parameters of interest, identified in spreadsheet input.  
-
-
-For each parameter of interest, run the model, then display tables and figures of model output (including estimated marginal slopes).  
-
-
-My original version of this used the wide data file, but I think I'm going to be preferring the long one, and filtering based on the selected response parameter.  
-
-</details>
 
 
 ## 1: EIR   
