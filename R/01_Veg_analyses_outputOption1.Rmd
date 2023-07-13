@@ -46,6 +46,8 @@ library(see)  # for CIs of model predictions
 
 file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
 file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
+
+options(knitr.kable.NA = '')
 ```
 
 ```{r source-fns}

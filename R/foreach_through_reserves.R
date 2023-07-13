@@ -4,6 +4,7 @@ library(doParallel)
 reserves <- c("GND", "CBV", "NIW", "TST")
 # removed GTM until I can figure out why it took so long on the last run
 
+reserves <- c("GTM", "TST") # because TST failed and I haven't tried GTM for a while
 
 cl<-makeCluster(6)  
 registerDoParallel(cl)

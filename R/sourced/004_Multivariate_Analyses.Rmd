@@ -126,8 +126,13 @@ env_pm <- expl_pm %>%
 pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
         method = "bray",
         permutations = 999)
-cat("\n \nPERMANOVA table \n \n")
-pmv
+
+
+kable(pmv,
+      digits = c(0, 2, 4, 2, 4),
+      format.args = list(scientific = FALSE),
+      caption = "PERMANOVA table") %>% 
+    kable_styling("striped")
 ```
 
 
@@ -162,13 +167,14 @@ for(i in seq_along(zones)){
         simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p")]
         simp_smaller <- data.frame(lapply(simp_df, round, 4))
         row.names(simp_smaller) <- row.names(simp_df)
+        names(simp_smaller) <- c("average contribution", "sd", "cumulative", "p")
         
         # save output to list
         simps[[i]] <- simp_smaller
         
         # if permanova wasn't significant, save a placeholder in the list   
     } else {
-        simps[[i]] <- "No significant difference"
+        simps[[i]] <- data.frame("None" = "No significant difference indicated by PERMANOVA")
     }
     
     names(simps)[[i]] <- zn
@@ -180,21 +186,51 @@ for(i in seq_along(zones)){
 
 Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
 
-
 ```{r}
-print(pmvs)
+pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
+    filter(term == "Time_group") %>% 
+    select('Vegetation Zone', R2, p.value)
+
+kable(pmvs_summ,
+      digits = 4,
+      caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring",
+      format.args = list(scientific = FALSE)) %>% 
+    kable_styling("striped")
 ```
 
 
+
+<details><summary>Click to see complete anova tables for each pairwise comparison</summary>
+
+```{r, results = 'asis'}
+for(i in seq_along(pmvs)){
+    print(kable(x = pmvs[[i]], 
+                caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
+                digits = c(0, 0, 2, 4, 2, 4),
+                format.args = list(scientific = FALSE)) %>% 
+              kable_styling("striped")
+          )
+}
+```
+
+</details>
 
 ## SIMPER  
 
 If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
 
-"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. p" is a p-value for that species based on permutation tests.  
+"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. "p" is a p-value for that species based on permutation tests.  
 
-```{r}
-print(simps)
+
+```{r, results = 'asis'}
+for(i in seq_along(simps)){
+    print(kable(x = simps[[i]], 
+                caption = paste0("Vegetation Zone ", names(simps)[i], " - 6 species contributing most to differences between first and most recent years of monitoring"),
+                digits = 4,
+                format.args = list(scientific = FALSE)) %>% 
+              kable_styling("striped")
+          )
+}
 ```
 
 ## NMDS

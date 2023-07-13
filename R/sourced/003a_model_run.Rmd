@@ -94,7 +94,8 @@ if(exists("mod_plts")){
 
     kableExtra::kable(mod_anov, 
                       caption = paste("Type III Analysis of Variance Table, using Kenward-Rogers method:", respn),
-                      digits = c(4, 4, 1, 2, 2, 5)) %>%
+                      digits = c(4, 4, 1, 2, 2, 4),
+                      format.args = list(scientific = FALSE)) %>%
         kable_styling("striped") 
     
     cat("\n \n \n")
