@@ -45,10 +45,15 @@ cat(paste("*", choices), sep="\n")
 
 ```{r mod-multivar-df}
 # widen out the univar data frame
-# it's grouped appropriately for these analyses  
-dat_multivar <- anaSpec_dfs$multivar %>% 
-    pivot_wider(names_from = Species_or_Group,
-                values_from = Cover)
+# it's grouped appropriately for these analyses 
+
+# below used during dev; commented out
+# dat_multivar <- anaSpec_dfs$multivar %>% 
+#     pivot_wider(names_from = Species_or_Group,
+#                 values_from = Cover)
+
+# trying to use more realistic df: grouped by nmst categories
+dat_multivar <- dat_nmst_cats
 
 # join EIR - use a join because might not be in same order
 EIR_df <- dat %>% 
@@ -77,8 +82,8 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 # these were originally done with dat, not dat_multivar
 # using dat_multivar GREATLY reduces the number of columns in the matrix
 # and probably isn't what we want....  
-expl <- dat_multivar[, 1:which(names(dat_multivar) == "Years_sinceStart")]
-resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Years_sinceStart")):which(names(dat_multivar) == "EIR")]
+expl <- dat_multivar[, 1:which(names(dat_multivar) == "Notes")]
+resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Notes")):which(names(dat_multivar) == "EIR")]
 
 # probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 

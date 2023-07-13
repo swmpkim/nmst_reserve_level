@@ -155,6 +155,34 @@ top_3_wide <- top_3_mean %>%
 ```
 
 
+```{r mod-group-nmst-cats}
+dat_nmst_cats <- dat_long %>% 
+    left_join(species_info) %>% 
+    mutate(NMST_Groupings = case_when(is.na(NMST_Groupings) ~ Species,
+                                      .default = NMST_Groupings)) %>% 
+    select(-Species, -Plant_Categories, -Native_Classification, -CDMO_Unvegetated) %>% 
+    pivot_wider(names_from = NMST_Groupings,
+                values_from = Cover,
+                values_fn = sum)
+```
+
+```{r}
+# for multivar, also remove any plots that don't have readings in the first couple years?? how to deal with this though when there are only some early plots, but most of what a reserve is interested in started later?
+
+# maybe collapse to start/end by plot???
+```
+
+
+```{r}
+# make a table of what was collapsed above, and show it in qaqc output
+```
+
+
+```{r}
+# remove any plots that don't have >3 readings
+
+```
+
 
 ```{r define-color-pals}
 # define color palettes - used in both QAQC and Summary Graphic child rmds
