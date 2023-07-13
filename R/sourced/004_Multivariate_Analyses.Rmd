@@ -83,7 +83,7 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 # using dat_multivar GREATLY reduces the number of columns in the matrix
 # and probably isn't what we want....  
 expl <- dat_multivar[, 1:which(names(dat_multivar) == "Notes")]
-resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Notes")):which(names(dat_multivar) == "EIR")]
+resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Notes")):ncol(dat_multivar)]
 
 # probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 
@@ -97,28 +97,36 @@ env <- expl %>%
     mutate(across(everything(), as.factor))
 ```
 
-## PERMANOVA
+### Characteristics of multivariate data frame  
 
 ```{r mod-first-last-years}
-# subset data frame to 'first two years' and 'last two years' (?) 
-yrs_smpld <- sort(unique(expl$Year))
-first_yrs <- yrs_smpld[c(1, 2)]
-last_yrs <- yrs_smpld[c(length(yrs_smpld)-1, length(yrs_smpld))]
+# find first and last years by zone
+start_ends <- dat_nmst_cats %>% 
+    group_by(Vegetation_Zone, Year) %>% 
+    tally() %>% 
+    group_by(Vegetation_Zone) %>% 
+    summarize(Start = min(Year),
+              startb = min(Year) + 1,
+              endb = max(Year) - 1,
+              End = max(Year))
 
-if(sum(first_yrs %in% last_yrs) > 0){
-    print("Not enough years to compare 2 years at the beginning to 2 years at the end; only comparing first year to last year.")
-    first_yrs <- first_yrs[1]
-    last_yrs <- last_yrs[2]
-}
+keeps <- start_ends %>% 
+    pivot_longer(Start:End, 
+                 names_to = "Time_group",
+                 values_to = "Year") %>% 
+    mutate(Time_group = case_match(Time_group,
+                                   "startb" ~ "Start",
+                                   "endb" ~ "End",
+                                   .default = Time_group))
 
-# to only work with first and last years:
-# use expl to index and subset both that and resp
-fl_index <- which(expl$Year %in% c(first_yrs, last_yrs))
+# subset data frames to first and last years by Zone
+expl <- expl %>% 
+    full_join(keeps)
+fl_index <- !is.na(expl$Time_group)
+
 expl_pm <- expl[fl_index, ]
 resp_pm <- resp[fl_index, ]
 
-# give them a label for 'beginning' or 'end'
-expl_pm$Time_group <- ifelse(expl_pm$Year %in% first_yrs, "Start", "End")
 expl_pm$Zone_Timegroup <- paste(expl_pm$Vegetation_Zone, expl_pm$Time_group, sep = "; ")
 
 env_pm <- expl_pm %>% 
@@ -126,6 +134,67 @@ env_pm <- expl_pm %>%
            Zone_Timegroup) %>% 
     mutate(across(everything(), as.factor))
 ```
+
+
+```{r}
+expl_pm %>% 
+    group_by(Vegetation_Zone, Time_group, Year) %>% 
+    tally() %>% 
+    ungroup() %>% 
+    mutate(Year_n = paste0(Year, " (", n, ")")) %>% 
+    group_by(Vegetation_Zone, Time_group) %>% 
+    summarize(Year_n = paste(unique(Year_n), collapse = " - ")) %>% 
+    pivot_wider(names_from = Time_group,
+                values_from = Year_n) %>% 
+    relocate(Start, .before = End) %>% 
+    kbl_nmst(caption = "Years in 'Start' and 'End' time groups for each Vegetation Zone. Number in parentheses is number of samples.",
+             align = c("l", "c", "c"))
+```
+
+
+NOTE - this isn't accounting for plots that may not have 4 years of data..... need to remove plots with less than 3 first, probably?
+
+```{r superceded-mod-first-last-years}
+# # subset data frame to 'first two years' and 'last two years' (?) 
+# yrs_smpld <- sort(unique(expl$Year))
+# first_yrs <- yrs_smpld[c(1, 2)]
+# last_yrs <- yrs_smpld[c(length(yrs_smpld)-1, length(yrs_smpld))]
+# 
+# if(sum(first_yrs %in% last_yrs) > 0){
+#     print("Not enough years to compare 2 years at the beginning to 2 years at the end; only comparing first year to last year.")
+#     first_yrs <- first_yrs[1]
+#     last_yrs <- last_yrs[2]
+# }
+# 
+# # to only work with first and last years:
+# # use expl to index and subset both that and resp
+# fl_index <- which(expl$Year %in% c(first_yrs, last_yrs))
+# expl_pm <- expl[fl_index, ]
+# resp_pm <- resp[fl_index, ]
+
+# give them a label for 'beginning' or 'end'
+# expl_pm$Zone_Timegroup <- paste(expl_pm$Vegetation_Zone, expl_pm$Time_group, sep = "; ")
+# 
+# env_pm <- expl_pm %>% 
+#     select(Vegetation_Zone, Time_group,
+#            Zone_Timegroup) %>% 
+#     mutate(across(everything(), as.factor))
+```
+
+```{r show-multivar-df}
+resp_names <- data.frame(names(resp))
+kbl_nmst(resp_names,
+         col.names = c(""),
+         caption = "Species/Groups included in response matrix") %>%
+    scroll_box(width = "400px", height = "400px") 
+
+# also make a table of start and end years
+```
+
+
+
+
+## PERMANOVA
 
 ```{r stats-run-permanova}
 pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
@@ -139,7 +208,7 @@ kbl_nmst(pmv,
 ```
 
 
-```{r}
+```{r stats-perm-posthoc}
 # for both follow-ups, want each zone on its own, start vs. end
 
 zones <- unique(expl_pm$Vegetation_Zone)
@@ -189,7 +258,7 @@ for(i in seq_along(zones)){
 
 Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
 
-```{r}
+```{r show-perm-posthoc}
 pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
     filter(term == "Time_group") %>% 
     select('Vegetation Zone', R2, p.value)
@@ -203,7 +272,7 @@ kbl_nmst(pmvs_summ,
 
 <details><summary>Click to see complete anova tables for each pairwise comparison</summary>
 
-```{r, results = 'asis'}
+```{r show-pairwise-perm, results = 'asis'}
 for(i in seq_along(pmvs)){
     print(kbl_nmst(x = pmvs[[i]], 
                 caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
@@ -221,7 +290,7 @@ If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicat
 "average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. "p" is a p-value for that species based on permutation tests.  
 
 
-```{r, results = 'asis'}
+```{r show-simper, results = 'asis'}
 for(i in seq_along(simps)){
     print(kbl_nmst(x = simps[[i]], 
                    caption = paste0("Vegetation Zone ", names(simps)[i], " - contributions of top 6 species to differences between first and most recent years of monitoring"),
@@ -274,7 +343,7 @@ Final 3-dimensional NMDS stress was `r round(mds_resp$stress, 4)`.
 -  Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points.
 
 
-```{r}
+```{r stats-prep-nmds-groups}
 # get centroids for each time/zone group
 # https://stackoverflow.com/a/47523181
 cent <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Timegroup, data = data.scores, FUN = mean)

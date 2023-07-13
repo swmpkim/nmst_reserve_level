@@ -73,14 +73,36 @@ if(nrow(susps) > 0){
 
 ## Sampling Info  
 
-### Sites and sample dates  
+### Samples per year  
 
 ```{r show-sampling-info}
-table(dat$StTrnsPlt, dat$Year) %>%
-    kable(caption = "# samples at each plot in each year") %>%
+dat %>% 
+    group_by(SiteID, Year) %>% 
+    tally() %>% 
+    arrange(Year, SiteID) %>% 
+    rename(Site = SiteID) %>% 
+    pivot_wider(names_from = Year,
+                values_from = n,
+                values_fill = 0) %>% 
+    arrange(Site) %>% 
+    kable(caption = "# samples per year, by site") %>%
     kable_styling("striped") %>%
     scroll_box(width = "600px", height = "300px")
 ```
+
+```{r}
+dat %>% 
+    group_by(Vegetation_Zone, Year) %>% 
+    tally() %>% 
+    arrange(Year, Vegetation_Zone) %>% 
+    pivot_wider(names_from = Year,
+                 values_from = n,
+                values_fill = 0) %>% 
+    arrange(Vegetation_Zone) %>% 
+    kbl_nmst(caption = "# samples per year, by vegetation zone") %>% 
+    scroll_box(width = "600px", height = "300px")
+```
+
 
 ### Species  
 
