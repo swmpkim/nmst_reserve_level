@@ -121,7 +121,7 @@ keeps <- start_ends %>%
 
 # subset data frames to first and last years by Zone
 expl <- expl %>% 
-    full_join(keeps)
+    left_join(keeps)
 fl_index <- !is.na(expl$Time_group)
 
 expl_pm <- expl[fl_index, ]
@@ -136,7 +136,7 @@ env_pm <- expl_pm %>%
 ```
 
 
-```{r}
+```{r show-start-end}
 expl_pm %>% 
     group_by(Vegetation_Zone, Time_group, Year) %>% 
     tally() %>% 
@@ -149,6 +149,11 @@ expl_pm %>%
     relocate(Start, .before = End) %>% 
     kbl_nmst(caption = "Years in 'Start' and 'End' time groups for each Vegetation Zone. Number in parentheses is number of samples.",
              align = c("l", "c", "c"))
+
+
+keeps2 <- expl_pm %>% 
+    group_by(Vegetation_Zone, Time_group) %>% 
+    summarize(Years = paste(unique(Year), collapse = ", "))
 ```
 
 
@@ -351,14 +356,13 @@ cent <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Timegroup, data = data.score
 en_coord_cat <- cent %>%
     separate(Zone_Timegroup, into = c("Zone", "Time_group"),
              sep = "; ") %>%
+    left_join(keeps2,
+              by = c("Zone" = "Vegetation_Zone",
+                     "Time_group")) %>% 
     separate(Zone, into = c("Zone_abbrev", "Zone_full"),
              sep = "-") %>%
     mutate(Zone_Timegroup = paste(Zone_abbrev, Time_group),
-           Zone_Years = case_when(
-               Time_group == "Start" ~ paste0(Zone_full, ": ", paste(first_yrs, collapse = ", ")),
-               Time_group == "End" ~ paste0(Zone_full, ": ", paste(last_yrs, collapse = ", "))
-               )
-    )
+           Zone_Years = paste(Zone_full, Years, sep = ": "))
 ```
 
 
