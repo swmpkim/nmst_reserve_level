@@ -128,11 +128,9 @@ pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
         permutations = 999)
 
 
-kable(pmv,
+kbl_nmst(pmv,
       digits = c(0, 2, 4, 2, 4),
-      format.args = list(scientific = FALSE),
-      caption = "PERMANOVA table") %>% 
-    kable_styling("striped")
+      caption = "PERMANOVA table") 
 ```
 
 
@@ -167,7 +165,7 @@ for(i in seq_along(zones)){
         simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p")]
         simp_smaller <- data.frame(lapply(simp_df, round, 4))
         row.names(simp_smaller) <- row.names(simp_df)
-        names(simp_smaller) <- c("average contribution", "sd", "cumulative", "p")
+        names(simp_smaller) <- c("average", "sd", "cumulative", "p")
         
         # save output to list
         simps[[i]] <- simp_smaller
@@ -191,11 +189,9 @@ pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>%
     filter(term == "Time_group") %>% 
     select('Vegetation Zone', R2, p.value)
 
-kable(pmvs_summ,
+kbl_nmst(pmvs_summ,
       digits = 4,
-      caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring",
-      format.args = list(scientific = FALSE)) %>% 
-    kable_styling("striped")
+      caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring")
 ```
 
 
@@ -204,11 +200,9 @@ kable(pmvs_summ,
 
 ```{r, results = 'asis'}
 for(i in seq_along(pmvs)){
-    print(kable(x = pmvs[[i]], 
+    print(kbl_nmst(x = pmvs[[i]], 
                 caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
-                digits = c(0, 0, 2, 4, 2, 4),
-                format.args = list(scientific = FALSE)) %>% 
-              kable_styling("striped")
+                digits = c(0, 0, 2, 4, 2, 4))
           )
 }
 ```
@@ -224,12 +218,10 @@ If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicat
 
 ```{r, results = 'asis'}
 for(i in seq_along(simps)){
-    print(kable(x = simps[[i]], 
-                caption = paste0("Vegetation Zone ", names(simps)[i], " - 6 species contributing most to differences between first and most recent years of monitoring"),
-                digits = 4,
-                format.args = list(scientific = FALSE)) %>% 
-              kable_styling("striped")
-          )
+    print(kbl_nmst(x = simps[[i]], 
+                   caption = paste0("Vegetation Zone ", names(simps)[i], " - contributions of top 6 species to differences between first and most recent years of monitoring"),
+                   digits = 4)
+    )
 }
 ```
 

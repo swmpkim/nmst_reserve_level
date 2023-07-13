@@ -335,6 +335,17 @@ make_spec_df <- function(data, specs){
 # and if so, rename it to "Other [category]"
 
 
+# Tables ----
+kbl_nmst <- function(data, ...) {
+    kable(data, 
+          format.args = list(scientific = FALSE),
+          ...) %>% 
+        kable_styling("striped",
+                      full_width = FALSE,
+                      position = "left")
+}
+
+
 # Plots ----
 
 plot_through_time <- function(data,
