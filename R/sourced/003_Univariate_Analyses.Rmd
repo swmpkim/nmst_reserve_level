@@ -36,6 +36,11 @@ dat_univar <- left_join(dat_univar, EIR_df)
 # can join any other metrics here - e.g. richness, diversity  
 ```
 
+```{r}
+# remove plots that don't have at readings in at least 3 separate years
+dat_univar <- filter(dat_univar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+```
+
 
 ### Statistical Model  
 
@@ -135,10 +140,10 @@ autoChoice <- FALSE
 if(is.na(respn)){
     top_unused <- top_5_spps[!(top_5_spps %in% anaSpec_list$univar$Choice) & top_5_spps != "Other"]
     respn <- top_unused[1]
+    dat_univar <- filter(dat, !(StTrnsPlt %in% not_enough$StTrnsPlt))
     autoChoice <- TRUE
 }
-
-dat_univar$resp <- unlist(dat[which(names(dat) == respn)])
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 

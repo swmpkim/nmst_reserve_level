@@ -64,6 +64,12 @@ dat_multivar <- left_join(dat_multivar, EIR_df)
 ```
 
 ```{r}
+# remove any plots without at least 3 distinct years of data
+dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+```
+
+
+```{r}
 # get data into a matrix.......
 # response matrix will be column number (Notes + 1) through EIR
 

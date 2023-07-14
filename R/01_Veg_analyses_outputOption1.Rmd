@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "CBV"
+    file_code: "GTM"
 ---
 
 # About this Document  
@@ -166,12 +166,6 @@ dat_nmst_cats <- dat_long %>%
                 values_fn = sum)
 ```
 
-```{r}
-# for multivar, also remove any plots that don't have readings in the first couple years?? how to deal with this though when there are only some early plots, but most of what a reserve is interested in started later?
-
-# maybe collapse to start/end by plot???
-```
-
 
 ```{r}
 # make a table of what was collapsed above, and show it in qaqc output
@@ -179,8 +173,14 @@ dat_nmst_cats <- dat_long %>%
 
 
 ```{r}
-# remove any plots that don't have >3 readings
-
+# find plots that don't readings in at least 3 separate years
+not_enough <- dat %>% 
+    group_by(StTrnsPlt, Year) %>% 
+    tally() %>% 
+    ungroup() %>% 
+    group_by(StTrnsPlt) %>% 
+    summarize(n_years = length(Year)) %>% 
+    filter(n_years < 3)
 ```
 
 
