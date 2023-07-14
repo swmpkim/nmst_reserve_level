@@ -1,10 +1,7 @@
 library(foreach)
 library(doParallel)
 
-reserves <- c("GND", "CBV", "NIW", "TST")
-# removed GTM until I can figure out why it took so long on the last run
-
-# reserves <- c("GTM", "TST") # because TST failed and I haven't tried GTM for a while
+reserves <- c("GND", "CBV", "NIW", "TST", "GTM")
 
 cl<-makeCluster(8)  
 registerDoParallel(cl)

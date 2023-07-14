@@ -26,7 +26,9 @@ get_stn_table <- function(file){
 
 get_species_info <- function(file){
     readxl::read_xlsx(file,
-                          sheet = "Species_Names")
+                          sheet = "Species_Names") %>% 
+        select(Species, Plant_Categories, Native_Classification,
+               CDMO_Unvegetated, NMST_Groupings)
 }
 
 get_eis <- function(file){
