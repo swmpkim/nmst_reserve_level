@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "NIW"
+    file_code: "TST"
 ---
 
 # About this Document  
@@ -100,6 +100,14 @@ dat_long <- dat %>%
 ```{r define-user-choices}
 # generate a list of data frames based on user's analysis specs
 anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
+
+# move unvegetated (if present) and other to end of species-as-factors
+# for all anaSpec_dfs
+for(i in 1:length(anaSpec_dfs)){
+    tmp <- anaSpec_dfs[[i]]
+    tmp$Species_or_Group <- relevel_spps(tmp$Species_or_Group)
+    anaSpec_dfs[[i]] <- tmp
+}
 ```
 
 
@@ -136,13 +144,15 @@ dat <- left_join(dat, EIR)
 # top 5, if needed
 # might use these species to supplement univariate analysis tabs  
 top_5_mean <- lump_species(dat_long, "mean", 5)  
+top_5_mean$Species <- relevel_spps(top_5_mean$Species)
 top_5_spps <- unique(top_5_mean$Species)
 
 # top 3, for use in exploratory/spatial graphics
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
                   Years_sinceStart = round(Date - min(Date), 4),
-                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"),
+                  Species = relevel_spps(Species)) %>% 
     dplyr::relocate(c(PlotID_full, Date, Years_sinceStart), .before = Year)
 
 
@@ -172,7 +182,7 @@ dat_nmst_cats <- dat_long %>%
 ```
 
 
-```{r}
+```{r define-plots-notEnoughReadings}
 # find plots that don't readings in at least 3 separate years
 not_enough <- dat %>% 
     group_by(StTrnsPlt, Year) %>% 
@@ -189,15 +199,19 @@ not_enough <- dat %>%
 
 # top 3 species + other
 palcols_top <- RColorBrewer::brewer.pal(4, "Paired")
-names(palcols_top) <- unique(top_3_mean$Species)
+names(palcols_top) <- levels(top_3_mean$Species)
 
 # spatial barplots: up to 3 species/groups + other
 palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
-names(palcols_spec) <- unique(anaSpec_dfs$spat$Species_or_Group)
+names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
 
 # univariate exploration: up to 4 species/groups + other
 palcols_univar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$univar$Species_or_Group)), "Paired")
-names(palcols_univar) <- unique(anaSpec_dfs$univar$Species_or_Group)
+names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
+
+# averaged stacked barplots: up to 8 species/groups + other
+palcols_multivar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$multivar$Species_or_Group)), "Paired")
+names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 ```
 
 # Exploration and QA/QC {.tabset}  

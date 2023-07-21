@@ -40,7 +40,7 @@ if(nrow(unsampds) > 0){
 
 If monitoring plots did not have data in at least 3 separate years, they were removed from the dataset before statistical analyses. These plots **do** appear in the plots and information in the *Exploration/QAQC* and *Summary Bar Chart* sections of this document, but were removed before Univariate and Multivariate analyses. 
 
-In this dataset, there were `r nrow(not_enough)` such plots removed. If plots were removed, relevant information is in a table below. 
+In this dataset, there were **`r nrow(not_enough)`** such plots removed. If plots were removed, relevant information is in a table below. 
 
 ```{r}
 if(nrow(not_enough) > 0){

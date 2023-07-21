@@ -284,6 +284,19 @@ get_ecotone_invaders <- function(file){
     return(eis)
 }
 
+relevel_spps <- function(data){
+    # data is a vector of species
+    if("Unvegetated" %in% data){
+        data <- forcats::fct_relevel(data, "Unvegetated", after = Inf)
+    } else if ("unvegetated" %in% data){
+        data <- forcats::fct_relevel(data, "unvegetated", after = Inf)
+    }
+    
+    out <- forcats::fct_relevel(data, "Other", after = Inf)
+    
+    return(out)
+}
+
 
 # Joins ----  
 

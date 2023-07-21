@@ -51,18 +51,18 @@ top_3_mean %>%
 The species/groups identified by the Reserve for these graphs are:  
 
 ```{r show-userChoices, results = 'asis'}
-cat(paste("*", anaSpec_list$spat$Choice), sep="\n")
+cat(paste("*", anaSpec_list$multivar$Choice), sep="\n")
 ```
 
 And so the groups showing up in the plots should be:  
 
 ```{r show-userChoices-groups, results = 'asis'}
-cat(paste("*", unique(anaSpec_dfs$spat$Species_or_Group)), sep="\n")
+cat(paste("*", unique(anaSpec_dfs$multivar$Species_or_Group)), sep="\n")
 ```
 
 
 ```{r graph-avgBar-userChoices}
-anaSpec_dfs$spat %>% 
+anaSpec_dfs$multivar %>% 
     group_by(Vegetation_Zone, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
     ggplot(aes(x = Year, y = Cover,
@@ -70,7 +70,7 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~Vegetation_Zone) +
-    scale_fill_manual(values = palcols_spec) +
+    scale_fill_manual(values = palcols_multivar) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
@@ -99,7 +99,7 @@ top_3_mean %>%
 ### User-chosen species  
 
 ```{r graph-avgBar-userChosen-Site, message = FALSE}
-anaSpec_dfs$spat %>% 
+anaSpec_dfs$multivar %>% 
     group_by(SiteID, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
     ggplot(aes(x = Year, y = Cover,
@@ -107,7 +107,7 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_wrap(~SiteID) +
-    scale_fill_manual(values = palcols_spec) +
+    scale_fill_manual(values = palcols_multivar) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
@@ -136,7 +136,7 @@ top_3_mean %>%
 ### User-chosen species  
 
 ```{r graph-avgBar-userChosen-Zone, message = FALSE}
-anaSpec_dfs$spat %>% 
+anaSpec_dfs$multivar %>% 
     group_by(SiteID, Vegetation_Zone, Year, Species_or_Group) %>% 
     summarize(Cover = mean(Cover, na.rm = TRUE)) %>% 
     ggplot(aes(x = Year, y = Cover,
@@ -144,7 +144,7 @@ anaSpec_dfs$spat %>%
            alpha = 0.8) +
     geom_col(position = "stack") +
     facet_grid(Vegetation_Zone~SiteID) +
-    scale_fill_manual(values = palcols_spec) +
+    scale_fill_manual(values = palcols_multivar) +
     theme_bw() +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
