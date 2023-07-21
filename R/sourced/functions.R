@@ -25,8 +25,14 @@ get_stn_table <- function(file){
 }
 
 get_species_info <- function(file){
-    readxl::read_xlsx(file,
-                          sheet = "Species_Names") %>% 
+    tmp <- readxl::read_xlsx(file,
+                          sheet = "Species_Names")
+    # find the first column that starts with "Species"
+    # rename it to only be "Species"
+    spcol <- min(which(str_starts(names(tmp), "Species")))
+    names(tmp)[spcol] <- "Species"
+
+    tmp %>% 
         select(Species, Plant_Categories, Native_Classification,
                CDMO_Unvegetated, NMST_Groupings)
 }
