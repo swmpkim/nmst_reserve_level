@@ -277,9 +277,10 @@ get_ecotone_invaders <- function(file){
     ei_spps <- get_ei_spps_from_groups(data = eis)
     eis <- bind_rows(eis, ei_spps) %>% 
         filter(Species == TRUE) %>% 
-        distinct() %>% 
         select(-Species, -Group) %>% 
-        rename(Species = eiID)
+        rename(Species = eiID) %>% 
+        distinct() %>% 
+        arrange(Vegetation_Zone, Species)
     
     return(eis)
 }

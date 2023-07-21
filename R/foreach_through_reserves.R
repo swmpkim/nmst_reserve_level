@@ -11,11 +11,13 @@ strt<-Sys.time()
 foreach(res = reserves) %dopar% {
     outname <- paste0("Veg_analyses_", res, "_", Sys.Date(), ".html")
     
-    xfun::Rscript_call(
-        rmarkdown::render,
-        list(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
-             params = list("file_code" = res),
-             output_file = here::here("output", outname))
+    try(
+        xfun::Rscript_call(
+            rmarkdown::render,
+            list(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
+                 params = list("file_code" = res),
+                 output_file = here::here("output", outname))
+        )
     )
     
 }
