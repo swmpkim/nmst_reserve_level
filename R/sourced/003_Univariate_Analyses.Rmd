@@ -5,7 +5,7 @@ output: html_document
 
 ## About  
 
-Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EIR, will have its results appear in its own tab. You will see the same tables and graphics for each.  
+Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EIR, species richness, and Shannon-Weiner Diversity Index, will have its results appear in its own tab. You will see the same tables and graphics for each.  
 
 ### Questions addressed  
 

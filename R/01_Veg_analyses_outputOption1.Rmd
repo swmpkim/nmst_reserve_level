@@ -42,6 +42,7 @@ library(DT)
 library(ggplot2)
 library(modelbased)  # for CIs of model predictions
 library(see)  # for CIs of model predictions
+library(vegan)
 
 
 file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
@@ -96,6 +97,30 @@ dat_long <- dat %>%
                  names_to = "Species",
                  values_to = "Cover")
 ```
+
+```{r mod-richness-diversity}
+to_toss <- unique(species_info$NMST_Groupings)
+to_toss <- to_toss[!(to_toss %in% c("Other Vegetated"))]
+to_toss <- na.omit(to_toss)
+
+spps_live <- species_info %>% 
+    filter(!(NMST_Groupings %in% to_toss)) %>%   # keeping species that don't fall into namaste groups
+    select(Species) %>% 
+    unlist()
+
+dat_live <- dat %>% 
+    select(all_of(spps_live))
+swdiv <- diversity(dat_live, index = "shannon")
+rich <- specnumber(dat_live)
+
+dat_div <- dat %>% 
+    select(Reserve:Notes) %>% 
+    mutate(SWdiv = swdiv,
+           Richness = rich)
+
+rm(dat_live, swdiv, rich, to_toss)
+```
+
 
 ```{r define-user-choices}
 # generate a list of data frames based on user's analysis specs
@@ -183,7 +208,7 @@ dat_nmst_cats <- dat_long %>%
 
 
 ```{r define-plots-notEnoughReadings}
-# find plots that don't readings in at least 3 separate years
+# find plots that don't have readings in at least 3 separate years
 not_enough <- dat %>% 
     group_by(StTrnsPlt, Year) %>% 
     tally() %>% 

@@ -106,6 +106,10 @@ dat %>%
 ```
 
 ```{r}
+cat("\n\n")
+```
+
+```{r}
 dat %>% 
     group_by(Vegetation_Zone, Year) %>% 
     tally() %>% 
@@ -132,15 +136,6 @@ DT::datatable(spp_summ,
 
 ### By Zone  
 
-```{r graph-time-top3, message = FALSE}
-plot_through_time(data = top_3_mean,
-          group = Species,
-          panels = Vegetation_Zone) +
-    scale_color_manual(values = palcols_top) +
-    ggtitle("Top 3 species by mean cover") +
-    theme_bw()
-```
-
 ```{r graph-time-userChosen}
 plot_through_time(data = anaSpec_dfs$univar,
           group = Species_or_Group,
@@ -150,19 +145,16 @@ plot_through_time(data = anaSpec_dfs$univar,
     theme_bw()
 ```
 
-
-
-### All plots combined  
-
-```{r graph-time-top3-onePanel, message = FALSE}
-ggplot(top_3_mean, aes(x = Year, y = Cover, 
-                     group = Species, color = Species, fill = Species)) +
-        geom_jitter(alpha = 0.2) +
-        geom_smooth(method = "loess", se = FALSE) +
+```{r graph-time-top3, message = FALSE}
+plot_through_time(data = top_3_mean,
+          group = Species,
+          panels = Vegetation_Zone) +
     scale_color_manual(values = palcols_top) +
-    ggtitle("Top 3 species by mean cover, all plots combined") +
+    ggtitle("Top 3 species by mean cover") +
     theme_bw()
 ```
+
+### All plots combined  
 
 ```{r graph-time-userChosen-onePanel}
 ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover, 
@@ -171,6 +163,16 @@ ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover,
         geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_univar) +
     ggtitle("User-chosen species, all plots combined") +
+    theme_bw()
+```
+
+```{r graph-time-top3-onePanel, message = FALSE}
+ggplot(top_3_mean, aes(x = Year, y = Cover, 
+                     group = Species, color = Species, fill = Species)) +
+        geom_jitter(alpha = 0.2) +
+        geom_smooth(method = "loess", se = FALSE) +
+    scale_color_manual(values = palcols_top) +
+    ggtitle("Top 3 species by mean cover, all plots combined") +
     theme_bw()
 ```
 
