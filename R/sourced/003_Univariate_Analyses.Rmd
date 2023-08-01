@@ -31,7 +31,9 @@ dat_univar <- anaSpec_dfs$univar %>%
 # join EIR - use a join because might not be in same order
 EIR_df <- dat %>% 
     select(StTrnsPlt, Year, Month, Day, EIR)
-dat_univar <- left_join(dat_univar, EIR_df)
+
+dat_univar <- left_join(dat_univar, EIR_df) %>% 
+    left_join(dat_div)
 
 # can join any other metrics here - e.g. richness, diversity  
 ```
@@ -92,12 +94,43 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 
 
+## 2: Richness  
+
+Species Richness, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.
+
+```{r define-univar-richness}
+respn <- "Richness"
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+```{r source-003a-userChosen1b, child = "003a_model_run.Rmd"}
+
+```
+
+
+
+## 3: SW Diversity  
+
+Shannon-Weiner Diversity index, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.  
+
+```{r define-univar-diversity}
+respn <- "SWdiv"
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+```{r source-003a-userChosen1c, child = "003a_model_run.Rmd"}
+
+```
+
+
+
+
 ```{r define-univar-userChosen1}
 respn <- anaSpec_list$univar$Choice[1]
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
-## 2: `r respn`  
+## 4: `r respn`  
 
 ```{r source-003a-userChosen1, child = "003a_model_run.Rmd"}
 
@@ -110,7 +143,7 @@ respn <- anaSpec_list$univar$Choice[2]
 dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
-## 3: `r respn`  
+## 5: `r respn`  
 
 ```{r source-003a-userChosen2, child = "003a_model_run.Rmd"}
 
@@ -125,7 +158,7 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
-## 4: `r respn`  
+## 6: `r respn`  
 
 ```{r source-003a-userChosen3, child = "003a_model_run.Rmd"}
 
@@ -147,7 +180,7 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
-## 5: `r respn`  
+## 7: `r respn`  
 
 ```{r show-if-automatedChoice, results = 'asis'}
 if(autoChoice){

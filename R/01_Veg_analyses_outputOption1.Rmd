@@ -114,7 +114,7 @@ swdiv <- diversity(dat_live, index = "shannon")
 rich <- specnumber(dat_live)
 
 dat_div <- dat %>% 
-    select(Reserve:Notes) %>% 
+    select(Reserve, StTrnsPlt, Year, Month, Day) %>% 
     mutate(SWdiv = swdiv,
            Richness = rich)
 
