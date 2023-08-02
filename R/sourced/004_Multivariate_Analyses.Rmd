@@ -14,8 +14,7 @@ library(ggiraph)
 These tabs are the multivariate analyses.  
 
 In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use  similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
-
-**NOTE:** during development, I'm only using columns identified by reserves to highlight in their multivariate analyses. I'm not sure it's okay to ignore everything else - we probably should combine into Namaste categories and maybe some other things - so we need to discuss what the actual data frame will look like. The identified columns will still be the only ones that show up on species arrows and the like though.  
+  
 
 
 ### Questions addressed  
@@ -54,13 +53,6 @@ cat(paste("*", choices), sep="\n")
 
 # trying to use more realistic df: grouped by nmst categories
 dat_multivar <- dat_nmst_cats
-
-# join EIR - use a join because might not be in same order
-EIR_df <- dat %>% 
-    select(StTrnsPlt, Year, Month, Day, EIR)
-dat_multivar <- left_join(dat_multivar, EIR_df)
-
-# can join any other metrics here - e.g. richness, diversity  
 ```
 
 ```{r}
@@ -71,7 +63,7 @@ dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
 
 ```{r}
 # get data into a matrix.......
-# response matrix will be column number (Notes + 1) through EIR
+# response matrix will be column number (Notes + 1) through end?
 
 # explanatory matrix will be column 1 through Notes
 # vegetation zone is present, as is ortho height
@@ -92,8 +84,6 @@ expl <- dat_multivar[, 1:which(names(dat_multivar) == "Notes")]
 resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Notes")):ncol(dat_multivar)]
 
 # probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
-
-resp$EIR <- resp$EIR * 100  # put it on the same scale as the others
 
 expl$Zone_Year <- paste(expl$Vegetation_Zone, expl$Year)
 
@@ -272,7 +262,8 @@ Was there a community difference between "Start" (first 2 years) and "End" (last
 ```{r show-perm-posthoc}
 pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
     filter(term == "Time_group") %>% 
-    select('Vegetation Zone', R2, p.value)
+    select('Vegetation Zone', R2, p.value) %>% 
+    mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
 
 kbl_nmst(pmvs_summ,
       digits = 4,
@@ -281,7 +272,9 @@ kbl_nmst(pmvs_summ,
 
 
 
-<details><summary>Click to see complete anova tables for each pairwise comparison</summary>
+<details><summary>Click to see complete anova tables for each pairwise comparison</summary>  
+
+Note - these individual tables do not contain Bonferroni-adjusted p-values; only the raw values.  
 
 ```{r show-pairwise-perm, results = 'asis'}
 for(i in seq_along(pmvs)){
@@ -296,7 +289,7 @@ for(i in seq_along(pmvs)){
 
 ## SIMPER  
 
-If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
+If the PERMANOVA for a single zone had a significant p-value (p < 0.05; *not* adjusted for multiple comparisons due to exploratory nature of these analyses), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
 
 "average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. "p" is a p-value for that species based on permutation tests.  
 
@@ -304,7 +297,7 @@ If the PERMANOVA for a single zone had a significant p-value (p < 0.05), indicat
 ```{r show-simper, results = 'asis'}
 for(i in seq_along(simps)){
     print(kbl_nmst(x = simps[[i]], 
-                   caption = paste0("Vegetation Zone ", names(simps)[i], " - contributions of top 6 species to differences between first and most recent years of monitoring"),
+                   caption = paste0("Vegetation Zone: ", names(simps)[i], " - SIMPER results"),
                    digits = 4)
     )
 }
