@@ -74,6 +74,12 @@ Estimated marginal slopes (change within each zone)
 
 Contrasts plot  
 
+```{r}
+# set up a list of univariate output info
+# estimates, CIs, etc.
+univar_outputs <- list()
+```
+
 
 
 ## 1: EIR   
@@ -192,3 +198,33 @@ if(autoChoice){
 ```{r source-003a-userChosen4, child = "003a_model_run.Rmd"}
 
 ```
+
+
+```{r export-univar-zones}
+# export univar results
+all_univars <- bind_rows(univar_outputs, .id = "ResponseVariable") %>% 
+    mutate(Reserve = params$file_code) %>% 
+    rename(Change_perYear = Years_sinceStart.trend) %>% 
+    relocate(Reserve)
+filename <- paste0(params$file_code, "_UnivarTrends_", Sys.Date(), ".csv")
+write.csv(all_univars, file = here::here("output", filename), row.names = FALSE)
+
+# export zone information for use in exploring trend outputs
+
+# define list of summary stats functions
+# for use in summarize across
+summ_stats <- list(
+  min = ~min(.x, na.rm = TRUE),
+  median = ~median(.x, na.rm = TRUE),
+  mean = ~mean(.x, na.rm = TRUE),
+  max = ~max(.x, na.rm = TRUE)
+)
+
+zone_tbl <- stn_tbl %>% 
+    group_by(Reserve, Vegetation_Zone) %>% 
+    summarize(across(c(Lat, Long, Orthometric_Height, Height_Relative_to_MLLW),
+                     summ_stats))
+filename <- paste0(params$file_code, "_ZoneInfo_", Sys.Date(), ".csv")
+write.csv(zone_tbl, file = here::here("output", filename), row.names = FALSE)
+```
+

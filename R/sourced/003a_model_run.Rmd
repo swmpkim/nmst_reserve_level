@@ -103,6 +103,8 @@ kbl_nmst(mod_trnds,
          col.names = c("Veg Zone", "Trend (per year)",
                        "SE", "df", "CI lower", "CI upper"),
          caption = paste("Estimated marginal slopes (change per year for each zone):", respn)) 
+
+univar_outputs[[respn]] <- mod_trnds
 ```
 
 
