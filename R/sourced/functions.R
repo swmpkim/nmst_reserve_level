@@ -40,9 +40,6 @@ get_species_info <- function(file){
 get_zone_ordering <- function(file){
     tmp <- read_xlsx(file,
               sheet = "Ecotone_Invaders")
-    # remove empty columns
-    empties <- which(colSums(!is.na(tmp)) == 0)
-    tmp <- tmp[-empties]
     # only keep zones that are in the station table
     tmp <- tmp[names(tmp) %in% unique(stn_tbl$Vegetation_Zone)]
     # put them in order
