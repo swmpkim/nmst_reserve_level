@@ -10,4 +10,5 @@ pkgs <- c(emmeans,
           kableExtra,
           DT,
           ggplot2,
-          fields)
+          fields,
+          forcats)

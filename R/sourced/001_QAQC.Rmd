@@ -204,12 +204,14 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
 
 ## EIR graphics  
 
+A table of which species were counted as "ecotone invaders" for each vegetation zone is below the graphics.  
+
 ```{r graph-time-EIR}
-ggplot(dat) +
-    geom_jitter(aes(x = Year, y = EIR, color = Vegetation_Zone),
-                alpha = 0.4) +
+ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
+    geom_jitter(alpha = 0.4) +
     facet_wrap(~Vegetation_Zone) +
     theme(legend.position = "none") +
+    geom_smooth(method = "loess", se = FALSE) +
     theme_bw() +
     labs(title = "EIR by Zone",
          subtitle = "as calculated per plot/date combination")
@@ -217,9 +219,9 @@ ggplot(dat) +
 
 
 ```{r graph-time-EIR2}
-ggplot(dat) +
-    geom_jitter(aes(x = Year, y = EIR, color = SiteID),
-                alpha = 0.4) +
+ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
+    geom_jitter(alpha = 0.4) +
+    geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone) +
     # theme(legend.position = "none") +
     theme_bw() +
@@ -238,7 +240,13 @@ ggplot(dat) +
     theme(legend.position = "none")
 ```
 
+Species considered to be invasive within each zone are denoted by 'x' in the following table:  
 
+```{r show-eir-table}
+kableExtra::kable(eir_spps, align = "c") %>% 
+    kable_styling("striped") %>%
+    scroll_box(width = "800px", height = "400px") 
+```
 
 
 

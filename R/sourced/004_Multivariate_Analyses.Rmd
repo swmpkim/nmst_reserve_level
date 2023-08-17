@@ -229,7 +229,7 @@ for(i in seq_along(zones)){
     
     # save formatted output to list
     pmvs[[i]] <- broom::tidy(pmvt)
-    names(pmvs)[[i]] <- zn
+    names(pmvs)[[i]] <- as.character(zn)
     
     # if permanova was significant, run SIMPER
     if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.05){
@@ -237,10 +237,12 @@ for(i in seq_along(zones)){
         simp <- simper(tmp_resp, tmp_expl$Time_group)
         
         # format output
-        simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p")]
+        simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
         simp_smaller <- data.frame(lapply(simp_df, round, 4))
+        simp_smaller$ava <- round(simp_smaller$ava, 1)
+        simp_smaller$avb <- round(simp_smaller$avb, 1)
         row.names(simp_smaller) <- row.names(simp_df)
-        names(simp_smaller) <- c("average", "sd", "cumulative", "p")
+        names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
         
         # save output to list
         simps[[i]] <- simp_smaller
@@ -250,7 +252,7 @@ for(i in seq_along(zones)){
         simps[[i]] <- data.frame("None" = "No significant difference indicated by PERMANOVA")
     }
     
-    names(simps)[[i]] <- zn
+    names(simps)[[i]] <- as.character(zn)
 }
 ```
 

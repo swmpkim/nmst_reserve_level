@@ -91,7 +91,7 @@ Species considered to be invasive within each zone are denoted by 'x' in the fol
 ```{r show-eir-spps}
 kableExtra::kable(eir_spps, align = "c") %>% 
     kable_styling("striped") %>%
-    scroll_box(width = "600px", height = "600px") 
+    scroll_box(width = "800px", height = "400px") 
 ```
 
 
