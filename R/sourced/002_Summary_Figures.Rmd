@@ -15,8 +15,6 @@ These summary figures tell a graphical story about current conditions and trends
 -  **Spatial stacked bar charts** - show the relative distribution of species and cover classes as above, but for each plot. These charts are laid out spatially by site. For ease of interpretation, only 4 evenly-spaced time points are used along the x-axis in each chart.    
 
 
-**NOTE:** for development, I'm including 2 versions of all bar charts. The versions that involve "top 3 species by mean cover across the entire dataset" can be removed to only show user-selected species, or retained if the TWG and users think it would be valuable to see both.  
-
 
 ### Questions addressed  
 

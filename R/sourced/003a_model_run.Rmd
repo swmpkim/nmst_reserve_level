@@ -222,7 +222,7 @@ if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
 if(exists("mod_plts")){check_singularity(mod_plts)}
 ```
 
-#### Table  
+#### Model Structure Comparisons  
 
 
 ```{r}
@@ -236,7 +236,21 @@ to_print <- trends_df %>%
 kbl(to_print) %>% 
     kable_styling("striped") %>%
     scroll_box(width = "600px", height = "300px") 
+```  
+
+```{r}
+ggplot(to_print, aes(col = model)) +
+    geom_errorbarh(aes(y = model, xmin = lower.CL, xmax = upper.CL)) +
+    geom_point(aes(y = model, x = TrendPerYear)) +
+    facet_wrap(~ Vegetation_Zone, scales = "free_x") +
+    labs(title = paste(respn, " - coefficients of different model structures"), 
+         x = "Trend per year",
+         y = "model") +
+    theme_bw() +
+    theme(legend.position = "none")
 ```
+
+
 
 #### Random effects by plot  
 

@@ -162,6 +162,15 @@ EIR <- dat_long %>%
 dat <- left_join(dat, EIR)
 ```
 
+```{r define-eir-species}
+eir_spps <- eis %>% 
+    mutate(Invader = case_when(Invader == 1 ~ "X",
+                               .default = NA_character_)) %>% 
+    pivot_wider(names_from = Vegetation_Zone,
+                values_from = Invader) %>% 
+    arrange(Species)
+```
+
 
 ```{r mod-lump-spps, message = FALSE}
 # combine species  

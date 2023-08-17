@@ -1,7 +1,7 @@
 library(foreach)
 library(doParallel)
 
-reserves <- c("GND", "CBV", "NIW", "TST", "GTM")
+reserves <- c("GND", "CBV", "NIW", "GTM")
 
 cl<-makeCluster(8)  
 registerDoParallel(cl)
