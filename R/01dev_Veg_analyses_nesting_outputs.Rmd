@@ -1,0 +1,290 @@
+---
+title: "Veg Analysis"
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 2
+params: 
+    file_code: "GND"
+---
+
+# About this Document  
+
+On the left is a floating table of contents for navigating between major sections of output:  
+
+-  Exploration and QA/QC  
+-  Summary bar charts  
+-  Univariate analyses  
+-  Multivariate analyses  
+
+Within each major section, content is split into **tabs** that are spread **horizontally** across the screen. By default, the *About* tab for each section is showing. Click on any tab to see specifics.  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      error = TRUE)
+```
+
+```{r pkgs-paths, message = FALSE, warning = FALSE}
+# library(Hmisc)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(kableExtra)
+library(DT)
+library(ggplot2)
+library(modelbased)  # for CIs of model predictions
+library(see)  # for CIs of model predictions
+library(vegan)
+library(PKNCA)
+
+
+file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
+file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
+
+options(knitr.kable.NA = '')
+```
+
+```{r source-fns}
+source(here::here("R", "sourced", "functions.R"))
+```
+
+
+```{r import-data-meta}
+# read data, metadata, and analysis specifications
+dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
+stn_tbl <- get_stn_table(file_dat)
+stn_tbl <- stn_tbl %>% 
+    mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
+species_info <- get_species_info(file_dat)
+eis <- get_ecotone_invaders(file = file_specs)
+anaSpecs <- get_anaSpecs(file = file_specs)
+anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
+zone_factor <- get_zone_ordering(file_specs)
+
+# remove vegetation zones from eis data frame that don't appear in the station table
+eis <- eis[eis$Vegetation_Zone %in% unique(stn_tbl$Vegetation_Zone), ]
+
+# get zones in the same order in stn_tbl and eis, for later use
+stn_tbl$Vegetation_Zone <- factor(stn_tbl$Vegetation_Zone, levels = zone_factor)
+eis$Vegetation_Zone <- factor(eis$Vegetation_Zone, levels = zone_factor)
+
+# add some columns to dat
+dat <- dat %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  StTrns = paste(SiteID, TransectID, sep = "-"),
+                  StTrnsPlt = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    dplyr::relocate(c(Date, Years_sinceStart), .before = Year) %>% 
+    dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
+```
+
+
+```{r mod-clean-data}
+# clean up data but keep some remnants for QA/QC tables
+unsampds <- find_unsampleds(dat)
+# find suspect data for later reporting
+# NEED TO MAKE FLAG VALUES FLEXIBLE
+susps <- find_suspect_values(dat, "-3")
+
+
+dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values. also removes F_columns.
+dat <- remove_unsampleds(dat)  # should get rid of any dates where a plot was not sampled or was entirely rejected. 
+dat <- na_to_0(dat)  # turn remaining NAs into 0s
+
+
+dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
+dat_long <- dat %>%
+    pivot_longer(-(Reserve:Notes),
+                 names_to = "Species",
+                 values_to = "Cover")
+```
+
+```{r mod-richness-diversity}
+to_toss <- unique(species_info$NMST_Groupings)
+to_toss <- to_toss[!(to_toss %in% c("Other Vegetated"))]
+to_toss <- na.omit(to_toss)
+
+spps_live <- species_info %>% 
+    filter(!(NMST_Groupings %in% to_toss)) %>%   # keeping species that don't fall into namaste groups
+    select(Species) %>% 
+    unlist()
+
+dat_live <- dat %>% 
+    select(all_of(spps_live))
+swdiv <- diversity(dat_live, index = "shannon")
+rich <- specnumber(dat_live)
+
+dat_div <- dat %>% 
+    select(Reserve, StTrnsPlt, Year, Month, Day) %>% 
+    mutate(SWdiv = swdiv,
+           Richness = rich)
+
+rm(dat_live, swdiv, rich, to_toss)
+```
+
+
+```{r define-user-choices}
+# generate a list of data frames based on user's analysis specs
+anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
+
+# move unvegetated (if present) and other to end of species-as-factors
+# for all anaSpec_dfs
+for(i in 1:length(anaSpec_dfs)){
+    tmp <- anaSpec_dfs[[i]]
+    tmp$Species_or_Group <- relevel_spps(tmp$Species_or_Group)
+    anaSpec_dfs[[i]] <- tmp
+}
+```
+
+
+```{r mod-spp-summary}
+# summarize species present
+spp_summ <- 
+    dat_long %>% 
+    group_by(SiteID, Species) %>% 
+    summarize(times_present = sum(Cover > 0),
+              mean_cover = round(mean(Cover, na.rm = TRUE), 3),
+              max_cover = round(max(Cover, na.rm = TRUE), 3)
+              ) %>% 
+    arrange(Species, SiteID)
+```
+
+```{r mod-attach-EIR}
+# attach EIR to data frame
+EIR <- dat_long %>% 
+    left_join(eis) %>% 
+    mutate(Invader = case_when(is.na(Invader) ~ 0,
+                               .default = 1),
+           EI_Cover = Cover * Invader) %>% 
+    group_by(Year, Month, Day, Reserve, SiteID, TransectID, PlotID) %>% 
+    summarize(EIR = round(sum(EI_Cover) / sum(Cover), 5))
+# confirmed at April TWG that denominator is total cover
+
+dat <- left_join(dat, EIR)
+```
+
+```{r define-eir-species}
+eir_spps <- eis %>% 
+    arrange(Vegetation_Zone, Species) %>% 
+    mutate(Invader = case_when(Invader == 1 ~ "X",
+                               .default = NA_character_)) %>% 
+    pivot_wider(names_from = Vegetation_Zone,
+                values_from = Invader) 
+```
+
+
+```{r mod-lump-spps, message = FALSE}
+# combine species  
+
+# top 5, if needed
+# might use these species to supplement univariate analysis tabs  
+top_5_mean <- lump_species(dat_long, "mean", 5)  
+top_5_mean$Species <- relevel_spps(top_5_mean$Species)
+top_5_spps <- unique(top_5_mean$Species)
+
+# top 3, for use in exploratory/spatial graphics
+top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"),
+                  Species = relevel_spps(Species)) %>% 
+    dplyr::relocate(c(PlotID_full, Date, Years_sinceStart), .before = Year)
+
+
+top_3_wide <- top_3_mean %>% 
+    pivot_wider(names_from = Species,
+                values_from = Cover,
+                values_fill = 0) %>% 
+    group_by(PlotID_full) %>% 
+    mutate()
+```
+
+
+```{r mod-group-nmst-cats}
+dat_nmst_cats <- dat_long %>% 
+    left_join(species_info) %>% 
+    mutate(NMST_Groupings = case_when(is.na(NMST_Groupings) ~ Species,
+                                      .default = NMST_Groupings)) %>% 
+    select(-Species, -Plant_Categories, -Native_Classification, -CDMO_Unvegetated) %>% 
+    pivot_wider(names_from = NMST_Groupings,
+                values_from = Cover,
+                values_fn = sum)
+```
+
+
+```{r}
+# make a table of what was collapsed above, and show it in qaqc output
+```
+
+
+```{r define-plots-notEnoughReadings}
+# find plots that don't have readings in at least 3 separate years
+not_enough <- dat %>% 
+    group_by(StTrnsPlt, Year) %>% 
+    tally() %>% 
+    ungroup() %>% 
+    group_by(StTrnsPlt) %>% 
+    summarize(n_years = length(Year)) %>% 
+    filter(n_years < 3)
+```
+
+
+```{r define-color-pals}
+# define color palettes - used in both QAQC and Summary Graphic child rmds
+
+# top 3 species + other
+palcols_top <- RColorBrewer::brewer.pal(4, "Paired")
+names(palcols_top) <- levels(top_3_mean$Species)
+
+# spatial barplots: up to 3 species/groups + other
+palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
+names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
+
+# univariate exploration: up to 4 species/groups + other
+palcols_univar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$univar$Species_or_Group)), "Paired")
+names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
+
+# averaged stacked barplots: up to 8 species/groups + other
+palcols_multivar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$multivar$Species_or_Group)), "Paired")
+names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
+```
+
+# Exploration and QA/QC {.tabset}  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+
+# Summary Bar Charts {.tabset}  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+
+# Univariate Analyses {.tabset}  
+
+```{r source-003-univarAna, child = "sourced/003dev_Univariate_Analyses.Rmd"}
+
+```
+
+
+# Multivariate Analyses {.tabset}  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+
+# Documentation   
+
+<details><summary>R Session Info; click to expand</summary>
+
+```{r define-sessionInfo}
+sessionInfo()
+```
+
+</details>

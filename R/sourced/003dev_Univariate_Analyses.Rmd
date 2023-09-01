@@ -1,0 +1,193 @@
+---
+title: ''
+output: html_document
+---
+
+## About  
+
+Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EIR, species richness, and Shannon-Weiner Diversity Index, will have its results appear in its own tab. You will see the same tables and graphics for each.  
+
+### Questions addressed  
+
+-  Are there shifts in key vegetation species/groups over time?  
+-  Do these shifts vary by vegetation zone?  
+-  Follow-up: Where is the plant community changing (which plots) and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
+
+### Reserve-identified response variables:  
+
+
+```{r mod-univar-df}
+# widen out the univar data frame
+# it's grouped appropriately for these analyses  
+dat_univar <- anaSpec_dfs$univar %>% 
+    pivot_wider(names_from = Species_or_Group,
+                values_from = Cover)
+
+# join EIR - use a join because might not be in same order
+EIR_df <- dat %>% 
+    select(StTrnsPlt, Year, Month, Day, EIR)
+
+dat_univar <- left_join(dat_univar, EIR_df) %>% 
+    left_join(dat_div)
+
+# can join any other metrics here - e.g. richness, diversity  
+```
+
+```{r}
+# remove plots that don't have at readings in at least 3 separate years
+dat_univar <- filter(dat_univar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+```
+
+
+### Statistical Model  
+
+The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Site/Transect/Plot`, where `y` is the response variable given in the tab. For various reasons this might not work as well as we'd hoped, so less complicated models have also been run.  
+
+<details><summary>Expand info on less complicated models</summary>
+
+`y ~ Vegetation Zone + Time + Zone*Time + 1|Transect/Plot` - particularly for reserves with only a single site  
+
+`y ~ Vegetation Zone + Time + Zone*Time + 1|Site/Plot`
+
+`y ~ Vegetation Zone + Time + Zone*Time + 1|Plot` - simplest model, with a random effect for each plot; should work for all reserves but may not account for spatial autocorrelation.  
+
+</details>
+
+
+### Model Diagnostics  
+
+Something here about the section about models throwing errors, and how to tell which one(s) did. Also describe what a singular fit is - when there's not enough variation in the random components to adequately estimate the random effects.  
+
+
+### Representation of Results  
+
+Coefficient table  
+
+ANOVA table; whether interaction between time and zone is significant  
+
+Estimated marginal slopes (change within each zone)  
+
+Contrasts plot  
+
+```{r}
+# set up a list of univariate output info
+# estimates, CIs, etc.
+univar_outputs <- list()
+```
+
+
+
+## 1: EIR   
+
+```{r define-univar-EIR}
+respn <- "EIR"
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+
+```{r source-003-EIR, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+## 2: Richness  
+
+Species Richness, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.
+
+```{r define-univar-richness}
+respn <- "Richness"
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+```{r source-003a-userChosen1b, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+## 3: SW Diversity  
+
+Shannon-Weiner Diversity index, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.  
+
+```{r define-univar-diversity}
+respn <- "SWdiv"
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+```{r source-003a-userChosen1c, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+
+```{r define-univar-userChosen1}
+respn <- anaSpec_list$univar$Choice[1]
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+## 4: `r respn`  
+
+```{r source-003a-userChosen1, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+```{r define-univar-userChosen2}
+respn <- anaSpec_list$univar$Choice[2]
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+## 5: `r respn`  
+
+```{r source-003a-userChosen2, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+
+```{r define-univar-userChosen3}
+respn <- anaSpec_list$univar$Choice[3]
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+
+## 6: `r respn`  
+
+```{r source-003a-userChosen3, child = "003adev_model_run.Rmd"}
+
+```
+
+
+
+```{r define-univar-userChosen4}
+respn <- anaSpec_list$univar$Choice[4]
+autoChoice <- FALSE
+
+if(is.na(respn)){
+    top_unused <- top_5_spps[!(top_5_spps %in% anaSpec_list$univar$Choice) & top_5_spps != "Other"]
+    respn <- top_unused[1]
+    dat_univar <- filter(dat, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+    autoChoice <- TRUE
+}
+dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+```
+
+
+## 7: `r respn`  
+
+```{r show-if-automatedChoice, results = 'asis'}
+if(autoChoice){
+    cat("Only 3 species were identified, rather than 4. The response variable for this tab has defaulted to the first species alphabetically, out of the 5 most common species across the entire dataset, that was not already one of the user's choices. \n\nTHIS SPECIES WAS NOT REMOVED FROM ANY GROUP TOTALS THAT HAVE BEEN ANALYZED ELSEWHERE IN THIS DOCUMENT.")
+}
+```
+
+
+```{r source-003a-userChosen4, child = "003adev_model_run.Rmd"}
+
+```
+
+

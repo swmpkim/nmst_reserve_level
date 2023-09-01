@@ -1,0 +1,171 @@
+---
+output: html_document
+---
+
+In this document, univariate analyses are conducted and the outputs are evaluated by different nesting structures. This is to demonstrate why it is okay to use only plot as a random effect.  
+
+Generally, in-depth outputs that are of interest have been removed here, because they were based only on the plots model anyway. Here we only dig into how well the different model structures run and how they compare to each other.  
+
+```{r}
+mod_nested_full <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/TransectID/PlotID),
+                   data = dat_univar)
+
+mod_nested_siteplot <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|SiteID/StTrnsPlt),
+                   data = dat_univar)
+
+mod_nested_trns <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrns/PlotID),
+                   data = dat_univar)
+
+mod_plts <- lmer(resp ~ Years_sinceStart*Vegetation_Zone + (1|StTrnsPlt),
+                   data = dat_univar)
+```
+
+
+#### Model errors, if any, will show up here  
+
+ 
+
+```{r}
+# allow for models that have errored and 
+# add models that did work to a list to pull out results
+
+mods <- list()
+
+
+if(exists("mod_nested_full", inherits = FALSE)){
+    mods[["fully nested"]] <- mod_nested_full
+} else {
+    cat("fully nested model errored")
+}
+
+if(exists("mod_nested_siteplot", inherits = FALSE)){
+    mods[["site/plot"]] <- mod_nested_siteplot
+} else {
+    cat("site/plot model errored")
+}
+
+
+if(exists("mod_nested_trns", inherits = FALSE)){
+    mods[["transect/plot"]] <- mod_nested_trns
+} else {
+    cat("transect/plot model errored")
+}
+
+
+if(exists("mod_plts", inherits = FALSE)){
+    mods[["plots only"]] <- mod_plts
+} else {
+    cat("plots only random effect model errored")
+}
+```
+
+
+```{r}
+trends <- purrr::map(mods, function(x) get_trends(x))
+trends_df <- bind_rows(trends, .id = "model") %>% 
+    mutate(model = forcats::as_factor(model))
+```
+
+
+
+```{r, warning = FALSE, message = FALSE}
+# Pull out marginal and conditional R^2 for mixed models and add columns to df  
+
+rsqds <- purrr::map(mods, function(x) as.data.frame(MuMIn::r.squaredGLMM(x)))
+rsqds_df <- bind_rows(rsqds, .id = "model") %>% 
+    mutate(model = forcats::as_factor(model))
+trends_df <- left_join(trends_df, rsqds_df)
+```
+
+
+
+### Numerical effects  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+### Graphs  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+
+### Contrasts plot  
+
+**omitted because we are only comparing outputs from different nesting structures in this file**
+
+
+### Comparing nesting structures  
+
+#### Singular Models  
+
+```{r}
+if(exists("mod_nested_full")){check_singularity(mod_nested_full)}
+if(exists("mod_nested_siteplot")){check_singularity(mod_nested_siteplot)}
+if(exists("mod_nested_trns")){check_singularity(mod_nested_trns)}
+if(exists("mod_plts")){check_singularity(mod_plts)}
+```
+
+#### Model Structure Comparisons  
+
+
+```{r}
+to_print <- trends_df %>% 
+    mutate(across(Years_sinceStart.trend:R2c, function(x) round(x, 4)),
+           df = round(df, 2)) %>% 
+    arrange(Vegetation_Zone, model) %>% 
+    rename(TrendPerYear = Years_sinceStart.trend) %>% 
+    relocate(Vegetation_Zone)
+    
+kbl(to_print) %>% 
+    kable_styling("striped") %>%
+    scroll_box(width = "600px", height = "300px") 
+```  
+
+```{r}
+ggplot(to_print, aes(col = model)) +
+    geom_errorbarh(aes(y = model, xmin = lower.CL, xmax = upper.CL)) +
+    geom_point(aes(y = model, x = TrendPerYear)) +
+    facet_wrap(~ Vegetation_Zone, scales = "free_x") +
+    labs(title = paste(respn, " - coefficients of different model structures"), 
+         x = "Trend per year",
+         y = "model") +
+    theme_bw() +
+    theme(legend.position = "none")
+```
+
+### Do statistics to see if random effect makes a difference  
+
+```{r}
+# note PKNCA needs to be installed for AIC to work on a list
+# but it does not have to be loaded
+AIC(mods, assess.best = FALSE) %>% 
+    arrange(AIC) %>% 
+    mutate(deltaAIC = round(AIC - AIC[1], 2)) %>% 
+    kable() %>% 
+    kable_styling("striped")
+```
+
+
+
+#### Random effects by plot  
+
+Drawn from the model where only plot is used as a random effect.  
+
+```{r, fig.width = 8, fig.height = 7}
+stn_tbl_b <- stn_tbl %>% filter(PlotID_full %in% dat_univar$StTrnsPlt)
+
+fields::quilt.plot(x = stn_tbl_b$Long, y = stn_tbl_b$Lat, z = unlist(ranef(mod_plts)$StTrnsPlt),
+                   nx = 100, ny = 100)
+```
+
+```{r}
+# cleanup before next response var
+rm(p, p1, p2, p3,
+   mod_nested_full, mod_nested_siteplot,
+   mod_nested_trns, mod_plts,
+   mods,
+   trends, trends_df,
+   rsqds, rsqds_df, 
+   to_print,
+   trnds)
+```
+
