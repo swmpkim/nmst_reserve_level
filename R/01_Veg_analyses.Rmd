@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "GND"
+    file_code: "ACE"
 ---
 
 # About this Document  
@@ -27,6 +27,8 @@ knitr::opts_chunk$set(echo = FALSE,
                       error = TRUE)
 ```
 
+**changed file paths here for new file naming after manual formatting**  
+
 ```{r pkgs-paths, message = FALSE, warning = FALSE}
 # library(Hmisc)
 library(emmeans)
@@ -45,8 +47,8 @@ library(see)  # for CIs of model predictions
 library(vegan)
 
 
-file_dat <- here::here("data", paste0(params$file_code, "_NMST.xlsx"))
-file_specs <- here::here("metadata", paste0(params$file_code, "veg_specs.xlsx"))
+file_dat <- here::here("data", paste0(params$file_code, "_NMST_mformat.xlsx"))
+file_specs <- here::here("metadata", paste0(params$file_code, "_specs.xlsx"))
 
 options(knitr.kable.NA = '')
 ```
@@ -85,6 +87,9 @@ dat <- dat %>%
     dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
 ```
 
+**changed Notes to Total in next chunk**  
+
+need to make sure all species columns are numeric or joining and pivoting don't work  
 
 ```{r mod-clean-data}
 # clean up data but keep some remnants for QA/QC tables
@@ -96,12 +101,14 @@ susps <- find_suspect_values(dat, "-3")
 
 dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values. also removes F_columns.
 dat <- remove_unsampleds(dat)  # should get rid of any dates where a plot was not sampled or was entirely rejected. 
-dat <- na_to_0(dat)  # turn remaining NAs into 0s
+
+
+dat <- na_to_0(dat)  # turn remaining NAs into 0s - this first makes sure all species columns are numeric
 
 
 dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
 dat_long <- dat %>%
-    pivot_longer(-(Reserve:Notes),
+    pivot_longer(-(Reserve:Total),
                  names_to = "Species",
                  values_to = "Cover")
 ```

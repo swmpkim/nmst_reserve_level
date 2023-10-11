@@ -93,12 +93,10 @@ remove_unsampleds <- function(data){
 na_to_0 <- function(data){
     dat_tmp <- data
     start <- which(names(dat_tmp) == "Notes") + 1  # first species
-    end <- ncol(data)  # last species (F_ columns should already have been removed)
+    end <- ncol(dat_tmp)  # last species (F_ columns should already have been removed)
+    dat_tmp[start:end] <- apply(dat_tmp[start:end], MARGIN = 2, as.numeric) # make sure everything is numeric
     dat_tmp[start:end][is.na(dat_tmp[start:end])] <- 0
     dat_tmp
-    # data %>% 
-    #     dplyr::mutate(across(all_of(start:end), 
-    #                          ~tidyr::replace_na(.x, 0)))
 }
 
 

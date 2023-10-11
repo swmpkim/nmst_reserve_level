@@ -136,8 +136,8 @@ DT::datatable(spp_summ,
 Make sure the colors below correctly represent which Vegetation Zones your plots belong to. If something looks wrong, it needs to be corrected in the 'Station_Table' tab of your data workbook.  
 
 ```{r, fig.height = 7, fig.width = 7}
-ggplot(stn_tbl, aes(x = Long, 
-                    y = Lat, 
+ggplot(stn_tbl, aes(x = Longitude, 
+                    y = Latitude, 
                     col = Vegetation_Zone,
                     shape = Vegetation_Zone)) + 
     geom_point() + 

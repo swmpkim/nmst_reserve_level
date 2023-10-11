@@ -222,6 +222,7 @@ One plot per Site; showing 4 evenly spaced-through-time samples.
 # }
 ```
 
+Plots without associated spatial locations will not be included in these graphics.  
 
 #### User-chosen species  
 
@@ -234,20 +235,21 @@ for(st in unique(stn_tbl$SiteID)){
     
     # subset to the site
     stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
-    long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
-    lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.11
+    long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
+    lat_offset <- (max(stn_tmp$Latitude) - min(stn_tmp$LatitudeE)) * 0.11
     
     # blank plot canvas
-    base <- ggplot(stn_tmp, aes(x = Long, y = Lat, 
+    base <- ggplot(stn_tmp, aes(x = Longitude, y = Latitude, 
                                 group = Species_or_Group,
                                 fill = Species_or_Group)) +
         geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
              y = "Latitude") +
-        scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
-        scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
+        scale_x_continuous(limits = c(min(stn_tmp$Longitude) - long_offset, max(stn_tmp$Longitude) + long_offset)) +
+        scale_y_continuous(limits = c(min(stn_tmp$Latitude) - lat_offset, max(stn_tmp$Latitude) + lat_offset)) +
         scale_fill_manual(values = palcols_spec) +
         theme_bw() +
         theme(legend.position = "right")
@@ -297,8 +299,8 @@ for(st in unique(stn_tbl$SiteID)){
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
         # get coordinates for subplot
-        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
-        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
+        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude
+        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude
         
         # add the subplot to the graph
         
@@ -326,20 +328,21 @@ for(st in unique(stn_tbl$SiteID)){
     
     # subset to the site
     stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
-    long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
-    lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.11
+    long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
+    lat_offset <- (max(stn_tmp$Latitude) - min(stn_tmp$Latitude)) * 0.11
     
     # blank plot canvas
-    base <- ggplot(stn_tmp, aes(x = Long, y = Lat, 
+    base <- ggplot(stn_tmp, aes(x = Longitude, y = Latitude, 
                                 group = Species,
                                 fill = Species)) +
         geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
              y = "Latitude") +
-        scale_x_continuous(limits = c(min(stn_tmp$Long) - long_offset, max(stn_tmp$Long) + long_offset)) +
-        scale_y_continuous(limits = c(min(stn_tmp$Lat) - lat_offset, max(stn_tmp$Lat) + lat_offset)) +
+        scale_x_continuous(limits = c(min(stn_tmp$Longitude) - long_offset, max(stn_tmp$Longitude) + long_offset)) +
+        scale_y_continuous(limits = c(min(stn_tmp$Latitude) - lat_offset, max(stn_tmp$Latitude) + lat_offset)) +
         scale_fill_manual(values = palcols_top) +
         theme_bw() +
         theme(legend.position = "right")
@@ -389,8 +392,8 @@ for(st in unique(stn_tbl$SiteID)){
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
         # get coordinates for subplot
-        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
-        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
+        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude
+        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude
         
         # add the subplot to the graph
         
