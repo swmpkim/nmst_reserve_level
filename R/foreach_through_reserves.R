@@ -14,7 +14,7 @@ foreach(res = reserves) %dopar% {
     try(
         xfun::Rscript_call(
             rmarkdown::render,
-            list(input = here::here("R", "01_Veg_analyses_outputOption1.Rmd"), 
+            list(input = here::here("R", "01_Veg_analyses.Rmd"), 
                  params = list("file_code" = res),
                  output_file = here::here("output", outname))
         )
