@@ -70,7 +70,7 @@ get_anaSpecs <- function(file){
 
 find_unsampleds <- function(data){
     to_find_empties <- data %>% 
-        dplyr::select(-(Reserve:Notes),
+        dplyr::select(-(Reserve:Total),
                       -starts_with("F"))
     # from code behind janitor::remove_empty; line 12
     empty_rows <- rowSums(is.na(to_find_empties)) == ncol(to_find_empties)
@@ -92,7 +92,7 @@ remove_unsampleds <- function(data){
 
 na_to_0 <- function(data){
     dat_tmp <- data
-    start <- which(names(dat_tmp) == "Notes") + 1  # first species
+    start <- which(names(dat_tmp) == "Total") + 1  # first species
     end <- ncol(dat_tmp)  # last species (F_ columns should already have been removed)
     dat_tmp[start:end] <- apply(dat_tmp[start:end], MARGIN = 2, as.numeric) # make sure everything is numeric
     dat_tmp[start:end][is.na(dat_tmp[start:end])] <- 0
@@ -107,7 +107,7 @@ find_suspect_values <- function(data, flags){
     # negative flags work fine (e.g. specifying -3 will not remove 3)
     
     # split data frame into data and qaqc columns
-    qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]
+    qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]  # first one is F_Record and we can ignore that
     data_alone <- data[, 1:(qaqc_cols_start-1)]
     qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
     sampling_info <- data[, c("SiteID", "TransectID", "PlotID", 
@@ -154,7 +154,7 @@ remove_suspect_values <- function(data,
     # negative flags work fine (e.g. specifying -3 will not remove 3)
     
     # split data frame into data and qaqc columns
-    qaqc_cols_start <- which(str_starts(names(data), "F_"))[1]
+    qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]  # first one is F_Record, in identifying columns. Need 2nd one
     data_alone <- data[, 1:(qaqc_cols_start-1)]
     qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
     
