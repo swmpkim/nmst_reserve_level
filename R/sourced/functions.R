@@ -34,7 +34,7 @@ get_species_info <- function(file){
 
     tmp %>% 
         select(Species, Plant_Categories, Native_Classification,
-               CDMO_Unvegetated, NMST_Groupings)
+               Cover_Categories, NMST_Groupings)
 }
 
 get_zone_ordering <- function(file){

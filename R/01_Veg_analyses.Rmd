@@ -88,9 +88,6 @@ dat <- dat %>%
     dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
 ```
 
-**changed Notes to Total in next chunk**  
-
-need to make sure all species columns are numeric or joining and pivoting don't work  
 
 ```{r mod-clean-data}
 # clean up data but keep some remnants for QA/QC tables
@@ -115,14 +112,7 @@ dat_long <- dat %>%
 ```
 
 ```{r mod-richness-diversity}
-to_toss <- unique(species_info$NMST_Groupings)
-to_toss <- to_toss[!(to_toss %in% c("Other Vegetated"))]
-to_toss <- na.omit(to_toss)
-
-spps_live <- species_info %>% 
-    filter(!(NMST_Groupings %in% to_toss)) %>%   # keeping species that don't fall into namaste groups
-    select(Species) %>% 
-    unlist()
+spps_live <- species_info$Species[species_info$Cover_Categories == "Live vegetation"]
 
 dat_live <- dat %>% 
     select(all_of(spps_live))
@@ -134,7 +124,7 @@ dat_div <- dat %>%
     mutate(SWdiv = swdiv,
            Richness = rich)
 
-rm(dat_live, swdiv, rich, to_toss)
+rm(dat_live, swdiv, rich)
 ```
 
 
