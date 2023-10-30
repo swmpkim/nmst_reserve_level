@@ -36,8 +36,6 @@ rsqds <- as.data.frame(MuMIn::r.squaredGLMM(mod_plts))
 
 ### Numerical effects  
 
-For simplicity, using model where plot is the only random effect.
-
 ```{r}
 mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
 tidied <- broom::tidy(mod_anov)
@@ -178,7 +176,7 @@ print(p)
 
 Same plot, different order along x-axis.  
 
-```{r}
+```{r, fig.height = 5, fig.width = 6}
 p <- ggplot(mod_cld, aes(x = Vegetation_Zone,
                          y = Years_sinceStart.trend,
                          label = .group,

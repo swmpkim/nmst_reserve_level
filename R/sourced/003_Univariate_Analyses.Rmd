@@ -46,18 +46,7 @@ dat_univar <- filter(dat_univar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
 
 ### Statistical Model  
 
-The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Site/Transect/Plot`, where `y` is the response variable given in the tab. For various reasons this might not work as well as we'd hoped, so less complicated models have also been run.  
-
-<details><summary>Expand info on less complicated models</summary>
-
-`y ~ Vegetation Zone + Time + Zone*Time + 1|Transect/Plot` - particularly for reserves with only a single site  
-
-`y ~ Vegetation Zone + Time + Zone*Time + 1|Site/Plot`
-
-`y ~ Vegetation Zone + Time + Zone*Time + 1|Plot` - simplest model, with a random effect for each plot; should work for all reserves but may not account for spatial autocorrelation.  
-
-</details>
-
+The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Plot`, where `y` is the response variable given in the tab, and each individual plot has a random intercept. 
 
 ### Model Diagnostics  
 
@@ -82,7 +71,7 @@ univar_outputs <- list()
 
 
 
-## 1: EIR   
+## EIR   
 
 Explanation of what EIR is and how it was calculated.  
 
@@ -107,7 +96,7 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 
 
-## 2: Richness  
+## Richness  
 
 Species Richness, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.
 
@@ -122,7 +111,7 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 
 
-## 3: SW Diversity  
+## Diversity  
 
 Shannon-Weiner Diversity index, calculated on all non-abiotic, non-dead, and non-overstory columns; using the `vegan` package.  
 
@@ -136,14 +125,14 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
-**This is where I need to loop through reserve choices, using results = "asis" and cat() to create headers**  
+
 
 ```{r, results = "asis"}
 respns <- anaSpec_list$univar$Choice
 for(i in seq_along(respns)){
     respn <- respns[i]
     cat("\n")
-    cat("##", i + 3, respn, "\n")
+    cat("##", respn, "\n")
     dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
     chld <- knitr::knit_child("003a_model_run.Rmd", quiet = TRUE)
     cat(chld, sep = "\n")
