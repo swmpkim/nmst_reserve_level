@@ -136,75 +136,21 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 ```
 
 
+**This is where I need to loop through reserve choices, using results = "asis" and cat() to create headers**  
 
-
-```{r define-univar-userChosen1}
-respn <- anaSpec_list$univar$Choice[1]
-dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
-```
-
-## 4: `r respn`  
-
-```{r source-003a-userChosen1, child = "003a_model_run.Rmd"}
-
-```
-
-
-
-```{r define-univar-userChosen2}
-respn <- anaSpec_list$univar$Choice[2]
-dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
-```
-
-## 5: `r respn`  
-
-```{r source-003a-userChosen2, child = "003a_model_run.Rmd"}
-
-```
-
-
-
-
-```{r define-univar-userChosen3}
-respn <- anaSpec_list$univar$Choice[3]
-dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
-```
-
-
-## 6: `r respn`  
-
-```{r source-003a-userChosen3, child = "003a_model_run.Rmd"}
-
-```
-
-
-
-```{r define-univar-userChosen4}
-respn <- anaSpec_list$univar$Choice[4]
-autoChoice <- FALSE
-
-if(is.na(respn)){
-    top_unused <- top_5_spps[!(top_5_spps %in% anaSpec_list$univar$Choice) & top_5_spps != "Other"]
-    respn <- top_unused[1]
-    dat_univar <- filter(dat, !(StTrnsPlt %in% not_enough$StTrnsPlt))
-    autoChoice <- TRUE
-}
-dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
-```
-
-
-## 7: `r respn`  
-
-```{r show-if-automatedChoice, results = 'asis'}
-if(autoChoice){
-    cat("Only 3 species were identified, rather than 4. The response variable for this tab has defaulted to the first species alphabetically, out of the 5 most common species across the entire dataset, that was not already one of the user's choices. \n\nTHIS SPECIES WAS NOT REMOVED FROM ANY GROUP TOTALS THAT HAVE BEEN ANALYZED ELSEWHERE IN THIS DOCUMENT.")
+```{r, results = "asis"}
+respns <- anaSpec_list$univar$Choice
+for(i in seq_along(respns)){
+    respn <- respns[i]
+    cat("\n")
+    cat("##", i + 3, respn, "\n")
+    dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+    chld <- knitr::knit_child("003a_model_run.Rmd", quiet = TRUE)
+    cat(chld, sep = "\n")
 }
 ```
 
 
-```{r source-003a-userChosen4, child = "003a_model_run.Rmd"}
-
-```
 
 
 ```{r export-univar-zones}
