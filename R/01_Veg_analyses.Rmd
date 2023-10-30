@@ -210,7 +210,7 @@ dat_nmst_cats <- dat_long %>%
     left_join(species_info) %>% 
     mutate(NMST_Groupings = case_when(is.na(NMST_Groupings) ~ Species,
                                       .default = NMST_Groupings)) %>% 
-    select(-Species, -Plant_Categories, -Native_Classification) %>% 
+    select(-Species, -Plant_Categories, -Native_Classification, -Cover_Categories) %>% 
     pivot_wider(names_from = NMST_Groupings,
                 values_from = Cover,
                 values_fn = sum)
@@ -277,7 +277,7 @@ names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 
 # Multivariate Analyses {.tabset}  
 
-```{r source-004-multivarAna, child = "sourced/004_Multivariate_Analyses.Rmd", eval = FALSE}
+```{r source-004-multivarAna, child = "sourced/004_Multivariate_Analyses.Rmd"}
 
 ```
 

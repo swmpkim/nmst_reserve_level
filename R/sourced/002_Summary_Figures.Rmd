@@ -159,69 +159,6 @@ top_3_mean %>%
 One plot per Site; showing 4 evenly spaced-through-time samples.   
 
 
-```{r graph-spatial-base}
-# THIS CHUNK IS AN ADAPTATION OF BROOK'S CODE
-
-# for(st in unique(stn_tbl$SiteID)){
-#     
-#     # subset to the site
-#     stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
-#     
-#     long_offset <- (max(stn_tmp$Long) - min(stn_tmp$Long)) * 0.05
-#     lat_offset <- (max(stn_tmp$Lat) - min(stn_tmp$Lat)) * 0.125
-#     
-#     # blank plot canvas
-#     plot(c(min(stn_tmp$Long) - long_offset,
-#            max(stn_tmp$Long) + long_offset),
-#          c(min(stn_tmp$Lat) - lat_offset,
-#            max(stn_tmp$Lat) + lat_offset),
-#          type = "n",
-#          bty = "n",
-#          xlab = "Longitude", ylab = "Latitude",
-#          main = paste(params$file_code, st))
-#     
-#     # subset the lumped data to the single site
-#     dat_tmp <- top_3_wide[top_3_wide$SiteID == st, ]
-#     
-#  
-# 
-#     # loop through each plot at the site
-#     # make a barplot of the top 3 species + other
-#     # and add as subplot to the blank canvas, based on lat/long
-#     for (plt in unique(dat_tmp$PlotID_full)){
-#         
-#         dat_plt <- dat_tmp[dat_tmp$PlotID_full==plt, ]
-#         yrs <- dat_plt$Years_sinceStart
-#             
-#         # subset the years: min, max, and as close as possible to the difference/3  
-# 
-#         un_yrs <- unique(yrs)
-#         div <- (max(un_yrs) - min(un_yrs)) / 3
-#         divs_to_keep <- c(min(un_yrs) + div,
-#                           max(un_yrs) - div)
-#         
-# 
-#         # figure out what to keep by finding the closest actual measurement to each, using absolute values
-#         keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
-#         keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
-# 
-#         keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
-#         
-#         # re-subset the data frame to only those years
-#         dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
-#         yrs <- dat_plt$Years_sinceStart
-#         
-#         lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Lat
-#         long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Long
-#         subplot(barplot( t(as.matrix(dat_plt[,(ncol(dat_plt)-3):ncol(dat_plt)])),  # last 4 columns are the top 3 species + Other
-#                          xlab = "",
-#                          axes=FALSE),
-#                 x = c(long - long_offset, long + long_offset),
-#                 y = c(lat - lat_offset, lat + lat_offset))  
-#     }
-# }
-```
-
 Plots without associated spatial locations will not be included in these graphics.  
 
 #### User-chosen species  
@@ -238,7 +175,7 @@ for(st in unique(stn_tbl$SiteID)){
     stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
     long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
-    lat_offset <- (max(stn_tmp$Latitude) - min(stn_tmp$LatitudeE)) * 0.11
+    lat_offset <- (max(stn_tmp$Latitude) - min(stn_tmp$Latitude)) * 0.11
     
     # blank plot canvas
     base <- ggplot(stn_tmp, aes(x = Longitude, y = Latitude, 
@@ -257,6 +194,8 @@ for(st in unique(stn_tbl$SiteID)){
     
     # subset the lumped data to the single site
     dat_tmp <- anaSpec_dfs$spat[anaSpec_dfs$spat$SiteID == st, ]
+    # and only keep the plots from above, with lat/long coords
+    dat_tmp <- dat_tmp[dat_tmp$StTrnsPlt %in% stn_tmp$PlotID_full, ]
     
  
 

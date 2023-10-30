@@ -80,8 +80,8 @@ dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
 # these were originally done with dat, not dat_multivar
 # using dat_multivar GREATLY reduces the number of columns in the matrix
 # and probably isn't what we want....  
-expl <- dat_multivar[, 1:which(names(dat_multivar) == "Notes")]
-resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Notes")):ncol(dat_multivar)]
+expl <- dat_multivar[, 1:which(names(dat_multivar) == "Total")]
+resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Total")):ncol(dat_multivar)]
 
 # probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 
