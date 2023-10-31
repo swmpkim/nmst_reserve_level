@@ -289,7 +289,8 @@ for(st in unique(stn_tbl$SiteID)){
     
     # subset the lumped data to the single site
     dat_tmp <- top_3_mean[top_3_mean$SiteID == st, ]
-    
+    # and only keep the plots from above, with lat/long coords
+    dat_tmp <- dat_tmp[dat_tmp$PlotID_full %in% stn_tmp$PlotID_full, ]
  
 
     # loop through each plot at the site
