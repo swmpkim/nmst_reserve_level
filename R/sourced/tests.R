@@ -86,3 +86,31 @@ out4 <- tribble(
 # Spartina alt. row, 
 # then sum of all rows where Plant_Categories is H-Halophyte MINUS Spalt; 
 # then individual species rows
+
+
+# F_ columns ----
+test_df <- data.frame(
+    Reserve = "ABC",
+    SiteID = "Site1",
+    TransectID = "Transect1",
+    PlotID = 1:5,
+    Notes = NA,
+    F_Record = NA,
+    Total = 100,
+    `Spartina alterniflora` = 80,
+    `Juncus roemerianus` = 15,
+    Unvegetated = 5,
+    `F_Spartina alterniflora` = NA,
+    `F_Juncus roemerianus` = NA,
+    F_Unvegetated = NA
+)
+data = test_df
+qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]
+
+min(which(names(data) != "F_Record" & str_starts(names(data), "F_")))
+
+# or it just needs to come after 'Total'
+position_Total <- which(names(data) == "Total") 
+position_Fs <- which(str_starts(names(data), "F_"))
+min(position_Fs[position_Fs > position_Total])
+min(which(names(data) != "F_Record" & position_Fs > position_Total))

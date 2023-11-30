@@ -82,7 +82,7 @@ find_unsampleds <- function(data){
 
 remove_unsampleds <- function(data){
     to_find_empties <- data %>% 
-        dplyr::select(-(Reserve:Notes),
+        dplyr::select(-(Reserve:Total),
                       -starts_with("F"))
     # from code behind janitor::remove_empty; line 12
     empty_rows <- rowSums(is.na(to_find_empties)) == ncol(to_find_empties)
