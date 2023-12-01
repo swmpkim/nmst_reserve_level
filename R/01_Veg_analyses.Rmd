@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "CBM-MB"
+    file_code: "ELK"
 ---
 
 # About this Document  
@@ -48,8 +48,8 @@ library(khroma) # for okabeito palette, color-blind-friendly
 library(vegan)
 
 
-file_dat <- here::here("data", paste0(params$file_code, "_NMST_mformat.xlsx"))
-file_specs <- here::here("metadata", paste0(params$file_code, "_specs.xlsx"))
+file_dat <- here::here("data", paste0(params$file_code, "_veg.xlsx"))
+file_specs <- here::here("metadata", paste0(params$file_code, "_veg-specs.xlsx"))
 
 options(knitr.kable.NA = '')
 ```

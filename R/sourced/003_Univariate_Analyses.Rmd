@@ -164,7 +164,7 @@ summ_stats <- list(
 
 zone_tbl <- stn_tbl %>% 
     group_by(Reserve, Vegetation_Zone) %>% 
-    summarize(across(c(Lat, Long), function(x) mean(x, na.rm = TRUE)),
+    summarize(across(c(Latitude, Longitude), function(x) mean(x, na.rm = TRUE)),
               across(c(Orthometric_Height, Height_Relative_to_MLLW),
                      summ_stats))
 filename <- paste0(params$file_code, "_ZoneInfo_", Sys.Date(), ".csv")
