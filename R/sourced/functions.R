@@ -429,6 +429,9 @@ plot_nmds <- function(scores = data.scores,
     xax <- paste0("NMDS", axes[1])
     yax <- paste0("NMDS", axes[2])
     
+    pals_zone_abbrev <- palcols_zones
+    names(pals_zone_abbrev) <- NULL
+    
     ggplot() +
         geom_point(data = scores,
                    aes(x = !!ensym(xax), y = !!ensym(yax),
@@ -474,6 +477,7 @@ plot_nmds <- function(scores = data.scores,
                           label.padding = 0.2,
                           fill = alpha(c("white"),0.9)) +
         # theme_bw() +
+        scale_color_manual(values = pals_zone_abbrev) +
         labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
              subtitle = "Diamonds: Zone/Time centroids. Arrows: Species.") +
         theme(legend.position = "none")

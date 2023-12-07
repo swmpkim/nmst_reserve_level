@@ -267,6 +267,18 @@ n <- min(9, length(unique(anaSpec_dfs$multivar$Species_or_Group)))
 # names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 palcols_multivar <- viridis(n)
 names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
+
+
+# also want zone colors to be consistent
+n <- length(zone_factor)
+palcols_zones <- viridis(n+1)[1:n]  # don't use the yellow endpoint
+names(palcols_zones) <- levels(zone_factor)
+
+
+# and site id
+n <- length(unique(stn_tbl$SiteID))
+palcols_sites <- viridis(n+1)[1:n]  # don't use the yellow endpoint
+names(palcols_sites) <- unique(stn_tbl$SiteID)
 ```
 
 # Exploration and QA/QC {.tabset}  

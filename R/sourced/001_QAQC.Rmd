@@ -144,6 +144,7 @@ ggplot(stn_tbl, aes(x = Longitude,
     facet_wrap(~SiteID, scales = "free") + 
     scale_y_continuous(labels = function(x) round(x, 3)) +
     scale_x_continuous(labels = function(x) round(x, 3)) +
+    scale_color_manual(values = palcols_zones) +
     labs(title = "Plots and their Vegetation Zones, by site",
          col = "Vegetation Zone",
          shape = "Vegetation Zone") +
@@ -212,6 +213,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
     facet_wrap(~Vegetation_Zone) +
     theme(legend.position = "none") +
     geom_smooth(method = "loess", se = FALSE) +
+    scale_color_manual(values = palcols_zones) +
     theme_bw() +
     labs(title = "EIR by Zone",
          subtitle = "as calculated per plot/date combination")
@@ -223,6 +225,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
     geom_jitter(alpha = 0.4) +
     geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone) +
+    scale_color_manual(values = palcols_sites) +
     # theme(legend.position = "none") +
     theme_bw() +
     labs(title = "EIR by Site, within Zone")
@@ -235,6 +238,7 @@ ggplot(dat) +
                    col = "gray40",
                    binwidth = 0.1) +
     facet_wrap(~Vegetation_Zone) +
+    scale_fill_manual(values = palcols_zones) +
     labs(title = "Histogram of EIR by Marsh Zone") +
     theme_bw() +
     theme(legend.position = "none")
