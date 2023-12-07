@@ -320,7 +320,9 @@ relevel_spps <- function(data){
 
 join_zones <- function(data = dat,
                        station_info = stn_tbl){
-    zones_to_join <- station_info[, c("Reserve", "SiteID", "TransectID", "PlotID", "Vegetation_Zone")]
+    zones_to_join <- dplyr::distinct(station_info[, c("Reserve", "SiteID", "TransectID", "PlotID", "Vegetation_Zone")])
+    # used 'distinct' above because at least one file has multiple rows per plot
+    # one for type 'E', one for type 'S'
     
     dplyr::left_join(data, zones_to_join) %>% 
         relocate(Vegetation_Zone, .before = SiteID)
