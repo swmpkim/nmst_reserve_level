@@ -478,6 +478,7 @@ plot_nmds <- function(scores = data.scores,
                           fill = alpha(c("white"),0.9)) +
         # theme_bw() +
         scale_color_manual(values = pals_zone_abbrev) +
+        scale_fill_manual(values = pals_zone_abbrev) +
         labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
              subtitle = "Diamonds: Zone/Time centroids. Arrows: Species.") +
         theme(legend.position = "none")

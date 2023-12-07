@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "CBM-JB"
+    file_code: "WEL"
 ---
 
 # About this Document  
@@ -115,6 +115,12 @@ dat_long <- dat %>%
 
 ```{r mod-richness-diversity}
 spps_live <- species_info$Species[species_info$Cover_Categories == "Live vegetation"]
+# make sure they're in the data file too; several extras in NE files
+spps_live <- spps_live[which(spps_live %in% names(dat))]
+
+# for troubleshooting: find out if any species in the data frame aren't in the species list
+# spps_live2 <- spps_live[which(spps_live %in% names(dat))]
+# names(dat)[which(!(names(dat) %in% spps_live2)[1:50])]
 
 dat_live <- dat %>% 
     select(all_of(spps_live))

@@ -1,14 +1,17 @@
 library(foreach)
 library(doParallel)
 
-reserves <- c("GND", "CBV", "NIW", "GTM")
+# reserves <- c("GND", "CBV", "NIW", "GTM")
+
+reserves <- c("APA-LSM",  "APA-PC", "CBM-JB", "CBM-MB", "DEL-BCR",
+              "ELK", "JAC", "NOC-RC", "NOC-ZI", "WEL")
 
 cl<-makeCluster(8)  
 registerDoParallel(cl)
 strt<-Sys.time()
 
 # process all stations
-foreach(res = reserves) %dopar% {
+foreach(res = reserves) %do% {
     outname <- paste0("Veg_analyses_", res, "_", Sys.Date(), ".html")
     
     try(
