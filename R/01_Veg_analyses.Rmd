@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "ELK"
+    file_code: "CBM-JB"
 ---
 
 # About this Document  
@@ -44,7 +44,8 @@ library(DT)
 library(ggplot2)
 library(modelbased)  # for CIs of model predictions
 library(see)  # for CIs of model predictions
-library(khroma) # for okabeito palette, color-blind-friendly
+# library(khroma) # for okabeito palette, color-blind-friendly
+library(viridis) # for colorblind-friendly viridis palette
 library(vegan)
 
 
@@ -240,26 +241,31 @@ not_enough <- dat %>%
 
 # top 3 species + other
 # palcols_top <- RColorBrewer::brewer.pal(4, "Paired")
-palcols_top <- khroma::color("okabeito")(4)
+# palcols_top <- khroma::color("okabeito")(4)
+palcols_top <- viridis(4)
 names(palcols_top) <- levels(top_3_mean$Species)
 
 # spatial barplots: up to 3 species/groups + other
 # palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
 n <- min(4, length(unique(anaSpec_dfs$spat$Species_or_Group)))
-palcols_spec <- khroma::color("okabeito")(n)
+# palcols_spec <- khroma::color("okabeito")(n)
+palcols_spec <- viridis(n)
 names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
 
 # univariate exploration: up to 4 species/groups + other
 # palcols_univar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$univar$Species_or_Group)), "Paired")
 n <- min(5, length(unique(anaSpec_dfs$univar$Species_or_Group)))
-palcols_univar <- khroma::color("okabeito")(n)
+# palcols_univar <- khroma::color("okabeito")(n)
+palcols_univar <- viridis(n)
 names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
 
 # averaged stacked barplots: up to 8 species/groups + other
 # palcols_multivar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$multivar$Species_or_Group)), "Paired")
 n <- min(9, length(unique(anaSpec_dfs$multivar$Species_or_Group)))
-if(n <= 8) palcols_multivar <- khroma::color("okabeito")(n)
-if(n == 9) palcols_multivar <- c(khroma::color("okabeito")(8), "#BBBBBB")
+# if(n <= 8) palcols_multivar <- khroma::color("okabeito")(n)
+# if(n == 9) palcols_multivar <- c(khroma::color("okabeito")(8), "#BBBBBB")
+# names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
+palcols_multivar <- viridis(n)
 names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 ```
 
