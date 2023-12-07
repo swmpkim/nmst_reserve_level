@@ -113,6 +113,10 @@ find_suspect_values <- function(data, flags){
     sampling_info <- data[, c("SiteID", "TransectID", "PlotID", 
                               "Year", "Month", "Day")]
     
+    # make sure qaqc columns are character format
+    qaqc_cols <- qaqc_cols %>% 
+        mutate(across(everything(), as.character))
+    
     # loop through qaqc columns and find any values containing the flags to be removed
     outs <- list()
     for(i in seq_along(qaqc_cols)){
@@ -157,6 +161,10 @@ remove_suspect_values <- function(data,
     qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]  # first one is F_Record, in identifying columns. Need 2nd one
     data_alone <- data[, 1:(qaqc_cols_start-1)]
     qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
+    
+    # make sure qaqc columns are character format
+    qaqc_cols <- qaqc_cols %>% 
+        mutate(across(everything(), as.character))
     
     # loop through qaqc columns and find any values containing the flags to be removed
     outs <- list()
