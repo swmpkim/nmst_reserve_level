@@ -13,6 +13,31 @@ library(ggiraph)
 
 These tabs are the multivariate analyses.  
 
+```{r mod-multivar-df}
+# widen out the univar data frame
+# it's grouped appropriately for these analyses 
+
+# trying to use more realistic df: grouped by nmst categories
+dat_multivar <- dat_nmst_cats
+```
+
+```{r}
+# remove any plots without at least 3 distinct years of data
+dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+```
+
+```{r, results = "asis"}
+# if there weren't enough years of data, can't do the rest.
+# set up to NOT evaluate code chunks, and spit out a message.
+datEnough <- nrow(dat_multivar) > 0
+
+if(!datEnough){
+    cat("### **Multivariate analyses were not run.**")
+    cat("\n \nThere were not enough rows of data.")
+}
+```
+
+
 In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use  similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
   
 
@@ -42,26 +67,8 @@ cat(paste("*", choices), sep="\n")
 ```
 
 
-```{r mod-multivar-df}
-# widen out the univar data frame
-# it's grouped appropriately for these analyses 
 
-# below used during dev; commented out
-# dat_multivar <- anaSpec_dfs$multivar %>% 
-#     pivot_wider(names_from = Species_or_Group,
-#                 values_from = Cover)
-
-# trying to use more realistic df: grouped by nmst categories
-dat_multivar <- dat_nmst_cats
-```
-
-```{r}
-# remove any plots without at least 3 distinct years of data
-dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
-```
-
-
-```{r}
+```{r, eval = datEnough}
 # get data into a matrix.......
 # response matrix will be column number (Notes + 1) through end?
 
@@ -76,7 +83,7 @@ dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
 # null hypothesis is that the community is not changing through time
 ```
 
-```{r stats-define-matrices}
+```{r stats-define-matrices, eval = datEnough}
 # these were originally done with dat, not dat_multivar
 # using dat_multivar GREATLY reduces the number of columns in the matrix
 # and probably isn't what we want....  
@@ -95,7 +102,7 @@ env <- expl %>%
 
 ### Characteristics of multivariate data frame  
 
-```{r mod-first-last-years}
+```{r mod-first-last-years, eval = datEnough}
 # find first and last years by zone
 start_ends <- dat_nmst_cats %>% 
     group_by(Vegetation_Zone, Year) %>% 
@@ -132,7 +139,7 @@ env_pm <- expl_pm %>%
 ```
 
 
-```{r show-start-end}
+```{r show-start-end, eval = datEnough}
 expl_pm %>% 
     group_by(Vegetation_Zone, Time_group, Year) %>% 
     tally() %>% 
@@ -155,7 +162,7 @@ keeps2 <- expl_pm %>%
 
 NOTE - this isn't accounting for plots that may not have 4 years of data..... need to remove plots with less than 3 first, probably?
 
-```{r superceded-mod-first-last-years}
+```{r superceded-mod-first-last-years, eval = datEnough}
 # # subset data frame to 'first two years' and 'last two years' (?) 
 # yrs_smpld <- sort(unique(expl$Year))
 # first_yrs <- yrs_smpld[c(1, 2)]
@@ -182,7 +189,7 @@ NOTE - this isn't accounting for plots that may not have 4 years of data..... ne
 #     mutate(across(everything(), as.factor))
 ```
 
-```{r show-multivar-df}
+```{r show-multivar-df, eval = datEnough}
 resp_names <- data.frame(names(resp))
 kbl_nmst(resp_names,
          col.names = c(""),
@@ -195,9 +202,20 @@ kbl_nmst(resp_names,
 
 
 
-## PERMANOVA
+## PERMANOVA  
 
-```{r stats-run-permanova}
+```{r, results = "asis"}
+# if there weren't enough years of data, can't do the rest.
+# set up to NOT evaluate code chunks, and spit out a message.
+datEnough <- nrow(dat_multivar) > 0
+
+if(!datEnough){
+    cat("### **Multivariate analyses were not run.**")
+    cat("\n \nThere were not enough rows of data.")
+}
+```
+
+```{r stats-run-permanova, eval = datEnough}
 pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
         method = "bray",
         permutations = 999)
@@ -209,7 +227,7 @@ kbl_nmst(pmv,
 ```
 
 
-```{r stats-perm-posthoc}
+```{r stats-perm-posthoc, eval = datEnough}
 # for both follow-ups, want each zone on its own, start vs. end
 
 zones <- unique(expl_pm$Vegetation_Zone)
@@ -261,7 +279,7 @@ for(i in seq_along(zones)){
 
 Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
 
-```{r show-perm-posthoc}
+```{r show-perm-posthoc, eval = datEnough}
 pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
     filter(term == "Time_group") %>% 
     select('Vegetation Zone', R2, p.value) %>% 
@@ -278,7 +296,7 @@ kbl_nmst(pmvs_summ,
 
 Note - these individual tables do not contain Bonferroni-adjusted p-values; only the raw values.  
 
-```{r show-pairwise-perm, results = 'asis'}
+```{r show-pairwise-perm, results = 'asis', eval = datEnough}
 for(i in seq_along(pmvs)){
     print(kbl_nmst(x = pmvs[[i]], 
                 caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
@@ -291,12 +309,23 @@ for(i in seq_along(pmvs)){
 
 ## SIMPER  
 
+```{r, results = "asis"}
+# if there weren't enough years of data, can't do the rest.
+# set up to NOT evaluate code chunks, and spit out a message.
+datEnough <- nrow(dat_multivar) > 0
+
+if(!datEnough){
+    cat("### **Multivariate analyses were not run.**")
+    cat("\n \nThere were not enough rows of data.")
+}
+```
+
 If the PERMANOVA for a single zone had a significant p-value (p < 0.05; *not* adjusted for multiple comparisons due to exploratory nature of these analyses), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
 
 "average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. "p" is a p-value for that species based on permutation tests.  
 
 
-```{r show-simper, results = 'asis'}
+```{r show-simper, results = 'asis', eval = datEnough}
 for(i in seq_along(simps)){
     print(kbl_nmst(x = simps[[i]], 
                    caption = paste0("Vegetation Zone: ", names(simps)[i], " - SIMPER results"),
@@ -305,42 +334,47 @@ for(i in seq_along(simps)){
 }
 ```
 
-## NMDS
+## NMDS  
 
+```{r, results = "asis"}
+# if there weren't enough years of data, can't do the rest.
+# set up to NOT evaluate code chunks, and spit out a message.
+datEnough <- nrow(dat_multivar) > 0
 
-<details>
-
-<summary>NMDS stress for each iteration</summary>
-
-```{r stats-run-nmds}
-mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
-                    autotransform = FALSE)
-# plot(mds_resp, type = "t")
-
-data.scores <- as.data.frame(scores(mds_resp)$sites)
-species.scores <- as.data.frame(scores(mds_resp)$species)
-species.scores$species <- rownames(species.scores) 
-
-# only keep the species listed as reserve choices, to reduce clutter on graphic
-species.scores <- species.scores %>% 
-    filter(species %in% unique(anaSpec_list$multivar$Choice))
-
-# data.scores$Vegetation_Zone <- expl$Vegetation_Zone
-# data.scores$Year <- expl$Year
-data.scores <- data.scores %>%
-    mutate(Zone = expl_pm$Vegetation_Zone,
-           Year = as.factor(expl_pm$Year),
-           Time_group = as.factor(expl_pm$Time_group),
-           Zone_Timegroup = as.factor(expl_pm$Zone_Timegroup)) %>% 
-    separate(Zone, into = c("Zone_abbrev", "Zone_full"),
-             sep = "-")
+if(!datEnough){
+    cat("### **Multivariate analyses were not run.**")
+    cat("\n \nThere were not enough rows of data.")
+}
 ```
 
-</details>  
+
+```{r stats-run-nmds, eval = datEnough}
+    mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
+                        autotransform = FALSE, trace = 0)
+    # plot(mds_resp, type = "t")
+    
+    data.scores <- as.data.frame(scores(mds_resp)$sites)
+    species.scores <- as.data.frame(scores(mds_resp)$species)
+    species.scores$species <- rownames(species.scores) 
+    
+    # only keep the species listed as reserve choices, to reduce clutter on graphic
+    species.scores <- species.scores %>% 
+        filter(species %in% unique(anaSpec_list$multivar$Choice))
+    
+    # data.scores$Vegetation_Zone <- expl$Vegetation_Zone
+    # data.scores$Year <- expl$Year
+    data.scores <- data.scores %>%
+        mutate(Zone = expl_pm$Vegetation_Zone,
+               Year = as.factor(expl_pm$Year),
+               Time_group = as.factor(expl_pm$Time_group),
+               Zone_Timegroup = as.factor(expl_pm$Zone_Timegroup)) %>% 
+        separate(Zone, into = c("Zone_abbrev", "Zone_full"),
+                 sep = "-")  
+```
 
 ***  
 
-Final 3-dimensional NMDS stress was `r round(mds_resp$stress, 4)`.  
+Final 3-dimensional NMDS stress was `r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`.  
 
 #### How to read these NMDS plots  
 
@@ -349,7 +383,7 @@ Final 3-dimensional NMDS stress was `r round(mds_resp$stress, 4)`.
 -  Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points.
 
 
-```{r stats-prep-nmds-groups}
+```{r stats-prep-nmds-groups, eval = datEnough}
 # get centroids for each time/zone group
 # https://stackoverflow.com/a/47523181
 cent <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Timegroup, data = data.scores, FUN = mean)
@@ -368,7 +402,7 @@ en_coord_cat <- cent %>%
 
 
 
-```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7}
+```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7, eval = datEnough}
 p <- plot_nmds()
 girafe(ggobj = p,
        width_svg = 6,
