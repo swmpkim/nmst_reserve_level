@@ -235,7 +235,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
 ```{r graph-hist-EIR}
 ggplot(dat) +
     geom_histogram(aes(x = EIR, fill = Vegetation_Zone),
-                   col = "gray40",
+                   col = "gray60",
                    binwidth = 0.1) +
     facet_wrap(~Vegetation_Zone) +
     scale_fill_manual(values = palcols_zones) +
