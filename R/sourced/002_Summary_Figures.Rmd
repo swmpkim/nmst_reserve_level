@@ -238,8 +238,8 @@ for(st in unique(stn_tbl$SiteID)){
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
         # get coordinates for subplot
-        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude
-        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude
+        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude[1]  # in case there are multiple rows for a plot
+        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude[1]
         
         # add the subplot to the graph
         
@@ -332,8 +332,8 @@ for(st in unique(stn_tbl$SiteID)){
                                  theme(panel.border = element_rect(linetype = "dashed", fill = NA)))
         
         # get coordinates for subplot
-        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude
-        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude
+        lat <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Latitude[1]
+        long <- stn_tmp[stn_tmp$PlotID_full==plt, ]$Longitude[1]
         
         # add the subplot to the graph
         
