@@ -115,7 +115,7 @@ find_suspect_values <- function(data, flags){
     # where is the "Total" column
     total_col <- which(names(data) == "Total")
     # what's the value of the first qaqc_col after Total
-    qaqc_cols_start <- qaqc_cols[which(min(qaqc_cols) > total_col)]  
+    qaqc_cols_start <- qaqc_cols[min(which(qaqc_cols > total_col))]
     
     # now get the data; should end right before the first qaqc col
     data_alone <- data[, 1:(qaqc_cols_start-1)]
@@ -176,7 +176,7 @@ remove_suspect_values <- function(data,
     # where is the "Total" column
     total_col <- which(names(data) == "Total")
     # what's the value of the first qaqc_col after Total
-    qaqc_cols_start <- qaqc_cols[which(min(qaqc_cols) > total_col)]  
+    qaqc_cols_start <- qaqc_cols[min(which(qaqc_cols > total_col))]  
     
     # now get the data; should end right before the first qaqc col
     data_alone <- data[, 1:(qaqc_cols_start-1)]
