@@ -107,7 +107,17 @@ find_suspect_values <- function(data, flags){
     # negative flags work fine (e.g. specifying -3 will not remove 3)
     
     # split data frame into data and qaqc columns
-    qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]  # first one is F_Record and we can ignore that
+    
+    # there may or may not be an F_Record column somewhere before 'Total'
+    # so pick the first F_ column after the 'Total' column
+    # what are all the ones that start with F_
+    qaqc_cols <- which(str_starts(names(data), "F_"))
+    # where is the "Total" column
+    total_col <- which(names(data) == "Total")
+    # what's the value of the first qaqc_col after Total
+    qaqc_cols_start <- qaqc_cols[which(min(qaqc_cols) > total_col)]  
+    
+    # now get the data; should end right before the first qaqc col
     data_alone <- data[, 1:(qaqc_cols_start-1)]
     qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
     sampling_info <- data[, c("SiteID", "TransectID", "PlotID", 
@@ -158,7 +168,17 @@ remove_suspect_values <- function(data,
     # negative flags work fine (e.g. specifying -3 will not remove 3)
     
     # split data frame into data and qaqc columns
-    qaqc_cols_start <- which(str_starts(names(data), "F_"))[2]  # first one is F_Record, in identifying columns. Need 2nd one
+    
+    # there may or may not be an F_Record column somewhere before 'Total'
+    # so pick the first F_ column after the 'Total' column
+    # what are all the ones that start with F_
+    qaqc_cols <- which(str_starts(names(data), "F_"))
+    # where is the "Total" column
+    total_col <- which(names(data) == "Total")
+    # what's the value of the first qaqc_col after Total
+    qaqc_cols_start <- qaqc_cols[which(min(qaqc_cols) > total_col)]  
+    
+    # now get the data; should end right before the first qaqc col
     data_alone <- data[, 1:(qaqc_cols_start-1)]
     qaqc_cols <- data[, qaqc_cols_start:ncol(data)]
     

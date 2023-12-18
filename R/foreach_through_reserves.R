@@ -11,6 +11,10 @@ reserves1 <- c("APA-LSM",  "APA-PC", "CBM-JB", "CBM-MB", "DEL-BCR",
 reserves2 <- c("CBV", "DEL-SJR", "GTM", "MAR", "NAR", "NIW",
               "NOC-MI", "SOS", "TJR")
 
+# batch 3
+reserves3 <- c("CBM-OPC", "GND", "GRB", "HUD-PIER", "HUD-TIV",
+               "KAC", "WQB")
+
 reserves <- c(reserves1, reserves2)
 # 
 # cl<-makeCluster(8)  
