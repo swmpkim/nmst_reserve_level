@@ -6,7 +6,8 @@ get_data <- function(file,
     if(cover_only == FALSE){
         readxl::read_xlsx(file,
                           sheet = "Cover",
-                          guess_max = 5000)
+                          guess_max = 5000) %>% 
+            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character))
     } else {
         readxl::read_xlsx(file,
                           sheet = "Cover",
@@ -15,7 +16,8 @@ get_data <- function(file,
                           -starts_with("Maximum Canopy Height"),
                           -starts_with("Density"),
                           -starts_with("Height"),
-                          -starts_with("Diameter"))
+                          -starts_with("Diameter")) %>% 
+            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character))
     }
 }
 
