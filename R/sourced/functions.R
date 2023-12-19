@@ -21,7 +21,8 @@ get_data <- function(file,
 
 get_stn_table <- function(file){
     readxl::read_xlsx(file,
-                          sheet = "Station_Table")
+                          sheet = "Station_Table") %>% 
+        mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character))
 }
 
 get_species_info <- function(file){
