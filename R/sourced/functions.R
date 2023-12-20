@@ -7,7 +7,8 @@ get_data <- function(file,
         readxl::read_xlsx(file,
                           sheet = "Cover",
                           guess_max = 5000) %>% 
-            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character))
+            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
+            arrange(Year, Month, Day, SiteID, TransectID, PlotID)
     } else {
         readxl::read_xlsx(file,
                           sheet = "Cover",
@@ -17,7 +18,8 @@ get_data <- function(file,
                           -starts_with("Density"),
                           -starts_with("Height"),
                           -starts_with("Diameter")) %>% 
-            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character))
+            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
+            arrange(Year, Month, Day, SiteID, TransectID, PlotID)
     }
 }
 
