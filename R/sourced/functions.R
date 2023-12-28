@@ -474,9 +474,12 @@ plot_nmds <- function(scores = data.scores,
                                  linewidth = 0.4)  +
         geom_point_interactive(data = env.vars, 
                                aes(x = !!ensym(xax), y = !!ensym(yax),
-                                   tooltip = Zone_Years, data_id = Zone_Timegroup), 
-                               shape = "diamond", 
-                               size = 4, alpha = 0.8, colour = "navy")  +
+                                   tooltip = Zone_Years, data_id = Zone_Timegroup,
+                                   shape = Time_group,
+                                   col = Zone_abbrev), 
+                               # shape = "diamond", 
+                               # colour = "navy",
+                               size = 4, alpha = 0.9)  +
         geom_label_repel2(data = species,  # species labels
                           aes(x = !!ensym(xax), y = !!ensym(yax)),
                           label = species$species,
