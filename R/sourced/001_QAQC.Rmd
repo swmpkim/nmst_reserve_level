@@ -168,8 +168,7 @@ plot_through_time(data = anaSpec_dfs$univar,
           group = Species_or_Group,
           panels = Vegetation_Zone) +
     scale_color_manual(values = palcols_univar) +
-    ggtitle("User-chosen species") +
-    theme_bw()
+    ggtitle("User-chosen species")
 ```
 
 ```{r graph-time-top3, message = FALSE}
@@ -177,8 +176,7 @@ plot_through_time(data = top_3_mean,
           group = Species,
           panels = Vegetation_Zone) +
     scale_color_manual(values = palcols_top) +
-    ggtitle("Top 3 species by mean cover") +
-    theme_bw()
+    ggtitle("Top 3 species by mean cover")
 ```
 
 ### All plots combined  
@@ -244,7 +242,7 @@ ggplot(dat) +
     theme(legend.position = "none")
 ```
 
-Species considered to be invasive within each zone are denoted by 'x' in the following table:  
+Species considered to be 'invasive' within each zone are denoted by 'x' in the following table:  
 
 ```{r show-eir-table}
 kableExtra::kable(eir_spps, align = "c") %>% 

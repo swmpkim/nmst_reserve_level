@@ -421,7 +421,10 @@ plot_through_time <- function(data,
                      group = {{group}}, color = {{group}}, fill = {{group}})) +
         geom_point() +
         geom_smooth(method = "loess", se = FALSE) +
-        facet_wrap(enquo(panels))
+        scale_x_continuous(breaks = scales::pretty_breaks()) +
+        facet_wrap(enquo(panels)) +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 
 
