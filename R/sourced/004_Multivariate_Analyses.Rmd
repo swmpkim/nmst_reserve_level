@@ -68,21 +68,6 @@ cat(paste("*", choices), sep="\n")
 
 
 
-```{r, eval = datEnough}
-# get data into a matrix.......
-# response matrix will be column number (Notes + 1) through end?
-
-# explanatory matrix will be column 1 through Notes
-# vegetation zone is present, as is ortho height
-
-# how to best restrict permutations? should i at all?
-
-# and center/scale before calculating distance matrix????? or at least multiply EIR by 100 so it's on the same scale as the cover variables....
-
-
-# null hypothesis is that the community is not changing through time
-```
-
 ```{r stats-define-matrices, eval = datEnough}
 # these were originally done with dat, not dat_multivar
 # using dat_multivar GREATLY reduces the number of columns in the matrix
@@ -160,35 +145,6 @@ keeps2 <- expl_pm %>%
 ```
 
 
-NOTE - this isn't accounting for plots that may not have 4 years of data..... need to remove plots with less than 3 first, probably?
-
-```{r superceded-mod-first-last-years, eval = datEnough}
-# # subset data frame to 'first two years' and 'last two years' (?) 
-# yrs_smpld <- sort(unique(expl$Year))
-# first_yrs <- yrs_smpld[c(1, 2)]
-# last_yrs <- yrs_smpld[c(length(yrs_smpld)-1, length(yrs_smpld))]
-# 
-# if(sum(first_yrs %in% last_yrs) > 0){
-#     print("Not enough years to compare 2 years at the beginning to 2 years at the end; only comparing first year to last year.")
-#     first_yrs <- first_yrs[1]
-#     last_yrs <- last_yrs[2]
-# }
-# 
-# # to only work with first and last years:
-# # use expl to index and subset both that and resp
-# fl_index <- which(expl$Year %in% c(first_yrs, last_yrs))
-# expl_pm <- expl[fl_index, ]
-# resp_pm <- resp[fl_index, ]
-
-# give them a label for 'beginning' or 'end'
-# expl_pm$Zone_Timegroup <- paste(expl_pm$Vegetation_Zone, expl_pm$Time_group, sep = "; ")
-# 
-# env_pm <- expl_pm %>% 
-#     select(Vegetation_Zone, Time_group,
-#            Zone_Timegroup) %>% 
-#     mutate(across(everything(), as.factor))
-```
-
 ```{r show-multivar-df, eval = datEnough}
 resp_names <- data.frame(names(resp))
 kbl_nmst(resp_names,
@@ -255,7 +211,7 @@ for(i in seq_along(zones)){
         simp <- simper(tmp_resp, tmp_expl$Time_group)
         
         # format output
-        simp_df <- summary(simp)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
+        simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
         simp_smaller <- data.frame(lapply(simp_df, round, 4))
         simp_smaller$ava <- round(simp_smaller$ava, 1)
         simp_smaller$avb <- round(simp_smaller$avb, 1)
@@ -322,7 +278,7 @@ if(!datEnough){
 
 If the PERMANOVA for a single zone had a significant p-value (p < 0.05; *not* adjusted for multiple comparisons due to exploratory nature of these analyses), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
 
-"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumsum" is the cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumsum" over 0.7. "p" is a p-value for that species based on permutation tests.  
+"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumulative" is the [scaled, as the averages may not add up to 1] cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests.  
 
 
 ```{r show-simper, results = 'asis', eval = datEnough}

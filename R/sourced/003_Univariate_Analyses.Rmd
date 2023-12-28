@@ -75,7 +75,7 @@ univar_outputs <- list()
 
 Explanation of what EIR is and how it was calculated.  
 
-Species considered to be invasive within each zone are denoted by 'x' in the following table:  
+Species considered to be 'invasive' within each zone are denoted by 'x' in the following table:  
 
 ```{r show-eir-spps}
 kableExtra::kable(eir_spps, align = "c") %>% 
