@@ -14,10 +14,7 @@ library(ggiraph)
 These tabs are the multivariate analyses.  
 
 ```{r mod-multivar-df}
-# widen out the univar data frame
-# it's grouped appropriately for these analyses 
-
-# trying to use more realistic df: grouped by nmst categories
+# use data frame where unvegetated 'species' are grouped by nmst categories
 dat_multivar <- dat_nmst_cats
 ```
 
@@ -69,13 +66,8 @@ cat(paste("*", choices), sep="\n")
 
 
 ```{r stats-define-matrices, eval = datEnough}
-# these were originally done with dat, not dat_multivar
-# using dat_multivar GREATLY reduces the number of columns in the matrix
-# and probably isn't what we want....  
 expl <- dat_multivar[, 1:which(names(dat_multivar) == "Total")]
 resp <- dat_multivar[, (1 + which(names(dat_multivar) == "Total")):ncol(dat_multivar)]
-
-# probably need to scale up to at least namaste categories? e.g. wrack, dead, etc. plus total vegetated?
 
 expl$Zone_Year <- paste(expl$Vegetation_Zone, expl$Year)
 
@@ -151,8 +143,6 @@ kbl_nmst(resp_names,
          col.names = c(""),
          caption = "Species/Groups included in response matrix") %>%
     scroll_box(width = "400px", height = "400px") 
-
-# also make a table of start and end years
 ```
 
 
@@ -307,13 +297,12 @@ if(!datEnough){
 ```{r stats-run-nmds, eval = datEnough}
     mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
                         autotransform = FALSE, trace = 0)
-    # plot(mds_resp, type = "t")
-    
+
     data.scores <- as.data.frame(scores(mds_resp)$sites)
     species.scores <- as.data.frame(scores(mds_resp)$species)
     species.scores$species <- rownames(species.scores) 
     
-    # only keep the species listed as reserve choices, to reduce clutter on graphic
+    # only keep the species/groups listed as reserve choices, to reduce clutter on graphic
     # first get everything to group
     species.scores <- species.scores %>% 
         left_join(species_info, by = c("species" = "Species")) %>% 

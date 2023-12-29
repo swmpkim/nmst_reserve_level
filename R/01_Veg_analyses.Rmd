@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "KAC"
+    file_code: "GRB"
 ---
 
 # About this Document  
@@ -44,7 +44,6 @@ library(DT)
 library(ggplot2)
 library(modelbased)  # for CIs of model predictions
 library(see)  # for CIs of model predictions
-# library(khroma) # for okabeito palette, color-blind-friendly
 library(viridis) # for colorblind-friendly viridis palette
 library(vegan)
 
@@ -118,10 +117,6 @@ spps_live <- species_info$Species[species_info$Cover_Categories == "Live vegetat
 # make sure they're in the data file too; several extras in NE files
 spps_live <- spps_live[which(spps_live %in% names(dat))]
 
-# for troubleshooting: find out if any species in the data frame aren't in the species list
-# spps_live2 <- spps_live[which(spps_live %in% names(dat))]
-# names(dat)[which(!(names(dat) %in% spps_live2)[1:50])]
-
 dat_live <- dat %>% 
     select(all_of(spps_live))
 swdiv <- diversity(dat_live, index = "shannon")
@@ -189,12 +184,6 @@ eir_spps <- eis %>%
 ```{r mod-lump-spps, message = FALSE}
 # combine species  
 
-# top 5, if needed
-# might use these species to supplement univariate analysis tabs  
-top_5_mean <- lump_species(dat_long, "mean", 5)  
-top_5_mean$Species <- relevel_spps(top_5_mean$Species)
-top_5_spps <- unique(top_5_mean$Species)
-
 # top 3, for use in exploratory/spatial graphics
 top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
@@ -225,11 +214,6 @@ dat_nmst_cats <- dat_long %>%
 ```
 
 
-```{r}
-# make a table of what was collapsed above, and show it in qaqc output
-```
-
-
 ```{r define-plots-notEnoughReadings}
 # find plots that don't have readings in at least 3 separate years
 not_enough <- dat %>% 
@@ -246,31 +230,21 @@ not_enough <- dat %>%
 # define color palettes - used in both QAQC and Summary Graphic child rmds
 
 # top 3 species + other
-# palcols_top <- RColorBrewer::brewer.pal(4, "Paired")
-# palcols_top <- khroma::color("okabeito")(4)
 palcols_top <- viridis(5, option = "magma")[1:4]  # don't use the yellow endpoint
 names(palcols_top) <- levels(top_3_mean$Species)
 
 # spatial barplots: up to 3 species/groups + other
-# palcols_spec <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$spat$Species_or_Group)), "Paired")
 n <- min(4, length(unique(anaSpec_dfs$spat$Species_or_Group)))
-# palcols_spec <- khroma::color("okabeito")(n)
 palcols_spec <- viridis(n)
 names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
 
 # univariate exploration: up to 4 species/groups + other
-# palcols_univar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$univar$Species_or_Group)), "Paired")
 n <- min(5, length(unique(anaSpec_dfs$univar$Species_or_Group)))
-# palcols_univar <- khroma::color("okabeito")(n)
 palcols_univar <- viridis(n + 1)[1:n]
 names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
 
 # averaged stacked barplots: up to 8 species/groups + other
-# palcols_multivar <- RColorBrewer::brewer.pal(length(unique(anaSpec_dfs$multivar$Species_or_Group)), "Paired")
 n <- min(9, length(unique(anaSpec_dfs$multivar$Species_or_Group)))
-# if(n <= 8) palcols_multivar <- khroma::color("okabeito")(n)
-# if(n == 9) palcols_multivar <- c(khroma::color("okabeito")(8), "#BBBBBB")
-# names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 palcols_multivar <- viridis(n)
 names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 

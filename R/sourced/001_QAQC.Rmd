@@ -66,26 +66,6 @@ if(nrow(susps) > 0){
 ```
 
 
-```{r mod-categories}
-# all commented out 7/3/23 because I don't think we'll use it
-
-# # Joining by species category  
-# # species group totals 
-# cat_sums <- sum_spp_categories(data = dat)
-# 
-# # join to sampling info, then pivot longer for easier plotting
-# dat_summ <- cbind(dat[, 1:which(names(dat) == "Notes")], cat_sums)
-# names(dat_summ)[which(is.na(names(dat_summ)))] <- "Other"
-# 
-# dat_summ_long <- dat_summ %>% 
-#     pivot_longer(-(Reserve:Notes),
-#                  names_to = "Group",
-#                  values_to = "Cover")
-
-
-```
-
-
 ## Sampling Info  
 
 ### Samples per year  
@@ -224,7 +204,6 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
     geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone) +
     scale_color_manual(values = palcols_sites) +
-    # theme(legend.position = "none") +
     theme_bw() +
     labs(title = "EIR by Site, within Zone")
 ```
