@@ -167,6 +167,7 @@ ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover,
         geom_jitter(alpha = 0.2) +
         geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_univar) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     ggtitle("User-chosen species, all plots combined") +
     theme_bw()
 ```
@@ -177,6 +178,7 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
         geom_jitter(alpha = 0.2) +
         geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_top) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     ggtitle("Top 3 species by mean cover, all plots combined") +
     theme_bw()
 ```
@@ -192,6 +194,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
     theme(legend.position = "none") +
     geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_zones) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
     labs(title = "EIR by Zone",
          subtitle = "as calculated per plot/date combination")
@@ -204,6 +207,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
     geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone) +
     scale_color_manual(values = palcols_sites) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
     labs(title = "EIR by Site, within Zone")
 ```
