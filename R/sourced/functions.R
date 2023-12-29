@@ -387,6 +387,8 @@ make_spec_df <- function(data, specs){
         left_join(species_info, by = "Species") %>% 
         mutate(Species_or_Group = case_when(Species %in% tmp ~ Species,
                                             Plant_Categories %in% tmp ~ Plant_Categories,
+                                            NMST_Groupings %in% tmp ~ NMST_Groupings,
+                                            Cover_Categories %in% tmp ~ Cover_Categories,
                                             .default = "Other")) %>% 
         group_by(Reserve, SiteID, TransectID, PlotID,
                  StTrns, StTrnsPlt,
