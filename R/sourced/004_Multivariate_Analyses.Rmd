@@ -142,7 +142,7 @@ resp_names <- data.frame(names(resp))
 kbl_nmst(resp_names,
          col.names = c(""),
          caption = "Species/Groups included in response matrix") %>%
-    scroll_box(width = "400px", height = "400px") 
+    scroll_box(width = "300px", height = "400px") 
 ```
 
 
