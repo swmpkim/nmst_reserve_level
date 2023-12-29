@@ -268,7 +268,7 @@ if(!datEnough){
 
 If the PERMANOVA for a single zone had a significant p-value (p < 0.05; *not* adjusted for multiple comparisons due to exploratory nature of these analyses), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
 
-"average" is the average contribution of that species to community differences (think of 0.10 as a 10% contribution); "sd" is the standard deviation. "cumulative" is the [scaled, as the averages may not add up to 1] cumulative contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests.  
+"average" is the average contribution of that species to community differences; "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution [averages are not %s but cumulative is scaled] for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.  
 
 
 ```{r show-simper, results = 'asis', eval = datEnough}
@@ -337,9 +337,9 @@ Final 3-dimensional NMDS stress was `r ifelse(datEnough, round(mds_resp$stress, 
 
 #### How to read these NMDS plots  
 
--  Navy diamonds represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
--  Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte). Hovering over the arrow will provide the Species or Category name.  
--  Points represent individual plots and are colored by Vegetation Zone; hovering does not yield output for points.
+-  Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
+-  Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve. Hovering over the arrow will provide the Species or Category name.  
+-  Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.
 
 
 ```{r stats-prep-nmds-groups, eval = datEnough}

@@ -3,24 +3,30 @@
 get_data <- function(file,
                      cover_only = FALSE){
     
+    # generally get the file
     if(cover_only == FALSE){
-        readxl::read_xlsx(file,
+        tmp <- readxl::read_xlsx(file,
                           sheet = "Cover",
-                          guess_max = 5000) %>% 
-            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
-            arrange(Year, Month, Day, SiteID, TransectID, PlotID)
+                          guess_max = 5000) 
     } else {
-        readxl::read_xlsx(file,
+        tmp <- readxl::read_xlsx(file,
                           sheet = "Cover",
                           guess_max = 5000) %>% 
             dplyr::select(-starts_with("Average Canopy Height"),
                           -starts_with("Maximum Canopy Height"),
                           -starts_with("Density"),
                           -starts_with("Height"),
-                          -starts_with("Diameter")) %>% 
-            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
-            arrange(Year, Month, Day, SiteID, TransectID, PlotID)
+                          -starts_with("Diameter"))  
+            
     }
+    
+    # do some selecting and arranging
+    tmp %>% 
+        select(Reserve, SiteID, TransectID, PlotID,
+               Year, Month, Day,
+               Total:ncol(.)) %>% # getting rid of cols that are duplicates from other tables
+        mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
+        arrange(Year, Month, Day, SiteID, TransectID, PlotID)
 }
 
 get_stn_table <- function(file){
@@ -541,12 +547,9 @@ check_singularity <- function(model){
     # model needs to be from lme4
     nm <- enexpr(model)
     mod <- model
-    cat(paste0(nm, ": \n"))
     if(isSingular(mod)){
-        cat("is singular. VarCorr follows. \n \n")
+        cat("This model is singular. Interpret results with caution. The correlation matrix (from R's VarCorr function) follows. \n \n")
         print(summary(mod)$varcor)
         cat("\n \n")
-    } else {
-        cat("fit is okay (not singular) \n \n")
-    }
+    } 
 }

@@ -11,6 +11,8 @@ params:
 
 # About this Document  
 
+## Using the html file  
+
 On the left is a floating table of contents for navigating between major sections of output:  
 
 -  Exploration and QA/QC  
@@ -20,6 +22,12 @@ On the left is a floating table of contents for navigating between major section
 
 Within each major section, content is split into **tabs** that are spread **horizontally** across the screen. By default, the *About* tab for each section is showing. Click on any tab to see specifics.  
 
+
+## General notes about notation, data inclusion, and reserve choices  
+
+-  If a species was identified as being of interest, and the category that species belongs to (e.g. H-Halophyte / B-Brackish / Unvegetated category) was also identified as being of interest, the species takes precedent and the category represents only the *other* species in that category. The species itself is not represented in both.  
+-  If a species was identified as belonging to an "Other layer" - something like canopy wrack, or water when whatever is below the water is also measured - it was removed before any of these analyses (including exploratory graphics).  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE,
@@ -27,7 +35,6 @@ knitr::opts_chunk$set(echo = FALSE,
                       error = TRUE)
 ```
 
-**changed file paths here for new file naming after manual formatting**  
 
 ```{r pkgs-paths, message = FALSE, warning = FALSE}
 # library(Hmisc)
@@ -99,11 +106,16 @@ susps <- find_suspect_values(dat, "-3")
 
 
 dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values. also removes F_columns.
-dat <- remove_unsampleds(dat)  # should get rid of any dates where a plot was not sampled or was entirely rejected. 
+dat <- remove_unsampleds(dat)  # get rid of any dates where a plot was not sampled or was entirely rejected. 
 
 
 dat <- na_to_0(dat)  # turn remaining NAs into 0s - this first makes sure all species columns are numeric
 
+# remove 'Other layer' species
+otherLayers <- unlist(species_info[species_info$Cover_Categories == "Other layer", "Species"])
+dat <- dat %>% 
+    select(-any_of(otherLayers))
+rm(otherLayers)
 
 dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
 dat_long <- dat %>%
