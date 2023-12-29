@@ -465,7 +465,9 @@ plot_nmds <- function(scores = data.scores,
     ggplot() +
         geom_point(data = scores,
                    aes(x = !!ensym(xax), y = !!ensym(yax),
-                       col = Zone_abbrev),
+                       col = Zone_abbrev,
+                       fill = Zone_abbrev,
+                       shape = Time_group),
                    size = 1, alpha = 0.5) +
         geom_segment_interactive(data = species, 
                                  aes(x = 0, y = 0,
@@ -515,7 +517,7 @@ plot_nmds <- function(scores = data.scores,
         scale_fill_manual(values = pals_zone_abbrev) +
         scale_shape_manual(values = c(22, 23)) +
         labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
-             subtitle = "Diamonds: Zone/Time centroids. Arrows: Species.") +
+             subtitle = "Large points: Zone/Time centroids. Arrows: Species or Groups.") +
         theme(legend.position = "none")
 }
 

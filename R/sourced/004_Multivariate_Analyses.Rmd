@@ -314,8 +314,22 @@ if(!datEnough){
     species.scores$species <- rownames(species.scores) 
     
     # only keep the species listed as reserve choices, to reduce clutter on graphic
+    # first get everything to group
     species.scores <- species.scores %>% 
-        filter(species %in% unique(anaSpec_list$multivar$Choice))
+        left_join(species_info, by = c("species" = "Species")) %>% 
+        mutate(Species_or_Group = case_when(species %in% choices ~ species,
+                                            Plant_Categories %in% choices ~ Plant_Categories,
+                                            NMST_Groupings %in% choices ~ NMST_Groupings,
+                                            Cover_Categories %in% choices ~ Cover_Categories,
+                                            .default = "Other")) %>% 
+        filter(Species_or_Group %in% choices) %>% 
+        select(species = Species_or_Group,
+               NMDS1,
+               NMDS2,
+               NMDS3)
+    
+    # then find centroids for the species-or-groups
+    species.scores <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ species, data = species.scores, FUN = mean)
     
     # data.scores$Vegetation_Zone <- expl$Vegetation_Zone
     # data.scores$Year <- expl$Year
