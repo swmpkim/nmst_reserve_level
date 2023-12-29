@@ -1,5 +1,5 @@
 ---
-title: "Veg Analysis"
+title: "Veg Analysis: `r params$file_code`"
 output: 
     html_document:
         toc: true
