@@ -57,6 +57,8 @@ In this section, we use ordination to visualize and analyze plant communities th
 
 The following species/groups were identified by the reserve as important loading factors to display on NMDS outputs.  
 
+Sometimes these species do not appear on the plots; usually that is because all data points for that species were 0 or very close to it.     
+
 ```{r show-userChoice-multivar, results = 'asis'}
 choices <- anaSpec_list$multivar$Choice
 choices <- choices[!is.na(choices)]
@@ -337,13 +339,14 @@ if(!datEnough){
 
 ***  
 
-Final 3-dimensional NMDS stress was `r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`.  
+Final 3-dimensional NMDS stress was **`r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`**.  
 
 #### How to read these NMDS plots  
 
 -  Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
 -  Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve. Hovering over the arrow will provide the Species or Category name.  
--  Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.
+-  Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.  
+-  Some identified loading factors may not appear as arrows; this is usually because all data points for that species were 0. They may also have been too low to have produced species scores in the NMDS.  
 
 
 ```{r stats-prep-nmds-groups, eval = datEnough}
