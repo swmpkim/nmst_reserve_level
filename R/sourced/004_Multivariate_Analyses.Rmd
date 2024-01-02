@@ -15,7 +15,11 @@ These tabs are the multivariate analyses.
 
 ```{r mod-multivar-df}
 # use data frame where unvegetated 'species' are grouped by nmst categories
-dat_multivar <- dat_nmst_cats
+# dat_multivar <- dat_nmst_cats
+
+# use the entire data frame - only group up for loading factors of interest
+dat_multivar <- dat %>% 
+    select(-any_of(c("EIR", "swdiv", "richness")))
 ```
 
 ```{r}
@@ -81,7 +85,7 @@ env <- expl %>%
 
 ```{r mod-first-last-years, eval = datEnough}
 # find first and last years by zone
-start_ends <- dat_nmst_cats %>% 
+start_ends <- dat_multivar %>% 
     group_by(Vegetation_Zone, Year) %>% 
     tally() %>% 
     group_by(Vegetation_Zone) %>% 
