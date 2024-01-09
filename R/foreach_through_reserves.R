@@ -12,10 +12,10 @@ reserves2 <- c("CBV", "DEL-SJR", "GTM", "MAR", "NAR", "NIW",
               "NOC-MI", "SOS", "TJR")
 
 # batch 3
-reserves <- c("CBM-OPC", "GND", "GRB", "HUD-PIER", "HUD-TIV",
-               "KAC", "WQB")
+reserves3 <- c("CBM-OPC", "GND", "GRB", "HUD-PIER", "HUD-TIV",
+               "KAC", "WQB", "ACE")
 
-# reserves <- c(reserves1, reserves2, reserves3)
+reserves <- sort(c(reserves1, reserves2, reserves3))
 
 # 
 # cl<-makeCluster(8)  
