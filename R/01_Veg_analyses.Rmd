@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "MAR"
+    file_code: "GRB"
 ---
 
 # About this Document  
@@ -52,6 +52,7 @@ library(ggplot2)
 library(modelbased)  # for CIs of model predictions
 library(see)  # for CIs of model predictions
 library(viridis) # for colorblind-friendly viridis palette
+library(khroma)  # for colorblind-friendly palettes
 library(vegan)
 
 
@@ -238,7 +239,7 @@ not_enough <- dat %>%
 ```
 
 
-```{r define-color-pals}
+```{r define-color-pals-viridis, eval = FALSE}
 # define color palettes - used in both QAQC and Summary Graphic child rmds
 
 # top 3 species + other
@@ -272,6 +273,47 @@ n <- length(unique(stn_tbl$SiteID))
 palcols_sites <- viridis(n+1, option = "magma")[1:n]  # don't use the yellow endpoint
 names(palcols_sites) <- unique(stn_tbl$SiteID)
 ```
+
+
+```{r define-color-pals-tol}
+# define color palettes - used in both QAQC and Summary Graphic child rmds
+
+# khroma package has 2 qualitative schemes that go up to 9 classes:
+# https://packages.tesselle.org/khroma/articles/tol.html#qualitative-data # muted and light
+
+# top 3 species + other
+palcols_top <- color("bright")(4)
+names(palcols_top) <- levels(top_3_mean$Species)
+
+# spatial barplots: up to 3 species/groups + other
+n <- min(4, length(unique(anaSpec_dfs$spat$Species_or_Group)))
+palcols_spec <- color("muted")(n)
+names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
+
+# univariate exploration: up to 4 species/groups + other
+n <- min(5, length(unique(anaSpec_dfs$univar$Species_or_Group)))
+palcols_univar <- color("muted")(n)
+names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
+
+# averaged stacked barplots: up to 8 species/groups + other
+n <- min(9, length(unique(anaSpec_dfs$multivar$Species_or_Group)))
+palcols_multivar <- color("muted")(n)
+names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
+
+
+# also want zone colors to be consistent
+n <- length(zone_factor)
+palcols_zones <- color("muted")(n)
+names(palcols_zones) <- levels(zone_factor)
+
+
+# and site id
+n <- length(unique(stn_tbl$SiteID))
+palcols_sites <- color("bright")(n)
+names(palcols_sites) <- unique(stn_tbl$SiteID)
+```
+
+
 
 # Exploration and QA/QC {.tabset}  
 
