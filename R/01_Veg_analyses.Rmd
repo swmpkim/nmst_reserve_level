@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "GRB"
+    file_code: "ELK"
 ---
 
 # About this Document  
@@ -308,8 +308,14 @@ names(palcols_zones) <- levels(zone_factor)
 
 
 # and site id
+# bright color palette only supports 7 colors,
+# so choose another palette if there are >7 sites
 n <- length(unique(stn_tbl$SiteID))
-palcols_sites <- color("bright")(n)
+if(n <= 7){
+    palcols_sites <- color("bright")(n)
+} else {
+    palcols_sites <- color("sunset")(n)  # this palette will linearly interpolate if there are too many
+}
 names(palcols_sites) <- unique(stn_tbl$SiteID)
 ```
 
