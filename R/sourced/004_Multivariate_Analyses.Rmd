@@ -219,7 +219,7 @@ for(i in seq_along(zones)){
         
         # if permanova wasn't significant, save a placeholder in the list   
     } else {
-        simps[[i]] <- data.frame("None" = "SIMPER not run; PERMANOVA p-value > 0.2")
+        simps[[i]] <- data.frame("None" = "SIMPER not run")
     }
     
     names(simps)[[i]] <- as.character(zn)
