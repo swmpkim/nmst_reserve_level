@@ -196,6 +196,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
     scale_color_manual(values = palcols_zones) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "EIR by Zone",
          subtitle = "as calculated per plot/date combination")
 ```
@@ -209,6 +210,7 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
     scale_color_manual(values = palcols_sites) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "EIR by Site, within Zone")
 ```
 

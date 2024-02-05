@@ -53,6 +53,7 @@ anaSpec_dfs$multivar %>%
     facet_wrap(~Vegetation_Zone) +
     scale_fill_manual(values = palcols_multivar) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
 ```
@@ -73,6 +74,7 @@ top_3_mean %>%
     facet_wrap(~Vegetation_Zone) +
     scale_fill_manual(values = palcols_top) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Zone")
 ```
@@ -94,6 +96,7 @@ anaSpec_dfs$multivar %>%
     facet_wrap(~SiteID) +
     scale_fill_manual(values = palcols_multivar) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
 ```
@@ -112,6 +115,7 @@ top_3_mean %>%
     facet_wrap(~SiteID) +
     scale_fill_manual(values = palcols_top) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site")
 ```
@@ -131,7 +135,9 @@ anaSpec_dfs$multivar %>%
     geom_col(position = "stack") +
     facet_grid(Vegetation_Zone~SiteID) +
     scale_fill_manual(values = palcols_multivar) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8))) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
 ```
@@ -148,7 +154,9 @@ top_3_mean %>%
     geom_col(position = "stack") +
     facet_grid(Vegetation_Zone~SiteID) +
     scale_fill_manual(values = palcols_top) +
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8))) +
     labs(title = "Vegetation Cover through time",
          subtitle = "averaged by Species within Site/Zone combination")
 ```

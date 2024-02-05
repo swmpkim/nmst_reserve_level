@@ -201,8 +201,8 @@ for(i in seq_along(zones)){
     pmvs[[i]] <- broom::tidy(pmvt)
     names(pmvs)[[i]] <- as.character(zn)
     
-    # if permanova was significant, run SIMPER
-    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.05){
+    # if permanova p-value was below 0.2, run SIMPER
+    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.2){
         # run simper
         simp <- simper(tmp_resp, tmp_expl$Time_group)
         
@@ -219,7 +219,7 @@ for(i in seq_along(zones)){
         
         # if permanova wasn't significant, save a placeholder in the list   
     } else {
-        simps[[i]] <- data.frame("None" = "No significant difference indicated by PERMANOVA")
+        simps[[i]] <- data.frame("None" = "SIMPER not run; PERMANOVA p-value > 0.2")
     }
     
     names(simps)[[i]] <- as.character(zn)
@@ -272,7 +272,9 @@ if(!datEnough){
 }
 ```
 
-If the PERMANOVA for a single zone had a significant p-value (p < 0.05; *not* adjusted for multiple comparisons due to exploratory nature of these analyses), indicating a significant community change between the first and last years of monitoring, a SIMPER was performed. The top 6 species in output are below.  
+If the PERMANOVA for a single zone had p-value < 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Post-hoc output' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.** 
+
+The top 6 species in output are below.  
 
 "average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.  
 
