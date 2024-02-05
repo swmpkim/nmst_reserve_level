@@ -202,7 +202,7 @@ for(i in seq_along(zones)){
     names(pmvs)[[i]] <- as.character(zn)
     
     # if permanova p-value was below 0.2, run SIMPER
-    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.2){
+    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.200){
         # run simper
         simp <- simper(tmp_resp, tmp_expl$Time_group)
         
@@ -282,7 +282,7 @@ The top 6 species in output are below.
 ```{r show-simper, results = 'asis', eval = datEnough}
 for(i in seq_along(simps)){
     print(kbl_nmst(x = simps[[i]], 
-                   caption = paste0("Vegetation Zone: ", names(simps)[i], " - SIMPER results"),
+                   caption = paste0(names(simps)[i], " SIMPER results; PERMANOVA p = ", round(pmvs_summ$p.value[i], 3)),
                    digits = 4)
     )
 }
