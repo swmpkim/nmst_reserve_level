@@ -17,6 +17,9 @@ reserves3 <- c("CBM-OPC", "GND", "GRB", "HUD-PIER", "HUD-TIV",
 
 reserves <- sort(c(reserves1, reserves2, reserves3))
 
+# ACE only
+reserves <- c("ACE-EIN", "ACE-EIS")
+
 # 
 # cl<-makeCluster(8)  
 # registerDoParallel(cl)

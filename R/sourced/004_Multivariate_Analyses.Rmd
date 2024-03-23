@@ -208,6 +208,8 @@ for(i in seq_along(zones)){
         
         # format output
         simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
+        # in case there are fewer than 6 species, get rid of empty rows
+        simp_df <- janitor::remove_empty(simp_df, "rows")
         simp_smaller <- data.frame(lapply(simp_df, round, 4))
         simp_smaller$ava <- round(simp_smaller$ava, 1)
         simp_smaller$avb <- round(simp_smaller$avb, 1)
