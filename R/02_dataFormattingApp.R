@@ -38,20 +38,25 @@ ui <- fluidPage(
     selectInput("file", "Which file would you like to use?", 
                 dir(here::here("data"))),
     
-    # Sidebar ----
+    # Sidebar: User Choices ----
     sidebarLayout(
         sidebarPanel(
             "Choose options for generating CDMO-formatted file, 
             \nand click 'Update' button below when completed",
             br(),
             br(),
-            selectInput("unvegspps", 
-                        label = "What species should be included in 'Unvegetated'?",
+            selectInput("yrchoice", 
+                        label = "What year(s) to work with?",
                         choices = NULL,
                         multiple = TRUE),
             br(),
-            selectInput("yrchoice", 
-                        label = "What year(s) to work with?",
+            selectInput("excludespps",
+                        label = "What species (if any) to exclude from CDMO reporting?",
+                        choices = NULL,
+                        multiple = TRUE),
+            br(),
+            selectInput("unvegspps", 
+                        label = "What species should be included in 'Unvegetated'?",
                         choices = NULL,
                         multiple = TRUE),
             br(),
@@ -125,7 +130,8 @@ server <- function(input, output, session) {
     })
     output$preview <- DT::renderDataTable(dat()[1:10, ])
     
-    # Observe when the data frame changes and update the selectInput choices ----
+    # UI choice updates ----
+    # Observe when the data frame changes and update the selectInput choices
     observe({
         req(dat())  
         dat_yrs <- unique(dat()$Year)  # Extract unique categories
@@ -133,6 +139,7 @@ server <- function(input, output, session) {
         
         dat_spps <- names(dat())[(which(names(dat()) == "Total") + 1):20]
         updateSelectInput(session, "unvegspps", choices = dat_spps)
+        updateSelectInput(session, "excludespps", choices = dat_spps)
     })
     
     # GENERATE PREVIEW FOR SUMMARY ----
@@ -193,15 +200,25 @@ server <- function(input, output, session) {
     dat_cdmo_measurements <- eventReactive(input$choices_made, {
         tmp <- dat()
         
+        # deal with year choices
         if(!is.null(input$yrchoice)){
             tmp <- tmp %>% 
                 dplyr::filter(Year %in% input$yrchoice)
         }
         
+        # pivot to longer; add QAQC column if it's not there 
+        # (in case it is present and used for species named for unvegetated)
         tmp_long <- pivot_to_cdmo(tmp)
-        
         if(!("QAQC" %in% names(tmp_long))) tmp_long$QAQC <- NA
         
+        
+        # deal with choices of species to remove from CDMO reporting
+        if(!is.null(input$excludespps)){
+            tmp_long <- tmp_long %>% 
+                dplyr::filter(!(Species %in% input$excludespps))
+        }
+        
+        # deal with choices of species to lump into "Unvegetated"
         if(!is.null(input$unvegspps)){
             # if only one species, all is well
             if(length(input$unvegspps) == 1){
