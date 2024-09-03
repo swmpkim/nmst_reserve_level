@@ -347,6 +347,44 @@ relevel_spps <- function(data){
 }
 
 
+pivot_to_cdmo <- function(data){
+    dat_long <- data %>% 
+        pivot_longer(-c(Reserve:Total),
+                     names_to = c("param", "Species"),
+                     names_sep = "_",
+                     values_to = "value") %>% 
+        mutate(Species = case_when(is.na(Species) ~ param,
+                                   .default = Species),
+               param = case_when(param == Species ~ "Cover",
+                                 .default = param),
+               Date = lubridate::ymd(paste(Year,
+                                           Month,
+                                           Day)),
+               Date = format(Date, "%m/%d/%Y")) %>% 
+        filter(!is.na(value)) %>% 
+        select(-c(Total, Year, Month, Day)) %>% 
+        pivot_wider(names_from = param,
+                    values_from = value)
+    
+    dat_cdmo_measurements <- dat_long %>% 
+        select(any_of(c(
+            "Reserve",
+            "Date",
+            "SiteID",
+            "TransectID",
+            "PlotID",
+            "Species",
+            "Cover",
+            "Density",
+            ends_with("Height"),
+            "QAQC" = "F"
+        ) ) ) %>% 
+        arrange(Date, SiteID, TransectID, PlotID, Species)
+    
+    return(dat_cdmo_measurements)
+}
+
+
 # Joins ----  
 
 join_zones <- function(data = dat,
