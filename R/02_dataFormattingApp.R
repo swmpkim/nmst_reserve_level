@@ -33,53 +33,68 @@ source(here::here('R', 'sourced', 'functions.R'))
 
 # UI ----  
 ui <- fluidPage(
+    
     h3("Namaste Veg File Exploration"),
     selectInput("file", "Which file would you like to use?", 
                 dir(here::here("data"))),
     
-    tabsetPanel(type = "tabs", id = "tabselected",
-                
-                tabPanel("1. Review data",
-                         value = 1,
-                         br(),
-                         "Some key features of this file are:",
-                         br(),
-                         verbatimTextOutput("summary"),
-                         br(),
-                         "And here is a preview:", 
-                         tableOutput("preview"),
-                         br()
-                         ),
-                
-                tabPanel("2. Choose options",
-                         value = 2,
-                         br(),
-                         selectInput("unvegspps", 
-                                     label = "What species should be included in 'Unvegetated'?",
-                                     choices = NULL,
-                                     multiple = TRUE),
-                         br(),
-                         selectInput("yrchoice", 
-                                     label = "What year(s) to work with?",
-                                     choices = NULL,
-                                     multiple = TRUE),
-                         br(),
-                         radioButtons("htdens", 
-                                      label = "Include Height and Density?",
-                                      choices = c("yes", "no"))),
-                
-                tabPanel("3. Preview CDMO layout",
-                         value = 3,
-                         h4("Preview of CDMO-shaped data"),
-                         tableOutput("long")),
-                
-                tabPanel("4. Download CDMO layout",
-                         value = 4,
-                         h4("Click the button below to download"),
-                         downloadButton("download_cdmo", 
-                                        label = "Download")
-                         )
-    
+    sidebarLayout(
+        sidebarPanel(
+            "Choose options",
+            br(),
+            selectInput("unvegspps", 
+                        label = "What species should be included in 'Unvegetated'?",
+                        choices = NULL,
+                        multiple = TRUE),
+            br(),
+            selectInput("yrchoice", 
+                        label = "What year(s) to work with?",
+                        choices = NULL,
+                        multiple = TRUE),
+            br(),
+            radioButtons("htdens", 
+                         label = "Include Height and Density?",
+                         choices = c("yes", "no"))
+        ),
+        mainPanel(
+            tabsetPanel(type = "tabs", id = "tabselected",
+                        
+                        tabPanel("1. Review data",
+                                 value = 1,
+                                 br(),
+                                 "Some key features of this file are:",
+                                 br(),
+                                 verbatimTextOutput("summary"),
+                                 br(),
+                                 h4("Sampling Summary: "),
+                                 br(),
+                                 "# samples by site/year",
+                                 tableOutput("sampling_summary"),
+                                 br(),
+                                 h4("Missing samples: "),
+                                 br(),
+                                 uiOutput("missing_samples"),
+                                 br(),
+                                 h4("Raw data table: "),
+                                 br(),
+                                 tableOutput("preview"),
+                                 br()
+                        ),
+                        
+                        tabPanel("2. Preview CDMO layout",
+                                 value = 2,
+                                 h4("Preview of CDMO-shaped data"),
+                                 tableOutput("long")
+                        ),
+                        
+                        tabPanel("3. Download CDMO layout",
+                                 value = 3,
+                                 h4("Click the button below to download"),
+                                 downloadButton("download_cdmo", 
+                                                label = "Download")
+                        )
+            )
+        )
     )
 )
 
@@ -90,11 +105,17 @@ server <- function(input, output, session) {
     # READ IN DATA -----
     dat <- reactive({
         req(input$file)
-        get_data(here::here("data", input$file), 
+        tmp <- get_data(here::here("data", input$file), 
                  cover_only = ifelse(input$htdens == "yes",
                                      FALSE,
                                      TRUE))
+        tmp <- tmp %>%
+            mutate(across(c(Year, Month, Day), as.integer))
+        
+        tmp
     })
+    output$preview <- renderTable(dat()[1:10, 1:10],
+                                  digits = 1)
     
     # Observe when the data frame changes and update the selectInput choices
     observe({
@@ -113,16 +134,63 @@ server <- function(input, output, session) {
                     "Years Sampled" = unique(dat()$Year))
         out
     })
+    output$summary <- renderPrint(dat_summ())
+    
+    
+    # SAMPLING SUMMARY
+    dat_sampling_summary <- reactive({
+        req(dat())
+        dat() %>% 
+            group_by(SiteID, Year) %>% 
+            tally() %>% 
+            arrange(Year, SiteID) %>% 
+            rename(Site = SiteID) %>% 
+            pivot_wider(names_from = Year,
+                        values_from = n,
+                        values_fill = 0) %>% 
+            arrange(Site) 
+    })
+    output$sampling_summary <- renderTable(dat_sampling_summary())
+
+    
+    
+    # MISSING DATA
+    unsampds <- reactive({
+        req(dat())
+        
+        tmp <- find_unsampleds(dat())
+        
+        if (nrow(tmp) == 0) {
+            return(NULL)  # No missing data, return NULL
+        } else {
+            return(tmp)  # Return the data frame with missing data
+        }
+    })
+    # render output, conditionally
+    output$missing_samples_table <- renderTable({
+        req(unsampds())  # Ensure there is data to display
+        unsampds()
+    })
+    output$missing_samples <- renderUI({
+        if (is.null(unsampds())) {
+            h5("No missing data")
+        } else {
+            tableOutput("missing_samples_table")
+        }
+    })
+    
+    
     
     # PIVOT DATA
     dat_cdmo_measurements <- reactive({
         pivot_to_cdmo(dat())
     })
+    output$long <- renderTable(dat_cdmo_measurements()[1:10, ],
+                               digits = 1)
     
-    # OUTPUTS  
-    output$preview <- renderTable(dat()[1:10, 1:10])
-    output$summary <- renderPrint(dat_summ())
-    output$long <- renderTable(dat_cdmo_measurements()[1:10, ])
+    
+    
+    # DOWNLOAD DATA  
     output$download_cdmo <- downloadHandler(
         filename = function() {
             paste0("download ", as.character(Sys.time()), ".xlsx")
