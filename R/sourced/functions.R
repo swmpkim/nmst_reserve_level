@@ -1,7 +1,8 @@
 # Importing ----
 
 get_data <- function(file,
-                     cover_only = FALSE){
+                     cover_only = FALSE,
+                     keep_all_cols = FALSE){
     
     # generally get the file
     if(cover_only == FALSE){
@@ -21,12 +22,18 @@ get_data <- function(file,
     }
     
     # do some selecting and arranging
+    if(keep_all_cols == FALSE) {
     tmp %>% 
         select(Reserve, SiteID, TransectID, PlotID,
                Year, Month, Day,
                Total:ncol(.)) %>% # getting rid of cols that are duplicates from other tables
         mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
         arrange(Year, Month, Day, SiteID, TransectID, PlotID)
+    } else {
+        tmp %>% 
+            mutate(across(c(Reserve, SiteID, TransectID, PlotID), as.character)) %>% 
+            arrange(Year, Month, Day, SiteID, TransectID, PlotID)
+    }
 }
 
 get_stn_table <- function(file){
@@ -348,7 +355,17 @@ relevel_spps <- function(data){
 
 
 pivot_to_cdmo <- function(data){
-    dat_long <- data %>% 
+    # updated from original form 10/8/24
+    # original form is commented out below - was used during data wrangling
+    
+    
+    # remove character columns (F_) from others
+    # pull out data, and remove any non-present values
+    # if somtehing is missing but flagged with a qaqc code,
+    # that code will be retained while pivoting the F_ columns
+    # so the row will still appear, because I'll use a full join
+    dat_data <- data %>% 
+        select(-starts_with("F_")) %>% 
         pivot_longer(-c(Reserve:Total),
                      names_to = c("param", "Species"),
                      names_sep = "_",
@@ -356,32 +373,84 @@ pivot_to_cdmo <- function(data){
         mutate(Species = case_when(is.na(Species) ~ param,
                                    .default = Species),
                param = case_when(param == Species ~ "Cover",
-                                 .default = param),
-               Date = lubridate::ymd(paste(Year,
-                                           Month,
-                                           Day)),
-               Date = format(Date, "%m/%d/%Y")) %>% 
+                                 .default = param)) %>% 
         filter(!is.na(value)) %>% 
-        select(-c(Total, Year, Month, Day)) %>% 
+        select(-c(Total)) %>% 
         pivot_wider(names_from = param,
                     values_from = value)
     
-    dat_cdmo_measurements <- dat_long %>% 
-        select(any_of(c(
-            "Reserve",
-            "Date",
-            "SiteID",
-            "TransectID",
-            "PlotID",
-            "Species",
-            "Cover",
-            "Density",
-            ends_with("Height"),
-            "QAQC" = "F"
-        ) ) ) %>% 
+    # pull out QAQC, but only keep codes
+    dat_qaqc <- data %>% 
+        select(Reserve:Total,
+               starts_with("F_")) %>% 
+        mutate(across(starts_with("F_"),
+                      as.character)) %>% 
+        pivot_longer(-c(Reserve:Total),
+                     names_to = c("param", "Species"),
+                     names_sep = "_",
+                     values_to = "QAQC") %>% 
+        select(-param) %>% 
+        filter(!is.na(QAQC))
+    
+    dat_full <- full_join(dat_data, dat_qaqc) %>% 
+        arrange(Year, Month, Day, SiteID, TransectID, PlotID, Species)
+    
+    dat_cdmo <- dat_full %>% 
+        mutate(Date = lubridate::ymd(paste(Year,
+                                           Month,
+                                           Day)),
+               Date = format(Date, "%m/%d/%Y")) %>% 
+        select(
+            Reserve,
+            Date,
+            SiteID,
+            TransectID,
+            PlotID,
+            Species,
+            Cover,
+            any_of(c("Density")),  # might not be present
+            ends_with("Height"),   # is okay present and will capture variations. also okay to not be present.
+            -Orthometric_Height,
+            QAQC
+        ) %>% 
         arrange(Date, SiteID, TransectID, PlotID, Species)
     
-    return(dat_cdmo_measurements)
+    return(dat_cdmo)
+    
+    # dat_long <- data %>% 
+    #     pivot_longer(-c(Reserve:Total),
+    #                  names_to = c("param", "Species"),
+    #                  names_sep = "_",
+    #                  values_to = "value") %>% 
+    #     mutate(Species = case_when(is.na(Species) ~ param,
+    #                                .default = Species),
+    #            param = case_when(param == Species ~ "Cover",
+    #                              .default = param),
+    #            Date = lubridate::ymd(paste(Year,
+    #                                        Month,
+    #                                        Day)),
+    #            Date = format(Date, "%m/%d/%Y")) %>% 
+    #     filter(!is.na(value)) %>% 
+    #     select(-c(Total, Year, Month, Day)) %>% 
+    #     pivot_wider(names_from = param,
+    #                 values_from = value)
+    # 
+    # dat_cdmo_measurements <- dat_long %>% 
+    #     select(any_of(c(
+    #         "Reserve",
+    #         "Date",
+    #         "SiteID",
+    #         "TransectID",
+    #         "PlotID",
+    #         "Species",
+    #         "Cover",
+    #         "Density",
+    #         ends_with("Height"),
+    #         "QAQC" = "F"
+    #     ) ) ) %>% 
+    #     arrange(Date, SiteID, TransectID, PlotID, Species)
+    # 
+    # return(dat_cdmo_measurements)
 }
 
 
@@ -556,7 +625,7 @@ plot_nmds <- function(scores = data.scores,
                           label.size = NA,
                           label.padding = 0.2,
                           fill = alpha(c("white"),0.9)) +
-        # theme_bw() +
+        theme_bw() +
         scale_color_manual(values = pals_zone_abbrev) +
         scale_fill_manual(values = pals_zone_abbrev) +
         scale_shape_manual(values = c(22, 23)) +

@@ -7,6 +7,7 @@ output: html_document
 library(vegan)
 library(ggrepel)
 library(ggiraph)
+library(plotly)
 ```
 
 ## About  
@@ -169,6 +170,7 @@ if(!datEnough){
 
 ```{r stats-run-permanova, eval = datEnough}
 pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
+               by = "terms",
         method = "bray",
         permutations = 999)
 
@@ -195,7 +197,7 @@ for(i in seq_along(zones)){
     
     # run permanova
     pmvt <- adonis2(tmp_resp ~ Time_group, data = tmp_expl,
-                    method = "bray")
+                    method = "bray", by = "terms")
     
     # save formatted output to list
     pmvs[[i]] <- broom::tidy(pmvt)
@@ -345,6 +347,78 @@ if(!datEnough){
 
 Final 3-dimensional NMDS stress was **`r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`**.  
 
+#### 3-d NMDS plot  
+
+
+
+```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
+# set up zone colors
+zone_cols <- as.vector(palcols_zones)
+names(zone_cols) <- NULL
+
+# main plot - points for each zone
+# (no centroids)
+fig <- plot_ly() %>% 
+    add_trace(data = data.scores,
+              type = "scatter3d",
+              mode = "markers",
+              x = ~NMDS1,
+              y = ~NMDS2,
+              z = ~NMDS3,
+              color = ~Zone_abbrev,
+              colors = zone_cols,
+              symbol = ~Time_group,
+              symbols = c("circle", "square"),
+              marker = list(size = 5,
+                            opacity = 0.5)
+    ) 
+
+# now add lines, text, and cross-hatches for each identified loading
+for (i in 1:nrow(species.scores)) {
+    fig <- fig %>% 
+        add_paths(
+            x = c(0, species.scores$NMDS1[i]),
+            y = c(0, species.scores$NMDS2[i]),
+            z = c(0, species.scores$NMDS3[i]),
+            # type = "scatter3d",
+            mode = "lines",
+            line = list(color = "red", width = 4),
+            showlegend = FALSE
+        )  |>
+        add_text(
+            x = species.scores$NMDS1[i],
+            y = species.scores$NMDS2[i],
+            z = species.scores$NMDS3[i],
+            text = species.scores$species[i],
+            textfont = list(color = "red", size = 12),
+            showlegend = FALSE
+        )  %>% 
+        add_trace(
+            type = "scatter3d",
+            mode = "markers",
+            x = species.scores$NMDS1[i],
+            y = species.scores$NMDS2[i],
+            z = species.scores$NMDS3[i],
+            marker = list(size = 6,
+                          color = "red",
+                          symbol = "cross"),
+            showlegend = FALSE
+        )
+        
+}
+
+# save the plot to another file
+NMDS_outname <- paste0("NMDS-3d_", params$file_code, "_", Sys.Date(), ".html")
+saveWidget(fig, file = here::here("output", NMDS_outname), selfcontained = TRUE)
+
+# print the plot
+fig
+```
+
+#### 2-dimensional NMDS plot  
+
+(first two axes only)  
+
 #### How to read these NMDS plots  
 
 -  Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
@@ -372,8 +446,8 @@ en_coord_cat <- cent %>%
 
 
 
-```{r stats-graph-nmds-centroids, fig.width = 7, fig.height = 7, eval = datEnough}
-p <- plot_nmds()
+```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 6, eval = datEnough}
+p <- plot_nmds() 
 girafe(ggobj = p,
        width_svg = 6,
        height_svg = 5,
@@ -381,20 +455,20 @@ girafe(ggobj = p,
        height = 0.6
        )
 # geom_text_repel is not yet implemented in plotly
-
-p2 <- plot_nmds(axes = c(1, 3))
-girafe(ggobj = p2,
-       width_svg = 6,
-       height_svg = 5,
-       width = 0.8,
-       height = 0.6)
-
-p3 <- plot_nmds(axes = c(2, 3))
-girafe(ggobj = p3,
-       width_svg = 6,
-       height_svg = 5,
-       width = 0.8,
-       height = 0.6)
+# 
+# p2 <- plot_nmds(axes = c(1, 3))
+# girafe(ggobj = p2,
+#        width_svg = 6,
+#        height_svg = 5,
+#        width = 0.8,
+#        height = 0.6)
+# 
+# p3 <- plot_nmds(axes = c(2, 3))
+# girafe(ggobj = p3,
+#        width_svg = 6,
+#        height_svg = 5,
+#        width = 0.8,
+#        height = 0.6)
 
 ```
 
