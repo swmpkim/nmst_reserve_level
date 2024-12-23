@@ -158,7 +158,8 @@ p <- ggplot(mod_cld, aes(x = reorder(Vegetation_Zone, Years_sinceStart.trend),
          x = "Vegetation Zone, low to high rate of change",
          y = "change per year") +
     theme_bw() +
-    theme(legend.position = "none")
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1))
 
 if(sig_int){
     p <- p +
@@ -185,7 +186,8 @@ p <- ggplot(mod_cld, aes(x = Vegetation_Zone,
          x = "Vegetation Zone, low to high elevation",
          y = "change per year") +
     theme_bw() +
-    theme(legend.position = "none")
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1))
 
 if(sig_int){
     p <- p +

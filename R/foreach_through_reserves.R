@@ -1,7 +1,7 @@
 library(foreach)
 library(doParallel)
 
-# reserves <- c("GND", "CBV", "NIW", "GTM")
+reserves <- c("GND", "CBV", "NIW", "GTM")
 # 
 # # batch one of manual files
 # reserves1 <- c("APA-LSM",  "APA-PC", "CBM-JB", "CBM-MB", "DEL-BCR",
@@ -50,7 +50,7 @@ foreach(res = reserves) %do% {
     try(
         xfun::Rscript_call(
             rmarkdown::render,
-            list(input = here::here("R", "01_Veg_analyses.Rmd"), 
+            list(input = here::here("R", "99_Veg_analyses.Rmd"), 
                  params = list("file_code" = res),
                  output_file = here::here("output", outname))
         )

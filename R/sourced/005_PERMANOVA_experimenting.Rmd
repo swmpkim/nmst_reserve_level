@@ -3,6 +3,8 @@ title: ''
 output: html_document
 ---
 
+Modifying multivariate analyses to only include first and last year.  
+
 ```{r}
 library(vegan)
 library(ggrepel)
@@ -47,11 +49,10 @@ In this section, we use ordination to visualize and analyze plant communities th
 ### Questions addressed  
 
 -  Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?  
-    -  addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.  
-    -  the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.  
-    -  if the above test indicated significant differences between Vegetation Zones (p $ \leq 0.05 $), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.     
+    -  addressed with PERMANOVA, comparing first two and most recent two years of monitoring. (If there are <4 years of data, only the first and last year are compared)  
+    -  if overall PERMANOVA indicated significant change (p < 0.05), follow-up pairwise PERMANOVAs were run comparing first vs. last years for each zone.  
 -  Which species/groups contribute most to these shifts?  
-    -  addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.  
+    -  addressed using SIMPER, comparing first and last year(s) of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.  
 -  Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
     -  visualized via NMDS.  
 
@@ -86,6 +87,11 @@ env <- expl %>%
 ```
 
 ### Characteristics of multivariate data frame  
+
+# MODIFIED DF SELECTION HERE  
+
+Probably also need to make sure the same plots exist in both the starting and ending years  
+`StTrnsPlt`  
 
 ```{r mod-first-last-years, eval = datEnough}
 # find first and last years by zone
@@ -169,8 +175,38 @@ if(!datEnough){
 }
 ```
 
+# THIS IS WHERE I'M CHANGING THE PERMANOVA  
 
-```{r, eval = datEnough}
+```{r}
+# test data
+testdf <- data.frame("veg_zone" = rep(c("Low Marsh", "High Marsh"), each = 4),
+                     "veg_plot" = rep(c("L.1", "L.2", "H.1", "H.2"), each = 2),
+                     "time" = rep(c("time 1", "time 2"), times = 4))
+```
+
+```{r}
+# option 1 which I think doesn't do what I want
+ctrl <- how(
+    plots = Plots(strata = testdf$veg_plot, type = "free"),   # permute veg plot samples as a unit (both time groups for a plot together get permuted to the same zone)
+    within = Within(type = "free"),  # samples (time group) can be permuted within veg plots
+    )
+
+set.seed(1222)
+testdf[shuffle(testdf, control = ctrl), ]
+# permuted plots and time, but veg zone went with it
+```
+
+
+# ACTUALLY THIS -  
+
+Calculate distance for each plot b/t start and end. then it's univariate. Still permute; is valid to permute raw data, and even recommended when it's a one-way situation (https://learninghub.primer-e.com/books/permanova-for-primer-guide-to-software-and-statistical-methods/page/117-methods-of-permutations)  
+
+
+## 1. Calculate distances for each plot  
+
+Calculate the whole darn distance matrix and then weed it down to plot-wise comparisons.  
+
+```{r}
 # response matrix and data frame
 resp_mat <- vegdist(resp_pm, method = "bray")
 resp_mat.df <- as.data.frame(as.matrix(resp_mat))
@@ -207,8 +243,11 @@ resp_plotwise <- left_join(resp_plotwise,
     relocate(Vegetation_Zone)
 ```
 
+So now the data frame has one row per vegetation plot, and 3 columns: Vegetation Zone, Plot ID, and Bray-Curtis distance between first and last years.  
 
-```{r, eval = datEnough}
+## Calculate observed F statistic  
+
+```{r}
 lm_zonedist <- lm(distance ~ Vegetation_Zone, data = resp_plotwise)
 
 # overall F for model (same as F for Vegetation_Zone, since it's one-way - really this is our interaction, if we would have kept start/end separate) 
@@ -217,7 +256,9 @@ observed_F <- summary(lm_zonedist)$fstatistic[["value"]]
 ```
 
 
-```{r, eval = datEnough}
+## Permute vegetation zone and get permutation distribution  
+
+```{r}
 nperm <- 999
 permuted_F <- numeric(nperm)
 
@@ -235,38 +276,36 @@ for(i in seq_len(nperm)){
 }
 ```
 
-#### Combine, visualize, calculate p-vals  
+## Combine, visualize, calculate p-vals  
 
-```{r, results = 'asis', eval = datEnough}
+```{r}
 permuted_F <- c(observed_F, permuted_F)
 
 pval_F <- sum(permuted_F >= observed_F) / length(permuted_F)
 
-cat("\n\nH0: community distance between time points is equal across all vegetation zones",
-    "\n\nHa: at least one vegetation zone has different community change than at least one other zone",
-    "\n\nNumber of Permutations: ", nperm, 
-  "\n\nObserved F: ", round(observed_F, 3), "\n\nPermutation-based p-value: ", round(pval_F, 4), "\n"
-)
-
-runZoneByZone <- pval_F <= 0.05 & datEnough == TRUE
-runOverall <- pval_F > 0.05 & datEnough == TRUE
-```
-
-```{r, fig.width = 5, fig.height = 4}
 hist(permuted_F, breaks = 30,
        main = "Permutation distribution")
 abline(v = observed_F, col = "red", lwd = 2, lty = 2)
-mtext("The red line is the observed F value", side = 3, line = 0.5, cex = 0.9)
+
+cat("Observed F: ", round(observed_F, 3))
+cat("Permutation-based p-value: ", round(pval_F, 4))
+
+cat("H0: community distance between time points is equal across all vegetation zones",
+    "\nHa: at least one vegetation zone has different community change than at least one other zone",
+    "\nNumber of Permutations: ", nperm, 
+  "\n\nObserved F: ", round(observed_F, 3), "\nPermutation-based p-value: ", round(pval_F, 4), "\n"
+)
+
 ```
 
 
-### Follow-up  
+# Follow-up  
 
-If the test above was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.  
+If the test above was significant, carry out zone-wise tests. If not, check for overall start vs. end community change.  
 
 Plots are paired with each other - i.e. time points can only be swapped within a plot.  
 
-```{r, results = 'asis'}
+```{r}
 set.seed(1223)
 
 # smaller data frame
@@ -275,37 +314,199 @@ expl_pm2 <- expl_pm %>%
 # set up veg zones
 veg_zones <- levels(expl_pm2$Vegetation_Zone)
 
-pmvs <- list()
-simps <- list()
+if(pval_F <= 0.05){
+    
+    cat("\n\nZONE-BY-ZONE ANALYSIS\n-------------------\n\n")
+    
+    for(i in seq_along(veg_zones)){
+        indices <- which(expl_pm2$Vegetation_Zone == veg_zones[i])
+        
+        resp_zn <- resp_pm[indices, ]
+        expl_zn <- expl_pm2[indices, ]
+        
+        cat("Zone: ", veg_zones[i], "\n\n")
+        print(adonis2(resp_zn ~ Time_group, data = expl_zn,
+                      control = how(blocks = expl_zn$StTrnsPlt), # don't move plots, just swap time stamps within where they are
+                      method = "bray",
+                      by = "margin"))
+        
+        cat("\n--------------------\n\n")
+    }
+    
+} else {
+    
+    cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
+    
+    print(adonis2(resp_pm ~ Time_group, data = expl_pm2,
+                      control = how(blocks = expl_pm2$StTrnsPlt), # don't move plots, just swap time stamps within where they are
+                      method = "bray",
+                      by = "margin"))
+    
+    
+}
+```
+
+
+
+
+
+# THIS IS WHAT I NEED  
+
+Well, in terms of permutations it is, but truly, permuting time within plot - since there are only 2 time points - won't be any different than just calculating a distance between time points per plot and doing a one-way analysis.  
+
+```{r}
+# two steps:
+# first, permute vegetation zones for plots
+# by only using one row per plot
+testdf2 <- testdf %>% 
+    select(veg_zone, veg_plot) %>% 
+    distinct()
+permuted_zones <- testdf2$veg_zone[shuffle(testdf2$veg_zone)]
+permuted_zonesdf <- data.frame("permuted_zone" = permuted_zones,
+                               "veg_plot" = testdf2$veg_plot)
+
+
+# permute time stamps within plot 
+testdf3 <- testdf %>% 
+    select(veg_plot, time)
+ctrl_times <- how(within = Within(type = "free"),
+                  plots = Plots(strata = testdf3$veg_plot,
+                                type = "none"))
+permuted_timesdf <- testdf3[shuffle(testdf3, control = ctrl_times), ]
+
+
+
+# join permuted plot timestamps to permuted zones
+permuted_all <- left_join(permuted_timesdf, permuted_zonesdf,
+                          by = "veg_plot")
+permuted_all
+```
+
+
+Set a seed, then keep running the chunk above, to see how things come out. It seems to work.  
+
+Next thing then is to figure out sums of squares and degrees of freedom - since this isn't a standard design in permute, vegan won't figure it out for me.  
+
+
+What if I just assign all plots to the same block? will it let me shuffle plots around relative to vegetation zones?  
+
+```{r}
+testdf4 <- testdf %>% 
+    mutate(block = 1)
+ctrl_blocks <- how(blocks = testdf4$block,
+                   plots = Plots(strata = testdf4$veg_plot,
+                                 type = "free"),
+                   within = Within(type = "free"))
+
+testdf4[shuffle(testdf4, control = ctrl_blocks), ]
+```
+
+
+# nope  
+
+```{r}
+ctrl <- how(
+    plots = Plots(strata = expl_pm$StTrnsPlt, type = "free"),   # permute veg plot samples as a unit (both time groups for a plot together get permuted to the same zone)
+    within = Within(type = "free"),  # samples (time group) can be permuted within veg plots
+    )
+
+# see what that setup looks like
+ctrl
 
 ```
 
-```{r, results = 'asis', eval = runZoneByZone}
+```{r}
+# make a backup of the data and then do some column selection for example permutations
+expl_pm_backup <- expl_pm
+expl_pm <- expl_pm %>% 
+    select(Vegetation_Zone, StTrnsPlt,
+           Year, Time_group)
 
-for(i in seq_along(veg_zones)){
-    indices <- which(expl_pm2$Vegetation_Zone == veg_zones[i])
+
+# view a few permutations
+set.seed(1220)
+permutations <- shuffleSet(n = nrow(expl_pm), control = ctrl, nset = 5)
+
+# Inspect the original data and permutations
+original_data <- expl_pm[1:10, ]  # First 10 rows of the dataset for demonstration
+perm_examples <- lapply(1:nrow(permutations), function(i) {
+  expl_pm[permutations[i, ], ]
+})
+
+# Print original data and two permuted examples
+cat("Original Data (first 10 rows):\n")
+expl_pm %>% 
+    mutate(rownum = row_number()) %>% 
+    filter(str_starts(StTrnsPlt, "spalt")) %>% 
+    arrange(StTrnsPlt) %>% 
+    head(10)
+
+cat("\nPermuted Example 1:\n")
+perm_examples[[1]] %>% 
+    as.data.frame() %>% 
+    mutate(rownum = row_number()) %>% 
+    filter(str_starts(StTrnsPlt, "spalt")) %>% 
+    arrange(StTrnsPlt) %>% 
+    head(10)
+
+
+cat("\nPermuted Example 2:\n")
+perm_examples[[2]] %>% 
+    as.data.frame() %>% 
+    mutate(rownum = row_number()) %>% 
+    filter(str_starts(StTrnsPlt, "spalt")) %>% 
+    arrange(StTrnsPlt) %>% 
+    head(10)
+
+
+# replace expl_pm with its original
+expl_pm <- expl_pm_backup
+```
+
+
+```{r stats-run-permanova, eval = datEnough}
+pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
+               by = "terms",
+        method = "bray",
+        permutations = 5)
+
+attributes(pmv)$F.perm
+
+testpmv <- adonis2(resp_pm ~ Vegetation_Zone + Time_group, 
+                   data = expl_pm, by = "terms", method = "bray")
+
+kbl_nmst(pmv,
+      digits = c(0, 2, 4, 2, 4),
+      caption = "PERMANOVA table") 
+```
+
+
+```{r stats-perm-posthoc, eval = datEnough}
+# for both follow-ups, want each zone on its own, start vs. end
+
+zones <- unique(expl_pm$Vegetation_Zone)
+pmvs <- list()
+simps <- list()
+
+for(i in seq_along(zones)){
+    # subset data to this zone
+    zn = zones[i]
+    tmp_index <- which(expl_pm$Vegetation_Zone == zn)
+    tmp_resp <- resp_pm[tmp_index, ]
+    tmp_expl <- expl_pm[tmp_index, ]
     
-    resp_zn <- resp_pm[indices, ]
-    expl_zn <- expl_pm2[indices, ]
-    
-    pmvt <- adonis2(resp_zn ~ Time_group, data = expl_zn,
-                    control = how(blocks = expl_zn$StTrnsPlt), # don't move plots, just swap time stamps within where they are
-                    method = "bray",
-                    by = "margin")
-    
-    kbl_nmst(pmvt,
-             digits = c(0, 2, 4, 2, 4),
-             caption = paste0(veg_zones[i], " PERMANOVA table, community difference at start vs. end")) 
-    
+    # run permanova
+    pmvt <- adonis2(tmp_resp ~ Time_group, data = tmp_expl,
+                    method = "bray", by = "terms")
     
     # save formatted output to list
     pmvs[[i]] <- broom::tidy(pmvt)
-    names(pmvs)[[i]] <- as.character(veg_zones[i])
+    names(pmvs)[[i]] <- as.character(zn)
     
     # if permanova p-value was below 0.2, run SIMPER
-    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] <= 0.200){
+    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.200){
         # run simper
-        simp <- simper(resp_zn, expl_zn$Time_group)
+        simp <- simper(tmp_resp, tmp_expl$Time_group)
         
         # format output
         simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
@@ -319,136 +520,14 @@ for(i in seq_along(veg_zones)){
         
         # save output to list
         simps[[i]] <- simp_smaller
+        
         # if permanova wasn't significant, save a placeholder in the list   
     } else {
         simps[[i]] <- data.frame("None" = "SIMPER not run")
     }
     
-    names(simps)[[i]] <- as.character(veg_zones[i])
+    names(simps)[[i]] <- as.character(zn)
 }
-
-pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
-    filter(term == "Time_group") %>% 
-    select('Vegetation Zone', R2, p.value) %>% 
-    mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
-
-print(kbl_nmst(pmvs_summ,
-               digits = 4,
-               caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring"))
-
-
-for(i in seq_along(simps)){
-    print(kbl_nmst(x = simps[[i]], 
-                   caption = paste0(names(simps)[i], " SIMPER results; PERMANOVA p = ", round(pmvs_summ$p.value[i], 3)),
-                   digits = 4)
-    )
-}
-
-```
-
-```{r, results = "asis", eval = runOverall}
-cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
-
-pmv <- adonis2(resp_pm ~ Time_group, data = expl_pm2,
-               control = how(blocks = expl_pm2$StTrnsPlt), # don't move plots, just swap time stamps within where the plot data rows are
-               method = "bray",
-               by = "margin")
-
-# save output to proper list for printing later
-pmvs_summ <- broom::tidy(pmv)
-
-print(kbl_nmst(pmv,
-               digits = c(0, 2, 4, 2, 4),
-               caption = "PERMANOVA table, community difference at start vs. end across all zones") )
-
-
-# run a simper if this test had p <= 0.02
-if(pmv$`Pr(>F)`[row.names(pmv) == "Time_group"] <= 0.200){
-    # run simper
-    simp <- simper(resp_pm, expl_pm$Time_group)
-    
-    # format output
-    simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
-    # in case there are fewer than 6 species, get rid of empty rows
-    simp_df <- janitor::remove_empty(simp_df, "rows")
-    simp_smaller <- data.frame(lapply(simp_df, round, 4))
-    simp_smaller$ava <- round(simp_smaller$ava, 1)
-    simp_smaller$avb <- round(simp_smaller$avb, 1)
-    row.names(simp_smaller) <- row.names(simp_df)
-    names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
-    
-    # save output to list
-    simps[[1]] <- simp_smaller
-} else {
-    simps[[1]] <- data.frame("None" = "SIMPER not run")
-}
-
-names(simps)[[1]] <- "Across all zones"
-```
-
-
-## PRIOR PERMANOVA  
-
-```{r stats-run-permanova, eval = datEnough}
-pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
-               by = "terms",
-        method = "bray",
-        permutations = 999)
-
-
-kbl_nmst(pmv,
-      digits = c(0, 2, 4, 2, 4),
-      caption = "PERMANOVA table") 
-```
-
-
-```{r stats-perm-posthoc, eval = datEnough}
-# # for both follow-ups, want each zone on its own, start vs. end
-# 
-# zones <- unique(expl_pm$Vegetation_Zone)
-# pmvs <- list()
-# simps <- list()
-# 
-# for(i in seq_along(zones)){
-#     # subset data to this zone
-#     zn = zones[i]
-#     tmp_index <- which(expl_pm$Vegetation_Zone == zn)
-#     tmp_resp <- resp_pm[tmp_index, ]
-#     tmp_expl <- expl_pm[tmp_index, ]
-#     
-#     # run permanova
-#     pmvt <- adonis2(tmp_resp ~ Time_group, data = tmp_expl,
-#                     method = "bray", by = "terms")
-#     
-#     # save formatted output to list
-#     pmvs[[i]] <- broom::tidy(pmvt)
-#     names(pmvs)[[i]] <- as.character(zn)
-#     
-#     # if permanova p-value was below 0.2, run SIMPER
-#     if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.200){
-#         # run simper
-#         simp <- simper(tmp_resp, tmp_expl$Time_group)
-#         
-#         # format output
-#         simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
-#         # in case there are fewer than 6 species, get rid of empty rows
-#         simp_df <- janitor::remove_empty(simp_df, "rows")
-#         simp_smaller <- data.frame(lapply(simp_df, round, 4))
-#         simp_smaller$ava <- round(simp_smaller$ava, 1)
-#         simp_smaller$avb <- round(simp_smaller$avb, 1)
-#         row.names(simp_smaller) <- row.names(simp_df)
-#         names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
-#         
-#         # save output to list
-#         simps[[i]] <- simp_smaller
-#         
-#         # if permanova wasn't significant, save a placeholder in the list   
-#     } else {
-#         simps[[i]] <- data.frame("None" = "SIMPER not run")
-#     }
-#     
-#     names(simps)[[i]] <- as.character(zn)
-# }
 ```
 
 
@@ -457,14 +536,14 @@ kbl_nmst(pmv,
 Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
 
 ```{r show-perm-posthoc, eval = datEnough}
-# pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
-#     filter(term == "Time_group") %>% 
-#     select('Vegetation Zone', R2, p.value) %>% 
-#     mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
-# 
-# kbl_nmst(pmvs_summ,
-#       digits = 4,
-#       caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring")
+pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
+    filter(term == "Time_group") %>% 
+    select('Vegetation Zone', R2, p.value) %>% 
+    mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
+
+kbl_nmst(pmvs_summ,
+      digits = 4,
+      caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring")
 ```
 
 
@@ -474,12 +553,12 @@ Was there a community difference between "Start" (first 2 years) and "End" (last
 Note - these individual tables do not contain Bonferroni-adjusted p-values; only the raw values.  
 
 ```{r show-pairwise-perm, results = 'asis', eval = datEnough}
-# for(i in seq_along(pmvs)){
-#     print(kbl_nmst(x = pmvs[[i]], 
-#                 caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
-#                 digits = c(0, 0, 2, 4, 2, 4))
-#           )
-# }
+for(i in seq_along(pmvs)){
+    print(kbl_nmst(x = pmvs[[i]], 
+                caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
+                digits = c(0, 0, 2, 4, 2, 4))
+          )
+}
 ```
 
 </details>

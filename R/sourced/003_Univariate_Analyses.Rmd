@@ -71,11 +71,11 @@ univar_outputs <- list()
 
 
 
-## EIR   
+## EMI   
 
-Explanation of what EIR is and how it was calculated.  
+EMI, Ecotone Migration Index, is the proportional cover of species/covers or species/cover groupings that are expected to increase within a vegetation zone as sea level rises. These species were identified by reserve staff, for each zone, in the 'veg_specs.xlsx' file. 
 
-Species considered to be 'invasive' within each zone are denoted by 'x' in the following table:  
+Species considered to be 'migrators' within each zone are denoted by 'x' in the following table:  
 
 ```{r show-eir-spps}
 kableExtra::kable(eir_spps, align = "c") %>% 
