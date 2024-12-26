@@ -12,9 +12,9 @@ library(gt)
 library(patchwork)
 ```
 
-## About  
+## About
 
-These tabs are the multivariate analyses.  
+These tabs are the multivariate analyses.
 
 ```{r mod-multivar-df}
 # use data frame where unvegetated 'species' are grouped by nmst categories
@@ -41,27 +41,24 @@ if(!datEnough){
 }
 ```
 
+In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
 
-In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use  similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
-  
+### Questions addressed
 
+-   Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?
+    -   addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.\
+    -   the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.\
+    -   if the above test indicated significant differences between Vegetation Zones (p \$ \leq 0.05 \$), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.\
+-   Which species/groups contribute most to these shifts?
+    -   addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.\
+-   Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?
+    -   visualized via NMDS.
 
-### Questions addressed  
+### Reserve output choices
 
--  Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?  
-    -  addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.  
-    -  the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.  
-    -  if the above test indicated significant differences between Vegetation Zones (p $ \leq 0.05 $), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.     
--  Which species/groups contribute most to these shifts?  
-    -  addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.  
--  Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?  
-    -  visualized via NMDS.  
+The following species/groups were identified by the reserve as important loading factors to display on NMDS outputs.
 
-### Reserve output choices  
-
-The following species/groups were identified by the reserve as important loading factors to display on NMDS outputs.  
-
-Sometimes these species do not appear on the plots; usually that is because all data points for that species were 0 or very close to it.     
+Sometimes these species do not appear on the plots; usually that is because all data points for that species were 0 or very close to it.
 
 ```{r show-userChoice-multivar, results = 'asis'}
 choices <- anaSpec_list$multivar$Choice
@@ -72,8 +69,6 @@ cat("Up to 8 species/groups could be identified specifically in outputs of these
 ```{r userChoice-2, results = 'asis'}
 cat(paste("*", choices), sep="\n")
 ```
-
-
 
 ```{r stats-define-matrices, eval = datEnough}
 expl <- dat_multivar[, 1:which(names(dat_multivar) == "Total")]
@@ -87,7 +82,7 @@ env <- expl %>%
     mutate(across(everything(), as.factor))
 ```
 
-### Characteristics of multivariate data frame  
+### Characteristics of multivariate data frame
 
 ```{r mod-first-last-years, eval = datEnough}
 # find first and last years by zone
@@ -112,7 +107,7 @@ fl_index <- !is.na(expl$Time_group)
 expl2 <- expl %>% 
     select(StTrnsPlt, Year, Time_group) %>% 
     janitor::tabyl(StTrnsPlt, Time_group)
-sum(expl2$Start) == sum(expl2$End)
+# sum(expl2$Start) == sum(expl2$End)
 
 expl_pm <- expl[fl_index, ]
 resp_pm <- resp[fl_index, ]
@@ -124,7 +119,6 @@ env_pm <- expl_pm %>%
            Zone_Timegroup) %>% 
     mutate(across(everything(), as.factor))
 ```
-
 
 ```{r show-start-end, eval = datEnough}
 expl_pm %>% 
@@ -146,7 +140,6 @@ keeps2 <- expl_pm %>%
     summarize(Years = paste(unique(Year), collapse = ", "))
 ```
 
-
 ```{r show-multivar-df, eval = datEnough}
 resp_names <- data.frame(names(resp))
 kbl_nmst(resp_names,
@@ -155,10 +148,7 @@ kbl_nmst(resp_names,
     scroll_box(width = "300px", height = "400px") 
 ```
 
-
-
-
-## PERMANOVA  
+## PERMANOVA
 
 ```{r, results = "asis"}
 # if there weren't enough years of data, can't do the rest.
@@ -170,7 +160,6 @@ if(!datEnough){
     cat("\n \nThere were not enough rows of data.")
 }
 ```
-
 
 ```{r, eval = datEnough}
 # response matrix and data frame
@@ -209,7 +198,6 @@ resp_plotwise <- left_join(resp_plotwise,
     relocate(Vegetation_Zone)
 ```
 
-
 ```{r, eval = datEnough}
 lm_zonedist <- lm(distance ~ Vegetation_Zone, data = resp_plotwise)
 
@@ -217,7 +205,6 @@ lm_zonedist <- lm(distance ~ Vegetation_Zone, data = resp_plotwise)
 # are there differences between zones in their response to time?
 observed_F <- summary(lm_zonedist)$fstatistic[["value"]]
 ```
-
 
 ```{r, eval = datEnough}
 nperm <- 999
@@ -250,8 +237,7 @@ runZoneByZone <- pval_F <= 0.05 & datEnough == TRUE
 runOverall <- pval_F > 0.05 & datEnough == TRUE
 ```
 
-
-```{r, eval = datEnough, fig.width = 6, fig.height = 3}
+```{r, eval = datEnough, fig.width = 6, fig.height = 2}
 permtab <- data.frame(a = c("Number of permutations",
                             "Observed F statistic",
                             "Permutation-based p-value"),
@@ -270,8 +256,8 @@ permutedFdf <- data.frame(rep = 1:length(permuted_F),
 
 permplot <- ggplot(permutedFdf) +
     geom_histogram(aes(x = permuted_F),
-                   fill = "cadetblue3",
-                   col = "gray40",
+                   fill = "gray80",
+                   col = "gray30",
                    bins = 30) +
     geom_vline(xintercept = observed_F, 
                col = "red", 
@@ -279,18 +265,18 @@ permplot <- ggplot(permutedFdf) +
                size = 1) +
     theme_bw() +
     labs(title = "Permutation distribution",
-         subtitle = "The red line is the observed F value")
+         subtitle = "The red line is the observed F value",
+         x = "F values in permutations")
 
 # patchwork to display together
 wrap_table(permtabgt) + permplot
 ```
 
+### Zone-wise
 
-### Zone-wise   
+If the test above was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
 
-If the test above was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.  
-
-Plots are paired with each other - i.e. time points can only be swapped within a plot.  
+Plots are paired with each other - i.e. time points can only be swapped within a plot.
 
 ```{r, results = 'asis'}
 set.seed(1223)
@@ -405,8 +391,7 @@ if(pmv$`Pr(>F)`[row.names(pmv) == "Time_group"] <= 0.200){
 names(simps)[[1]] <- "Across all zones"
 ```
 
-
-## SIMPER  
+## SIMPER
 
 ```{r, results = "asis"}
 # if there weren't enough years of data, can't do the rest.
@@ -419,12 +404,11 @@ if(!datEnough){
 }
 ```
 
-If the PERMANOVA for a single zone had p-value < 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Zone-wise' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.** 
+If the PERMANOVA for a single zone had p-value \< 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Zone-wise' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.**
 
-The top 6 species in output are below.  
+The top 6 species in output are below.
 
-"average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.  
-
+"average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.
 
 ```{r show-simper, results = 'asis', eval = datEnough}
 for(i in seq_along(simps)){
@@ -435,7 +419,7 @@ for(i in seq_along(simps)){
 }
 ```
 
-## NMDS  
+## NMDS
 
 ```{r, results = "asis"}
 # if there weren't enough years of data, can't do the rest.
@@ -447,7 +431,6 @@ if(!datEnough){
     cat("\n \nThere were not enough rows of data.")
 }
 ```
-
 
 ```{r stats-run-nmds, eval = datEnough}
 set.seed(1226)    
@@ -487,33 +470,42 @@ mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
                  sep = "-")  
 ```
 
-***  
+------------------------------------------------------------------------
 
-Final 3-dimensional NMDS stress was **`r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`**.  
+Final 3-dimensional NMDS stress was **`r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`**.
 
+Rules of thumb for interpreting stress, based on the sources below, are:
 
-Rules of thumb for interpreting stress, based on the sources below, are:  
+```{r}
 
-| Stress    | Quality of ordination |
-|----: |:-------|
-| < 0.05 | Excellent |
-| 0.05 - 0.10 | Good; no need to increase number of dimensions |
-| 0.10 - 0.20 | Useable, but do not place too much reliance on details, as a higher-dimensional ordination could be different |  
-| 0.20 - 0.30 | Interpretation problems start, and especially in the upper range of the interval plots could be dangerously misleading |
-| > 0.30 | Poor presentation; essentially random placement of points. Consider increasing number of dimensions. |  
+stress_interp <- tribble(
+    ~"Stress", ~"Quality of ordination",
+    "< 0.05" , "Excellent" ,
+"0.05 ‒ 0.10" , "Good; no need to increase number of dimensions" ,
+"0.10 ‒ 0.20" , "Useable, but do not place too much reliance on details, as a higher-dimensional ordination could be different" ,  
+"0.20 ‒ 0.30" , "Interpretation problems start, and especially in the upper range of the interval could be dangerously misleading" ,
+"> 0.30" , "Poor presentation; essentially random placement of points. Consider increasing number of dimensions"
+)
 
-**For more information on NMDS:**  
+DT::datatable(stress_interp,
+              rownames = FALSE,
+              width = "600px",
+              options = list(dom = "t",
+                             columnDefs = list(
+                                 list(className = 'dt-right', targets = 0),
+                                 list(width = '25%', targets = 0)
+                             )))
+```
 
-Clarke, K. R. (1993). Non-parametric multivariate analyses of changes in community structure. Australian Journal of Ecology, 18(1), Article 1. https://doi.org/10.1111/j.1442-9993.1993.tb00438.x  
+**For more information on NMDS:**
 
-Clarke, K. R., & Warwick, R. M. (2001). Change in Marine Communities: An Approach to Statistical Analysis and Interpretation, 2nd ed.  - Chapter 5 focuses on NMDS.  
+Clarke, K. R. (1993). Non-parametric multivariate analyses of changes in community structure. Australian Journal of Ecology, 18(1), Article 1. <https://doi.org/10.1111/j.1442-9993.1993.tb00438.x>
 
-Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Springer.  - Chapter 15 for NMDS.  
+Clarke, K. R., & Warwick, R. M. (2001). Change in Marine Communities: An Approach to Statistical Analysis and Interpretation, 2nd ed. - Chapter 5 focuses on NMDS.
 
+Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Springer. - Chapter 15 for NMDS.
 
-#### 3-d NMDS plot  
-
-
+#### 3-d NMDS plot
 
 ```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
 # set up zone colors
@@ -572,24 +564,23 @@ for (i in 1:nrow(species.scores)) {
 }
 
 # save the plot to another file
-NMDS_outname <- paste0("NMDS-3d_", params$file_code, "_", Sys.Date(), ".html")
-saveWidget(fig, file = here::here("output", NMDS_outname), selfcontained = TRUE)
+# NMDS_outname <- paste0("NMDS-3d_", params$file_code, "_", Sys.Date(), ".html")
+# saveWidget(fig, file = here::here("output", NMDS_outname), selfcontained = TRUE)
 
 # print the plot
 fig
 ```
 
-#### 2-dimensional NMDS plot  
+#### 2-dimensional NMDS plot
 
-(first two axes only)  
+(first two axes only)
 
-#### How to read these NMDS plots  
+#### How to read these NMDS plots
 
--  Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
--  Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve. Hovering over the arrow will provide the Species or Category name.  
--  Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.  
--  Some identified loading factors may not appear as arrows; this is usually because all data points for that species were 0. They may also have been too low to have produced species scores in the NMDS.  
-
+-   Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.\
+-   Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve. Hovering over the arrow will provide the Species or Category name.\
+-   Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.\
+-   Some identified loading factors may not appear as arrows; this is usually because all data points for that species were 0. They may also have been too low to have produced species scores in the NMDS.
 
 ```{r stats-prep-nmds-groups, eval = datEnough}
 # get centroids for each time/zone group
@@ -608,8 +599,6 @@ en_coord_cat <- cent %>%
            Zone_Years = paste(Zone_full, Years, sep = ": "))
 ```
 
-
-
 ```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 6, eval = datEnough}
 p <- plot_nmds() 
 girafe(ggobj = p,
@@ -618,22 +607,4 @@ girafe(ggobj = p,
        width = 0.8,
        height = 0.6
        )
-# geom_text_repel is not yet implemented in plotly
-# 
-# p2 <- plot_nmds(axes = c(1, 3))
-# girafe(ggobj = p2,
-#        width_svg = 6,
-#        height_svg = 5,
-#        width = 0.8,
-#        height = 0.6)
-# 
-# p3 <- plot_nmds(axes = c(2, 3))
-# girafe(ggobj = p3,
-#        width_svg = 6,
-#        height_svg = 5,
-#        width = 0.8,
-#        height = 0.6)
-
 ```
-
-
