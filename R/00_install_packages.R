@@ -26,11 +26,13 @@ install.packages("khroma")
 install.packages("plotly")
 install.packages("scales")
 install.packages("viridis") 
+install.packages("patchwork")
 
 
 # nice tables
 install.packages("DT")
 install.packages("kableExtra")
+install.packages("gt")
 
 
 # statistical modeling and graphing

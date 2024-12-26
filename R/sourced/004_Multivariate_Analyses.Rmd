@@ -8,6 +8,8 @@ library(vegan)
 library(ggrepel)
 library(ggiraph)
 library(plotly)
+library(gt)
+library(patchwork)
 ```
 
 ## About  
@@ -235,32 +237,56 @@ for(i in seq_len(nperm)){
 }
 ```
 
-#### Combine, visualize, calculate p-vals  
-
 ```{r, results = 'asis', eval = datEnough}
 permuted_F <- c(observed_F, permuted_F)
 
 pval_F <- sum(permuted_F >= observed_F) / length(permuted_F)
 
 cat("\n\nH0: community distance between time points is equal across all vegetation zones",
-    "\n\nHa: at least one vegetation zone has different community change than at least one other zone",
-    "\n\nNumber of Permutations: ", nperm, 
-  "\n\nObserved F: ", round(observed_F, 3), "\n\nPermutation-based p-value: ", round(pval_F, 4), "\n"
+    "\n\nHa: at least one vegetation zone has different community change than at least one other zone"
 )
 
 runZoneByZone <- pval_F <= 0.05 & datEnough == TRUE
 runOverall <- pval_F > 0.05 & datEnough == TRUE
 ```
 
-```{r, fig.width = 5, fig.height = 4}
-hist(permuted_F, breaks = 30,
-       main = "Permutation distribution")
-abline(v = observed_F, col = "red", lwd = 2, lty = 2)
-mtext("The red line is the observed F value", side = 3, line = 0.5, cex = 0.9)
+
+```{r, eval = datEnough, fig.width = 6, fig.height = 3}
+permtab <- data.frame(a = c("Number of permutations",
+                            "Observed F statistic",
+                            "Permutation-based p-value"),
+                      b = c(nperm, round(observed_F, 3), round(pval_F, 4)))
+
+permtabgt <- gt(permtab) %>% 
+    cols_label(
+        a = "PERMANOVA output",
+        b = ""
+    ) %>% 
+    fmt_number(rows = 1, decimals = 0) %>% 
+    fmt_number(rows = c(2:3), decimals = 3)
+
+permutedFdf <- data.frame(rep = 1:length(permuted_F),
+                          permF = permuted_F)
+
+permplot <- ggplot(permutedFdf) +
+    geom_histogram(aes(x = permuted_F),
+                   fill = "cadetblue3",
+                   col = "gray40",
+                   bins = 30) +
+    geom_vline(xintercept = observed_F, 
+               col = "red", 
+               linetype = "dashed", 
+               size = 1) +
+    theme_bw() +
+    labs(title = "Permutation distribution",
+         subtitle = "The red line is the observed F value")
+
+# patchwork to display together
+wrap_table(permtabgt) + permplot
 ```
 
 
-### Follow-up  
+### Zone-wise   
 
 If the test above was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.  
 
@@ -337,13 +363,6 @@ print(kbl_nmst(pmvs_summ,
                caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring"))
 
 
-for(i in seq_along(simps)){
-    print(kbl_nmst(x = simps[[i]], 
-                   caption = paste0(names(simps)[i], " SIMPER results; PERMANOVA p = ", round(pmvs_summ$p.value[i], 3)),
-                   digits = 4)
-    )
-}
-
 ```
 
 ```{r, results = "asis", eval = runOverall}
@@ -387,103 +406,6 @@ names(simps)[[1]] <- "Across all zones"
 ```
 
 
-## PRIOR PERMANOVA  
-
-```{r stats-run-permanova, eval = datEnough}
-pmv <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
-               by = "terms",
-        method = "bray",
-        permutations = 999)
-
-
-kbl_nmst(pmv,
-      digits = c(0, 2, 4, 2, 4),
-      caption = "PERMANOVA table") 
-```
-
-
-```{r stats-perm-posthoc, eval = datEnough}
-# # for both follow-ups, want each zone on its own, start vs. end
-# 
-# zones <- unique(expl_pm$Vegetation_Zone)
-# pmvs <- list()
-# simps <- list()
-# 
-# for(i in seq_along(zones)){
-#     # subset data to this zone
-#     zn = zones[i]
-#     tmp_index <- which(expl_pm$Vegetation_Zone == zn)
-#     tmp_resp <- resp_pm[tmp_index, ]
-#     tmp_expl <- expl_pm[tmp_index, ]
-#     
-#     # run permanova
-#     pmvt <- adonis2(tmp_resp ~ Time_group, data = tmp_expl,
-#                     method = "bray", by = "terms")
-#     
-#     # save formatted output to list
-#     pmvs[[i]] <- broom::tidy(pmvt)
-#     names(pmvs)[[i]] <- as.character(zn)
-#     
-#     # if permanova p-value was below 0.2, run SIMPER
-#     if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] < 0.200){
-#         # run simper
-#         simp <- simper(tmp_resp, tmp_expl$Time_group)
-#         
-#         # format output
-#         simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
-#         # in case there are fewer than 6 species, get rid of empty rows
-#         simp_df <- janitor::remove_empty(simp_df, "rows")
-#         simp_smaller <- data.frame(lapply(simp_df, round, 4))
-#         simp_smaller$ava <- round(simp_smaller$ava, 1)
-#         simp_smaller$avb <- round(simp_smaller$avb, 1)
-#         row.names(simp_smaller) <- row.names(simp_df)
-#         names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
-#         
-#         # save output to list
-#         simps[[i]] <- simp_smaller
-#         
-#         # if permanova wasn't significant, save a placeholder in the list   
-#     } else {
-#         simps[[i]] <- data.frame("None" = "SIMPER not run")
-#     }
-#     
-#     names(simps)[[i]] <- as.character(zn)
-# }
-```
-
-
-### Post-hoc output  
-
-Was there a community difference between "Start" (first 2 years) and "End" (last 2 years) for each zone?  
-
-```{r show-perm-posthoc, eval = datEnough}
-# pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
-#     filter(term == "Time_group") %>% 
-#     select('Vegetation Zone', R2, p.value) %>% 
-#     mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
-# 
-# kbl_nmst(pmvs_summ,
-#       digits = 4,
-#       caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring")
-```
-
-
-
-<details><summary>Click to see complete anova tables for each pairwise comparison</summary>  
-
-Note - these individual tables do not contain Bonferroni-adjusted p-values; only the raw values.  
-
-```{r show-pairwise-perm, results = 'asis', eval = datEnough}
-# for(i in seq_along(pmvs)){
-#     print(kbl_nmst(x = pmvs[[i]], 
-#                 caption = paste0("Pairwise results for Vegetation Zone ", names(pmvs)[i]),
-#                 digits = c(0, 0, 2, 4, 2, 4))
-#           )
-# }
-```
-
-</details>
-
 ## SIMPER  
 
 ```{r, results = "asis"}
@@ -497,7 +419,7 @@ if(!datEnough){
 }
 ```
 
-If the PERMANOVA for a single zone had p-value < 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Post-hoc output' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.** 
+If the PERMANOVA for a single zone had p-value < 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Zone-wise' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.** 
 
 The top 6 species in output are below.  
 
@@ -528,7 +450,8 @@ if(!datEnough){
 
 
 ```{r stats-run-nmds, eval = datEnough}
-    mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
+set.seed(1226)    
+mds_resp <- metaMDS(resp_pm, distance = "bray", k = 3,
                         autotransform = FALSE, trace = 0)
 
     data.scores <- as.data.frame(scores(mds_resp)$sites)
@@ -568,6 +491,26 @@ if(!datEnough){
 
 Final 3-dimensional NMDS stress was **`r ifelse(datEnough, round(mds_resp$stress, 4), "NMDS not run")`**.  
 
+
+Rules of thumb for interpreting stress, based on the sources below, are:  
+
+| Stress    | Quality of ordination |
+|----: |:-------|
+| < 0.05 | Excellent |
+| 0.05 - 0.10 | Good; no need to increase number of dimensions |
+| 0.10 - 0.20 | Useable, but do not place too much reliance on details, as a higher-dimensional ordination could be different |  
+| 0.20 - 0.30 | Interpretation problems start, and especially in the upper range of the interval plots could be dangerously misleading |
+| > 0.30 | Poor presentation; essentially random placement of points. Consider increasing number of dimensions. |  
+
+**For more information on NMDS:**  
+
+Clarke, K. R. (1993). Non-parametric multivariate analyses of changes in community structure. Australian Journal of Ecology, 18(1), Article 1. https://doi.org/10.1111/j.1442-9993.1993.tb00438.x  
+
+Clarke, K. R., & Warwick, R. M. (2001). Change in Marine Communities: An Approach to Statistical Analysis and Interpretation, 2nd ed.  - Chapter 5 focuses on NMDS.  
+
+Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Springer.  - Chapter 15 for NMDS.  
+
+
 #### 3-d NMDS plot  
 
 
@@ -589,9 +532,9 @@ fig <- plot_ly() %>%
               color = ~Zone_abbrev,
               colors = zone_cols,
               symbol = ~Time_group,
-              symbols = c("circle", "square"),
+              symbols = c("circle", "circle-open"),
               marker = list(size = 5,
-                            opacity = 0.5)
+                            opacity = 0.7)
     ) 
 
 # now add lines, text, and cross-hatches for each identified loading
