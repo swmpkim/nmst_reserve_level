@@ -168,8 +168,12 @@ ggplot(anaSpec_dfs$univar, aes(x = Year, y = Cover,
         geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_univar) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
-    ggtitle("User-chosen species, all plots combined") +
-    theme_bw()
+    labs(title = "User-chosen species, all plots combined",
+         y = "% Cover",
+         col = "Species or \nVegetation Group",
+         fill = "Species or \nVegetation Group") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ```{r graph-time-top3-onePanel, message = FALSE}
@@ -179,16 +183,20 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
         geom_smooth(method = "loess", se = FALSE) +
     scale_color_manual(values = palcols_top) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
-    ggtitle("Top 3 species by mean cover, all plots combined") +
-    theme_bw()
+    labs(title = "Top 3 species by mean cover, all plots combined",
+         y = "% Cover",
+         col = "Species or \nVegetation Group",
+         fill = "Species or \nVegetation Group") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-## EIR graphics  
+## EMI graphics  
 
-A table of which species were counted as "ecotone invaders" for each vegetation zone is below the graphics.  
+A table of which species were counted as "ecotone migrators" for each vegetation zone - as specified in the "Ecotone_Migrators" sheet of the "veg-specs.xlsx" workbook is below the graphics.  
 
-```{r graph-time-EIR}
-ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
+```{r graph-time-EMI}
+ggplot(dat, aes(x = Year, y = EMI, color = Vegetation_Zone)) +
     geom_jitter(alpha = 0.4) +
     facet_wrap(~Vegetation_Zone) +
     theme(legend.position = "none") +
@@ -197,13 +205,15 @@ ggplot(dat, aes(x = Year, y = EIR, color = Vegetation_Zone)) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(title = "EIR by Zone",
-         subtitle = "as calculated per plot/date combination")
+    labs(title = "EMI by Zone",
+         subtitle = "as calculated per plot/date combination",
+         y = "Ecotone Migration Index",
+         col = "Vegetation Zone")
 ```
 
 
-```{r graph-time-EIR2}
-ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
+```{r graph-time-EMI2}
+ggplot(dat, aes(x = Year, y = EMI, color = SiteID)) +
     geom_jitter(alpha = 0.4) +
     geom_smooth(method = "loess", se = FALSE) +
     facet_wrap(~Vegetation_Zone) +
@@ -211,26 +221,29 @@ ggplot(dat, aes(x = Year, y = EIR, color = SiteID)) +
     scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(title = "EIR by Site, within Zone")
+    labs(title = "EMI by Site, within Zone",
+         y = "Ecotone Migration Index",
+         col = "Site")
 ```
 
 
-```{r graph-hist-EIR}
+```{r graph-hist-EMI}
 ggplot(dat) +
-    geom_histogram(aes(x = EIR, fill = Vegetation_Zone),
+    geom_histogram(aes(x = EMI, fill = Vegetation_Zone),
                    col = "gray60",
                    binwidth = 0.1) +
     facet_wrap(~Vegetation_Zone) +
     scale_fill_manual(values = palcols_zones) +
-    labs(title = "Histogram of EIR by Marsh Zone") +
+    labs(title = "Histogram of EMI by Vegetation Zone",
+         x = "Ecotone Migration Index") +
     theme_bw() +
     theme(legend.position = "none")
 ```
 
-Species considered to be 'invasive' within each zone are denoted by 'x' in the following table:  
+Species considered to be 'migrators' within each zone are denoted by 'x' in the following table:  
 
-```{r show-eir-table}
-kableExtra::kable(eir_spps, align = "c") %>% 
+```{r show-emi-table}
+kableExtra::kable(emi_spps, align = "c") %>% 
     kable_styling("striped") %>%
     scroll_box(width = "800px", height = "200px") 
 ```

@@ -5,13 +5,13 @@ output: html_document
 
 ## About  
 
-This section has summary graphics. The color palette is meant to be colorblind-friendly but please reach out if you are colorblind and it's not working for you.  
+This section has summary graphics. The color palettes are meant to be colorblind-friendly but please reach out if you are colorblind and it's not working for you.  
 
 These summary figures tell a graphical story about current conditions and trends through time. There are two types:  
 
 -  **Averaged stacked bar graphs** -  show the relative distribution of species and cover classes and how these relationships change over time.  
     -  Charts have been created at the Site, Zone, and Site x Zone levels.  
-    -  Chart categories feature dominant species or species groups as identified by the Reserve.  
+    -  Chart categories feature dominant species or species groups as identified by the Reserve in the "veg-specs.xlsx" file, "Analysis_Specs" sheet.  
 -  **Spatial stacked bar charts** - show the relative distribution of species and cover classes as above, but for each plot. These charts are laid out spatially by site. For ease of interpretation, only 4 evenly-spaced time points are used along the x-axis in each chart.    
 
 
@@ -19,7 +19,7 @@ These summary figures tell a graphical story about current conditions and trends
 ### Questions addressed  
 
 -  What species characterize each site and marsh zone?  
--  How do relative abundances of species/groups fluctuate among years and is there a visual trend with time (e.g., corresponds to severe events (e.g., potential SLR impacts) or a change that storm, staff turnover)?  
+-  How do relative abundances of species/groups fluctuate among years and is there a visual trend with time (e.g., corresponds to severe events, stroms, staff turnover)?  
 -  For QA/QC purposes, does the data make sense?
 
 
@@ -29,16 +29,16 @@ These summary figures tell a graphical story about current conditions and trends
 
 ### User-chosen species  
 
-The species/groups identified by the Reserve for these graphs are:  
+The species/groups identified by the Reserve for these graphs are (in order):  
 
 ```{r show-userChoices, results = 'asis'}
 cat(paste("*", anaSpec_list$multivar$Choice), sep="\n")
 ```
 
-And so the groups showing up in the plots should be:  
+And so the groups appearing in the plots should be (alphabetically):  
 
 ```{r show-userChoices-groups, results = 'asis'}
-cat(paste("*", unique(anaSpec_dfs$multivar$Species_or_Group)), sep="\n")
+cat(paste("*", levels(anaSpec_dfs$multivar$Species_or_Group)), sep="\n")
 ```
 
 
@@ -55,7 +55,9 @@ anaSpec_dfs$multivar %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Zone")
+         subtitle = "averaged by Species within Zone",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 
@@ -76,7 +78,9 @@ top_3_mean %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Zone")
+         subtitle = "averaged by Species within Zone",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 
@@ -98,7 +102,9 @@ anaSpec_dfs$multivar %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Site")
+         subtitle = "averaged by Species within Site",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 
@@ -117,7 +123,9 @@ top_3_mean %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Site")
+         subtitle = "averaged by Species within Site",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 
@@ -139,7 +147,9 @@ anaSpec_dfs$multivar %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8))) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Site/Zone combination")
+         subtitle = "averaged by Species within Site/Zone combination",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 ### Top 3 species by mean cover across the entire dataset  
@@ -158,7 +168,9 @@ top_3_mean %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8))) +
     labs(title = "Vegetation Cover through time",
-         subtitle = "averaged by Species within Site/Zone combination")
+         subtitle = "averaged by Species within Site/Zone combination",
+         y = "% Cover",
+         fill = "Species or \nVegetation Group")
 ```
 
 
@@ -192,7 +204,8 @@ for(st in unique(stn_tbl$SiteID)){
         geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
-             y = "Latitude") +
+             y = "Latitude",
+             fill = "Species or \nVegetation Group") +
         scale_x_continuous(limits = c(min(stn_tmp$Longitude) - long_offset, max(stn_tmp$Longitude) + long_offset)) +
         scale_y_continuous(limits = c(min(stn_tmp$Latitude) - lat_offset, max(stn_tmp$Latitude) + lat_offset)) +
         scale_fill_manual(values = palcols_spec) +
@@ -287,7 +300,8 @@ for(st in unique(stn_tbl$SiteID)){
         geom_col(na.rm = TRUE) +  # necessary to make legend show up
         labs(title = paste(params$file_code, st),
              x = "Longitude",
-             y = "Latitude") +
+             y = "Latitude",
+             fill = "Species or \nVegetation Group") +
         scale_x_continuous(limits = c(min(stn_tmp$Longitude) - long_offset, max(stn_tmp$Longitude) + long_offset)) +
         scale_y_continuous(limits = c(min(stn_tmp$Latitude) - lat_offset, max(stn_tmp$Latitude) + lat_offset)) +
         scale_fill_manual(values = palcols_top) +

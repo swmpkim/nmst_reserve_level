@@ -22,7 +22,7 @@ These tabs are the multivariate analyses.
 
 # use the entire data frame - only group up for loading factors of interest
 dat_multivar <- dat %>% 
-    select(-any_of(c("EIR", "swdiv", "richness")))
+    select(-any_of(c("EMI", "swdiv", "richness")))
 ```
 
 ```{r}
@@ -41,16 +41,16 @@ if(!datEnough){
 }
 ```
 
-In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also plan to use similarity analysis (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) will also be used to test for differences between years (test comparing first and last years may have the greatest power).
+In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also use similarity percentages (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) is used to test for differences between the first and last years of monitoring.
 
 ### Questions addressed
 
 -   Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?
-    -   addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.\
-    -   the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.\
-    -   if the above test indicated significant differences between Vegetation Zones (p \$ \leq 0.05 \$), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.\
+    -   addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.
+    -   the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.
+    -   if the above test indicated significant differences between Vegetation Zones (p \$ \leq 0.05 \$), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.
 -   Which species/groups contribute most to these shifts?
-    -   addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.\
+    -   addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.
 -   Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?
     -   visualized via NMDS.
 

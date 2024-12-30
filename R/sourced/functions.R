@@ -57,7 +57,7 @@ get_species_info <- function(file){
 
 get_zone_ordering <- function(file){
     tmp <- read_xlsx(file,
-              sheet = "Ecotone_Invaders")
+              sheet = "Ecotone_Migrators")
     # only keep zones that are in the station table
     tmp <- tmp[names(tmp) %in% unique(stn_tbl$Vegetation_Zone)]
     # put them in order
@@ -68,13 +68,13 @@ get_zone_ordering <- function(file){
 
 get_eis <- function(file){
     read_xlsx(file,
-              sheet = "Ecotone_Invaders") %>% 
+              sheet = "Ecotone_Migrators") %>% 
         mutate(rownum = row_number()) %>% 
         pivot_longer(-rownum,
                      names_to = "Vegetation_Zone",
                      values_to = "Species") %>% 
         filter(!is.na(Species)) %>% 
-        mutate(Invader = 1) %>% 
+        mutate(Indicator = 1) %>% 
         select(-rownum) %>% 
         arrange(Vegetation_Zone, Species)
 }
@@ -306,9 +306,9 @@ get_ei_spps_from_groups <- function(data){
             select(Species) %>% 
             unlist()
         
-        # make a data frame of all vegetation zones crossed with all these species; Invader = 1, Species = TRUE, Group = FALSE
+        # make a data frame of all vegetation zones crossed with all these species; Indicator = 1, Species = TRUE, Group = FALSE
         addls <- expand.grid(zones, spps, stringsAsFactors = FALSE)
-        addls$Invader <- 1
+        addls$Indicator <- 1
         addls$Species <- TRUE
         addls$Group <- FALSE
         names(addls)[1:2] <- c("Vegetation_Zone", "eiID")
@@ -319,8 +319,8 @@ get_ei_spps_from_groups <- function(data){
     bind_rows(to_add)
 }
 
-# Ecotone Invaders - do the whole thing
-get_ecotone_invaders <- function(file){
+# Ecotone Migrators/Indicators - do the whole thing
+get_ecotone_migrators <- function(file){
     eis <- get_eis(file)  # ecotone invaders
     names(eis)[2] <- "eiID"
     
@@ -539,7 +539,8 @@ plot_through_time <- function(data,
         scale_x_continuous(breaks = scales::pretty_breaks()) +
         facet_wrap(enquo(panels)) +
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        labs(y = "% Cover")
 }
 
 

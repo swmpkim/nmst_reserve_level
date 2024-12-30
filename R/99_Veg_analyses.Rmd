@@ -74,7 +74,7 @@ stn_tbl <- get_stn_table(file_dat)
 stn_tbl <- stn_tbl %>% 
     mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
 species_info <- get_species_info(file_dat)
-eis <- get_ecotone_invaders(file = file_specs)
+eis <- get_ecotone_migrators(file = file_specs)
 anaSpecs <- get_anaSpecs(file = file_specs) |> 
     filter(!is.na(Choice))
 anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
@@ -170,27 +170,28 @@ spp_summ <-
     arrange(Species, SiteID)
 ```
 
-```{r mod-attach-EIR}
+```{r mod-attach-EMI}
 # attach EIR to data frame
-EIR <- dat_long %>% 
+EMI <- dat_long %>% 
     left_join(eis) %>% 
-    mutate(Invader = case_when(is.na(Invader) ~ 0,
+    mutate(Migrator = case_when(is.na(Indicator) ~ 0,
                                .default = 1),
-           EI_Cover = Cover * Invader) %>% 
+           EI_Cover = Cover * Migrator) %>% 
     group_by(Year, Month, Day, Reserve, SiteID, TransectID, PlotID) %>% 
-    summarize(EIR = round(sum(EI_Cover) / sum(Cover), 5))
+    summarize(EMI = round(sum(EI_Cover) / sum(Cover), 5))
 # confirmed at April TWG that denominator is total cover
 
-dat <- left_join(dat, EIR)
+dat <- left_join(dat, EMI)
 ```
 
-```{r define-eir-species}
-eir_spps <- eis %>% 
+```{r define-emi-species}
+emi_spps <- eis %>% 
     arrange(Vegetation_Zone, Species) %>% 
-    mutate(Invader = case_when(Invader == 1 ~ "X",
+    mutate(Migrator = case_when(Indicator == 1 ~ "X",
                                .default = NA_character_)) %>% 
     pivot_wider(names_from = Vegetation_Zone,
-                values_from = Invader) 
+                values_from = Migrator) %>% 
+    select(-Indicator)
 ```
 
 
