@@ -178,7 +178,7 @@ resp_mat.pivoted <- resp_mat.df %>%
                  names_to = "vegPlot_time2",
                  values_to = "distance") %>% 
     filter(vegPlot_time != vegPlot_time2)
-# split out plots and times, reduct to one row per plot
+# split out plots and times, reduce to one row per plot
 resp_plotwise <- resp_mat.pivoted %>% 
     separate(vegPlot_time,
              into = c("vegPlot", "time"),
@@ -237,7 +237,7 @@ runZoneByZone <- pval_F <= 0.05 & datEnough == TRUE
 runOverall <- pval_F > 0.05 & datEnough == TRUE
 ```
 
-```{r, eval = datEnough, fig.width = 6, fig.height = 2}
+```{r, eval = datEnough, fig.width = 7, fig.height = 3}
 permtab <- data.frame(a = c("Number of permutations",
                             "Observed F statistic",
                             "Permutation-based p-value"),
@@ -265,18 +265,34 @@ permplot <- ggplot(permutedFdf) +
                size = 1) +
     theme_bw() +
     labs(title = "Permutation distribution",
-         subtitle = "The red line is the observed F value",
-         x = "F values in permutations")
+         subtitle = "red line = observed F value",
+         x = "F")
 
 # patchwork to display together
-wrap_table(permtabgt) + permplot
+wrap_table(permtabgt) + plot_spacer() + permplot +
+    plot_layout(widths = c(3, 1, 4))
 ```
+
+#### Check for homogeneity of variance  
+
+Because the permutation test above was performed on a univariate response (multivariate distance between 'start' and 'end' for each plot), a Levene's test is used here to check for homogeneity of variances between groups. If p < 0.05, this assumption is violated and results of the permutational test above should be interpreted with caution.  
+
+```{r, eval = datEnough}
+levene_out <- car::leveneTest(distance ~ Vegetation_Zone, data = resp_plotwise)
+kbl_nmst(levene_out,
+         digits = c(0, 2, 4),
+         caption = "Levene's test for homogeneity of variances; center = median")
+```
+
+
 
 ### Zone-wise
 
-If the test above was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
+If the above permutational test for differences in community response between zones was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
 
-Plots are paired with each other - i.e. time points can only be swapped within a plot.
+Plots are paired with each other - i.e. time points can only be swapped within a plot.  
+
+As above, a test for homogeneity of group variances is conducted, this time for start vs. end within each vegetation zone, controlling for plot. Because the response in this instance is multivariate, the `vegan::betadisper()` function, the R analogue to the PERMDISP test, is used. PERMDISP is the multivariate analogue of Levene's test for homogeneity of variances.  
 
 ```{r, results = 'asis'}
 set.seed(1223)
@@ -289,7 +305,8 @@ veg_zones <- levels(expl_pm2$Vegetation_Zone)
 
 pmvs <- list()
 simps <- list()
-
+betadispers <- list()
+dispers_toplo <- list()  # to make dispersion plots  
 ```
 
 ```{r, results = 'asis', eval = runZoneByZone}
@@ -305,51 +322,104 @@ for(i in seq_along(veg_zones)){
                     method = "bray",
                     by = "margin")
     
-    kbl_nmst(pmvt,
-             digits = c(0, 2, 4, 2, 4),
-             caption = paste0(veg_zones[i], " PERMANOVA table, community difference at start vs. end")) 
+    # PERMDISP
+    disper.obj <- betadisper(vegdist(resp_zn, method = "bray"),
+                             group = expl_zn$Time_group)
+    disper.test <- permutest(disper.obj, control = how(blocks = expl_zn$StTrnsPlt))
     
+    disper.test2 <- disper.test$tab
+    
+    
+    disper.df <- data.frame(
+        Start.dispersion = disper.obj$group.distances["Start"],
+        End.dispersion = disper.obj$group.distances["End"],
+        NumDf = disper.test2[1, "Df"],
+        DenDf = disper.test2[2, "Df"],
+        F.val = disper.test2[1, "F"],
+        N.Perm = disper.test2[1, "N.Perm"],
+        p.val = disper.test2[1, "Pr(>F)"])
+    
+    betadispers[[i]] <- disper.df
+    names(betadispers)[[i]] <- as.character(veg_zones[i])
+    
+    dispers_toplo[[i]] <- disper.obj
+    names(dispers_toplo)[[i]] <- as.character(veg_zones[i])
     
     # save formatted output to list
     pmvs[[i]] <- broom::tidy(pmvt)
     names(pmvs)[[i]] <- as.character(veg_zones[i])
     
-    # if permanova p-value was below 0.2, run SIMPER
-    if(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] <= 0.200){
-        # run simper
-        simp <- simper(resp_zn, expl_zn$Time_group)
+    # if permanova p-value exists and was below 0.2, run SIMPER
+    if (length(pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"]) == 1) {
         
-        # format output
-        simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
-        # in case there are fewer than 6 species, get rid of empty rows
-        simp_df <- janitor::remove_empty(simp_df, "rows")
-        simp_smaller <- data.frame(lapply(simp_df, round, 4))
-        simp_smaller$ava <- round(simp_smaller$ava, 1)
-        simp_smaller$avb <- round(simp_smaller$avb, 1)
-        row.names(simp_smaller) <- row.names(simp_df)
-        names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
+        # if p-value is less than 0.2, create simper
+        if (pmvt$`Pr(>F)`[row.names(pmvt) == "Time_group"] <= 0.200) {
+            
+            # run simper
+            simp <- simper(resp_zn, expl_zn$Time_group)
+            
+            # format output
+            simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
+            # in case there are fewer than 6 species, get rid of empty rows
+            simp_df <- janitor::remove_empty(simp_df, "rows")
+            simp_smaller <- data.frame(lapply(simp_df, round, 4))
+            simp_smaller$ava <- round(simp_smaller$ava, 1)
+            simp_smaller$avb <- round(simp_smaller$avb, 1)
+            row.names(simp_smaller) <- row.names(simp_df)
+            names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
+            
+            # save output to list
+            simps[[i]] <- simp_smaller
+            
+            # if permanova wasn't significant, save a placeholder in the list   
+        } else {
+            simps[[i]] <- data.frame("None" = "SIMPER not run")
+        }
         
-        # save output to list
-        simps[[i]] <- simp_smaller
-        # if permanova wasn't significant, save a placeholder in the list   
+        # if p-value doesn't exist, save a placeholder in the list
     } else {
         simps[[i]] <- data.frame("None" = "SIMPER not run")
     }
     
     names(simps)[[i]] <- as.character(veg_zones[i])
 }
+```
+
+```{r, results = 'asis', eval = runZoneByZone}
+
+# PERMANOVA outputs
 
 pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>% 
     filter(term == "Time_group") %>% 
     select('Vegetation Zone', R2, p.value) %>% 
-    mutate(Bonferroni_p.value = p.adjust(p.value, method = "bonferroni"))
+    mutate(p.value_Bonferonni = p.adjust(p.value, method = "bonferroni"))
 
 print(kbl_nmst(pmvs_summ,
                digits = 4,
                caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring"))
 
 
+# PERMDISP outputs
+betadispers_summ <- bind_rows(betadispers, .id = "Vegetation Zone")
+rownames(betadispers_summ) <- NULL
+
+print(kbl_nmst(betadispers_summ,
+      digits = c(0, 3, 3, 0, 0, 1, 0, 4),
+      caption = "Summary of PERMDISP outputs for each zone"))
+
+
 ```
+
+<details><summary>Click to view plots of dispersion for each zone</summary>
+
+```{r, results = 'asis', eval = runZoneByZone, fig.width = 4, fig.height = 3}
+for(i in seq_along(dispers_toplo)){
+    plot(dispers_toplo[[i]],
+         main = names(dispers_toplo)[[i]])
+}
+```
+
+</details>  
 
 ```{r, results = "asis", eval = runOverall}
 cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
@@ -362,12 +432,31 @@ pmv <- adonis2(resp_pm ~ Time_group, data = expl_pm2,
 # save output to proper list for printing later
 pmvs_summ <- broom::tidy(pmv)
 
+# PERMDISP
+disper.obj <- betadisper(vegdist(resp_pm, method = "bray"),
+                         group = expl_pm2$Time_group)
+disper.test <- permutest(disper.obj, control = how(blocks = expl_pm2$StTrnsPlt))
+disper.test2 <- disper.test$tab
+disper.df <- data.frame(
+    Start.dispersion = disper.obj$group.distances["Start"],
+    End.dispersion = disper.obj$group.distances["End"],
+    NumDf = disper.test2[1, "Df"],
+    DenDf = disper.test2[2, "Df"],
+    F.val = disper.test2[1, "F"],
+    N.Perm = disper.test2[1, "N.Perm"],
+    p.val = disper.test2[1, "Pr(>F)"])
+rownames(disper.df) <- NULL
+
 print(kbl_nmst(pmv,
                digits = c(0, 2, 4, 2, 4),
                caption = "PERMANOVA table, community difference at start vs. end across all zones") )
 
+print(kbl_nmst(disper.df,
+      digits = c(3, 3, 0, 0, 1, 0, 4),
+      caption = "PERMDISP output, start vs. end across all zones"))
 
-# run a simper if this test had p <= 0.02
+
+# run a simper if this PERMANOVA had p <= 0.02
 if(pmv$`Pr(>F)`[row.names(pmv) == "Time_group"] <= 0.200){
     # run simper
     simp <- simper(resp_pm, expl_pm$Time_group)
@@ -599,12 +688,28 @@ en_coord_cat <- cent %>%
            Zone_Years = paste(Zone_full, Years, sep = ": "))
 ```
 
-```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 6, eval = datEnough}
+```{r stats-graph-nmds-centroids, fig.width = 6, fig.height = 5, eval = datEnough}
 p <- plot_nmds() 
-girafe(ggobj = p,
-       width_svg = 6,
-       height_svg = 5,
-       width = 0.8,
-       height = 0.6
-       )
+girafe(ggobj = p)
 ```
+
+#### Contour plots  
+
+The below plots, rather than using arrows for individual species or vegetation groups, create contours for the specific values of each.    
+
+<details><summary>Click to expand if you would like to see contour plots.</summary>
+
+```{r, fig.width = 6, fig.height = 6}
+spps <- paste0(species.scores$species)
+for(i in seq_along(spps)){
+    # Construct formula dynamically with backticks
+  formula <- as.formula(paste0("mds_resp ~ `", spps[i], "`"))
+  
+  # Pass the formula to ordisurf
+  ordi <- ordisurf(formula, resp_pm, plot = FALSE)
+
+  plot(ordi, main = spps[i], xlab = "NMDS1", ylab = "NMDS2")
+}
+```
+
+</details>

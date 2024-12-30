@@ -21,9 +21,12 @@ if(exists("mod_plts", inherits = FALSE)){
     mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
     sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
-    mod_trnds <- data.frame(emtrends(mod_plts, 
-                                     pairwise ~ Vegetation_Zone, 
-                                     var = "Years_sinceStart")$emtrends)
+    # mod_trnds <- data.frame(emtrends(mod_plts, 
+    #                                  pairwise ~ Vegetation_Zone, 
+    #                                  var = "Years_sinceStart")$emtrends)
+    
+    mod_trnds <- estimate_slopes(mod_plts, trend = "Years_sinceStart",
+                                 by = "Vegetation_Zone")
     
     # save outputs
     univar_outputs[[respn]] <- mod_trnds
@@ -109,10 +112,11 @@ kbl_nmst(rsqds,
 cat("\n \n \n")
 cat("\n \n \n")
 
-kbl_nmst(mod_trnds, 
-         digits = c(4, 4, 4, 2, 4, 4), 
+kbl_nmst(mod_trnds[, -4], 
+         digits = c(4, 4, 4, 3, 3, 1, 1, 4), 
          col.names = c("Veg Zone", "Trend (per year)",
-                       "SE", "df", "CI lower", "CI upper"),
+                       "SE", "CI lower", "CI upper", "t",
+                       "df", "p.val"),
          caption = paste(respn, " - Estimated marginal slopes (change per year for each zone)")) 
 ```
 
