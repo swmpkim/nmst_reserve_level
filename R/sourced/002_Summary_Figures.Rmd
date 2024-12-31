@@ -178,20 +178,49 @@ top_3_mean %>%
 
 One plot per Site; showing 4 evenly spaced-through-time samples.   
 
+```{r spatial-option-setup}
+spatOption <- addlOptions$Choice[addlOptions$R_param == "spatOption"]
+
+if(spatOption == "Site"){
+    
+    # new column = Site only
+    stn_tbl$spatOption <- stn_tbl$SiteID
+    anaSpec_dfs$spat$spatOption <- anaSpec_dfs$spat$SiteID
+    top_3_mean$spatOption <- top_3_mean$SiteID
+    
+} else if(spatOption == "Transect"){
+    
+    # new column = Site + Transect
+    stn_tbl$spatOption <- paste(stn_tbl$SiteID, 
+                                stn_tbl$TransectID,
+                                sep = "_")
+    anaSpec_dfs$spat$spatOption <- paste(anaSpec_dfs$spat$SiteID,
+                                         anaSpec_dfs$spat$TransectID,
+                                         sep = "_")
+    top_3_mean$spatOption <- paste(top_3_mean$SiteID, 
+                                   top_3_mean$TransectID,
+                                   sep = "_")
+    
+} else {
+    message("Please select either 'Site' or 'Transect' in your Analysis_Specs file")
+}
+```
+
+
 
 Plots without associated spatial locations will not be included in these graphics.  
 
 #### User-chosen species  
 
 ```{r graph-spatial-userChosen, fig.width = 8, fig.height = 4}
-
-# add species into station table for the sole purpose of generating a legend.  
+# add user-chosen species into station table for the sole purpose of generating a legend.  
 stn_tbl$Species_or_Group <- rep_len(unique(anaSpec_dfs$spat$Species_or_Group), length.out = nrow(stn_tbl))
 
-for(st in unique(stn_tbl$SiteID)){
+
+for(st in unique(stn_tbl$spatOption)){
     
     # subset to the site
-    stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    stn_tmp <- stn_tbl[stn_tbl$spatOption == st, ]
     stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
     long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
@@ -214,12 +243,12 @@ for(st in unique(stn_tbl$SiteID)){
     
     
     # subset the lumped data to the single site
-    dat_tmp <- anaSpec_dfs$spat[anaSpec_dfs$spat$SiteID == st, ]
+    dat_tmp <- anaSpec_dfs$spat[anaSpec_dfs$spat$spatOption == st, ]
     # and only keep the plots from above, with lat/long coords
     dat_tmp <- dat_tmp[dat_tmp$StTrnsPlt %in% stn_tmp$PlotID_full, ]
     
- 
-
+    
+    
     # loop through each plot at the site
     # make a barplot of the top 3 species + other
     # and add as subplot to the blank canvas, based on lat/long
@@ -227,24 +256,24 @@ for(st in unique(stn_tbl$SiteID)){
         
         dat_plt <- dat_tmp[dat_tmp$StTrnsPlt==plt, ]
         yrs <- dat_plt$Years_sinceStart
-            
+        
         # subset the years: min, max, and as close as possible to the difference/3  
-
+        
         un_yrs <- unique(yrs)
         div <- (max(un_yrs) - min(un_yrs)) / 3
         divs_to_keep <- c(min(un_yrs) + div,
                           max(un_yrs) - div)
         
-
+        
         # figure out what to keep by finding the closest actual measurement to each, using absolute values
         keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
         keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
-
+        
         keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
         
         # re-subset the data frame to only those years
         dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
-
+        
         # make the subplot
         subplo <- ggplotGrob(ggplot(dat_plt) +
                                  geom_col(aes(x = as.factor(Years_sinceStart),
@@ -270,24 +299,25 @@ for(st in unique(stn_tbl$SiteID)){
                               xmax = long + long_offset,
                               ymin = lat - lat_offset,
                               ymax = lat + lat_offset)
-         
+        
     }
     print(base)
     
 }
+
 ```
 
 #### Top 3 species by mean cover across the entire dataset  
 
 ```{r graph-spatial-top3, fig.width = 8, fig.height = 4}
-
-# add species into station table for the sole purpose of generating a legend.  
+# add top 3 species into station table for the sole purpose of generating a legend.  
 stn_tbl$Species <- rep_len(unique(top_3_mean$Species), length.out = nrow(stn_tbl))
 
-for(st in unique(stn_tbl$SiteID)){
+
+for(st in unique(stn_tbl$spatOption)){
     
     # subset to the site
-    stn_tmp <- stn_tbl[stn_tbl$SiteID == st, ]
+    stn_tmp <- stn_tbl[stn_tbl$spatOption == st, ]
     stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
     long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
@@ -310,7 +340,7 @@ for(st in unique(stn_tbl$SiteID)){
     
     
     # subset the lumped data to the single site
-    dat_tmp <- top_3_mean[top_3_mean$SiteID == st, ]
+    dat_tmp <- top_3_mean[top_3_mean$spatOption == st, ]
     # and only keep the plots from above, with lat/long coords
     dat_tmp <- dat_tmp[dat_tmp$PlotID_full %in% stn_tmp$PlotID_full, ]
  

@@ -78,6 +78,7 @@ eis <- get_ecotone_migrators(file = file_specs)
 anaSpecs <- get_anaSpecs(file = file_specs) |> 
     filter(!is.na(Choice))
 anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
+addlOptions <- get_addlOptions(file = file_specs)
 zone_factor <- get_zone_ordering(file_specs)
 
 # remove vegetation zones from eis data frame that don't appear in the station table
@@ -86,6 +87,19 @@ eis <- eis[eis$Vegetation_Zone %in% unique(stn_tbl$Vegetation_Zone), ]
 # get zones in the same order in stn_tbl and eis, for later use
 stn_tbl$Vegetation_Zone <- factor(stn_tbl$Vegetation_Zone, levels = zone_factor)
 eis$Vegetation_Zone <- factor(eis$Vegetation_Zone, levels = zone_factor)
+
+
+# if subsets of dat were specified, 
+# that subsetting occurs here
+# start year
+if(!na(addlOptions$Choice[addlOptions$R_param == yrStartOption])){
+    dat <- dat[dat$Year >= addlOptions$Choice[addlOptions$R_param == yrStartOption], ]
+}
+# end year
+if(!na(addlOptions$Choice[addlOptions$R_param == yrEndOption])){
+    dat <- dat[dat$Year <= addlOptions$Choice[addlOptions$R_param == yrEndOption], ]
+}
+
 
 # add some columns to dat
 dat <- dat %>% 
@@ -238,43 +252,6 @@ not_enough <- dat %>%
     summarize(n_years = length(Year)) %>% 
     filter(n_years < 3)
 ```
-
-
-```{r define-color-pals-viridis, eval = FALSE}
-# define color palettes - used in both QAQC and Summary Graphic child rmds
-
-# top 3 species + other
-palcols_top <- viridis(5, option = "magma")[1:4]  # don't use the yellow endpoint
-names(palcols_top) <- levels(top_3_mean$Species)
-
-# spatial barplots: up to 3 species/groups + other
-n <- min(4, length(unique(anaSpec_dfs$spat$Species_or_Group)))
-palcols_spec <- viridis(n)
-names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
-
-# univariate exploration: up to 4 species/groups + other
-n <- min(5, length(unique(anaSpec_dfs$univar$Species_or_Group)))
-palcols_univar <- viridis(n + 1)[1:n]
-names(palcols_univar) <- levels(anaSpec_dfs$univar$Species_or_Group)
-
-# averaged stacked barplots: up to 8 species/groups + other
-n <- min(9, length(unique(anaSpec_dfs$multivar$Species_or_Group)))
-palcols_multivar <- viridis(n)
-names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
-
-
-# also want zone colors to be consistent
-n <- length(zone_factor)
-palcols_zones <- viridis(n+1)[1:n]  # don't use the yellow endpoint
-names(palcols_zones) <- levels(zone_factor)
-
-
-# and site id
-n <- length(unique(stn_tbl$SiteID))
-palcols_sites <- viridis(n+1, option = "magma")[1:n]  # don't use the yellow endpoint
-names(palcols_sites) <- unique(stn_tbl$SiteID)
-```
-
 
 ```{r define-color-pals-tol}
 # define color palettes - used in both QAQC and Summary Graphic child rmds

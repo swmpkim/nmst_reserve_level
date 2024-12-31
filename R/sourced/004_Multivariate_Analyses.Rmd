@@ -10,6 +10,7 @@ library(ggiraph)
 library(plotly)
 library(gt)
 library(patchwork)
+library(metR)
 ```
 
 ## About
@@ -737,8 +738,14 @@ for(i in seq_along(spps)){
   
   # Pass the formula to ordisurf
   ordi <- ordisurf(formula, resp_pm, plot = FALSE)
+  
+  grid <- with(ordi$grid, expand.grid(x = x, y = y))
+  grid$z <- as.vector(ordi$grid$z)
+  p_cont <- plot_nmds_contours() +
+      labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
+  print(p_cont)
 
-  plot(ordi, main = spps[i], xlab = "NMDS1", ylab = "NMDS2")
+  # plot(ordi, main = spps[i], xlab = "NMDS1", ylab = "NMDS2")
 }
 ```
 

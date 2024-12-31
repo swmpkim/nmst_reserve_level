@@ -85,6 +85,13 @@ get_anaSpecs <- function(file){
         select(R_anaName, R_varName, Choice) 
 }
 
+get_addlOptions <- function(file){
+    read_xlsx(file,
+              sheet = "More_Options") %>% 
+        filter(!is.na(R_param)) %>% 
+        select(R_param, Choice) 
+}
+
 
 find_unsampleds <- function(data){
     to_find_empties <- data %>% 
@@ -636,7 +643,65 @@ plot_nmds <- function(scores = data.scores,
         theme(legend.position = "none")
 }
 
-
+plot_nmds_contours <- function(scores = data.scores,
+                               grid = grid.obj,
+                               env.vars = en_coord_cat,
+                               axes = c(1, 2)){
+    # grid = an object derived from ordisurf function of vegan package
+    xax <- paste0("NMDS", axes[1])
+    yax <- paste0("NMDS", axes[2])
+    
+    pals_zone_abbrev <- palcols_zones
+    names(pals_zone_abbrev) <- NULL
+    
+    ggplot() +
+        geom_point(data = scores,
+                   aes(x = !!ensym(xax), y = !!ensym(yax),
+                       col = Zone_abbrev,
+                       fill = Zone_abbrev,
+                       shape = Time_group),
+                   size = 2, alpha = 0.5) +
+        geom_contour(data = grid,
+                     aes(x = x,
+                         y = y,
+                         z = z),
+                     col = "gray20") +
+        geom_label_contour(data = grid,  # uses metR package
+                           aes(x = x,
+                               y = y,
+                               z = z),
+                           size = 3,
+                           col = "gray20") +
+        geom_point(data = env.vars, 
+                               aes(x = !!ensym(xax), y = !!ensym(yax),
+                                   shape = Time_group,
+                                   fill = Zone_abbrev,
+                                   col = Zone_abbrev), 
+                               size = 5)  +
+        geom_label_repel2(data = env.vars,  # zone/time labels
+                          aes(x = !!ensym(xax), y = !!ensym(yax),
+                              col = Zone_abbrev
+                          ),
+                          label = env.vars$Zone_Timegroup,
+                          size = 3,
+                          fontface = "bold",
+                          max.overlaps = 20,
+                          min.segment.length = 0.1,
+                          force = 5,
+                          force_pull = 0.2,
+                          direction = "both",
+                          point.padding = 0.5,
+                          label.size = NA,
+                          label.padding = 0.2,
+                          fill = alpha(c("white"),0.9)) +
+        theme_bw() +
+        scale_color_manual(values = pals_zone_abbrev) +
+        scale_fill_manual(values = pals_zone_abbrev) +
+        scale_shape_manual(values = c(16, 10)) +
+        labs(title = paste("Ordination results, axes", axes[1], "and", axes[2]),
+             subtitle = "Large points: Zone/Time centroids.") +
+        theme(legend.position = "none")
+}
 
 
 # Models ----
