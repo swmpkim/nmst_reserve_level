@@ -479,7 +479,7 @@ process_custom_metric_terms <- function(terms,
                 cat("None of the species columns matching ", term, " exist in data.\n")
             }
         } else {
-        cat(term, "not found in the Species_Info worksheet.\n")
+        cat(term, "not found in the Species_Names worksheet of the data file. Please check spelling and capitalization.\n")
     }
     }
     return(data)
