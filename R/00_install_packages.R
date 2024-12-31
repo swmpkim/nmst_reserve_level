@@ -11,6 +11,7 @@ install.packages("writexl")
 install.packages("stringr")
 install.packages("forcats")
 install.packages("lubridate")
+install.packages("rlang")
 
 
 # interactive apps

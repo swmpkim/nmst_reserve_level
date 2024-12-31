@@ -424,40 +424,65 @@ pivot_to_cdmo <- function(data){
     
     return(dat_cdmo)
     
-    # dat_long <- data %>% 
-    #     pivot_longer(-c(Reserve:Total),
-    #                  names_to = c("param", "Species"),
-    #                  names_sep = "_",
-    #                  values_to = "value") %>% 
-    #     mutate(Species = case_when(is.na(Species) ~ param,
-    #                                .default = Species),
-    #            param = case_when(param == Species ~ "Cover",
-    #                              .default = param),
-    #            Date = lubridate::ymd(paste(Year,
-    #                                        Month,
-    #                                        Day)),
-    #            Date = format(Date, "%m/%d/%Y")) %>% 
-    #     filter(!is.na(value)) %>% 
-    #     select(-c(Total, Year, Month, Day)) %>% 
-    #     pivot_wider(names_from = param,
-    #                 values_from = value)
-    # 
-    # dat_cdmo_measurements <- dat_long %>% 
-    #     select(any_of(c(
-    #         "Reserve",
-    #         "Date",
-    #         "SiteID",
-    #         "TransectID",
-    #         "PlotID",
-    #         "Species",
-    #         "Cover",
-    #         "Density",
-    #         ends_with("Height"),
-    #         "QAQC" = "F"
-    #     ) ) ) %>% 
-    #     arrange(Date, SiteID, TransectID, PlotID, Species)
-    # 
-    # return(dat_cdmo_measurements)
+}
+
+# Custom Metrics ----
+extract_terms <- function(expr) {
+    # Match anything inside backticks
+    terms <- str_extract_all(expr, "`[^`]+`", simplify = TRUE)
+    terms <- trimws(terms)  # Remove any extra spaces
+    terms <- terms[terms != ""]  # Remove empty strings
+    terms <- str_remove_all(terms, "`")  # Remove the backticks
+    return(terms)
+}
+
+process_custom_metric_terms <- function(terms,
+                                        data,
+                                        species_df = species_info,
+                                        columns_to_check = c("Plant_Categories", "NMST_Groupings",
+                                                             "Cover_Categories", "Native_Classification")){
+    # terms should be output from 'extract_terms()'
+    
+    for(term in terms){
+        # first see if it's already a column
+        if(term %in% names(data)){
+            next
+        }
+        
+        # if not, find it and do calculations
+        
+        # Loop over each column in the species info dataframe to check for the specified term
+        matched_column <- NULL
+        
+        for(col in columns_to_check) {
+            if (term %in% species_info[[col]]) {
+                matched_column <- col
+                break  # Stop once a match is found
+            }
+            # if it wasn't a match, move to the next column
+        }
+        
+        # If a match was found, proceed with calculations
+        if (!is.null(matched_column)) {
+            # Get the species belonging to that category
+            matching_species <- species_df$Species[which(species_df[[matched_column]] == term)]
+            
+            # Make sure those columns exist in dat
+            valid_columns <- matching_species[matching_species %in% colnames(data)]
+            
+            if(length(valid_columns) > 0) {
+                # Dynamically create the new column name and sum valid columns
+                data[[term]] <- rowSums(data[valid_columns], na.rm = TRUE)
+                cat("Created new column:", term, "\n")
+                
+            } else {
+                cat("None of the species columns matching ", term, " exist in data.\n")
+            }
+        } else {
+        cat(term, "not found in the Species_Info worksheet.\n")
+    }
+    }
+    return(data)
 }
 
 

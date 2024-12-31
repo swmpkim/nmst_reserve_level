@@ -539,7 +539,11 @@ for(i in seq_along(simps)){
 }
 ```
 
-## NMDS
+## NMDS  
+
+Non-metric multidimensional scaling is an ordination method that preserves ranked dissimilarities between observations. Exact calculated distances are *not* preserved in this type of ordination. Points that are closer together on the graphs are more similar than points that are further away, so NMDS is good for seeing groupings and gradients when present. For more information, see the sources referenced below.  
+
+This NMDS used Bray-Curtis dissimilarity on the full species matrix (see 'About' tab for list of species included), and 3 dimensions.  
 
 ```{r, results = "asis"}
 # if there weren't enough years of data, can't do the rest.
@@ -625,7 +629,9 @@ Clarke, K. R., & Warwick, R. M. (2001). Change in Marine Communities: An Approac
 
 Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Springer. - Chapter 15 for NMDS.
 
-#### 3-d NMDS plot
+
+
+### 3-d NMDS plot
 
 ```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
 # set up zone colors
@@ -691,14 +697,14 @@ for (i in 1:nrow(species.scores)) {
 fig
 ```
 
-#### 2-dimensional NMDS plot
+### 2-dimensional NMDS plot
 
 (first two axes only)
 
 #### How to read these NMDS plots
 
 -   Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.\
--   Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve. Hovering over the arrow will provide the Species or Category name.\
+-   Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve in the 'Analysis_Specs' sheet of the 'veg-specs.xlsx' file. Hovering over the arrow will provide the Species or Category name.\
 -   Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.\
 -   Some identified loading factors may not appear as arrows; this is usually because all data points for that species were 0. They may also have been too low to have produced species scores in the NMDS.
 
@@ -707,6 +713,7 @@ fig
 # https://stackoverflow.com/a/47523181
 cent <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Timegroup, data = data.scores, FUN = mean)
 
+# get all categorical descriptions that belong to the centroid coordinates
 en_coord_cat <- cent %>%
     separate(Zone_Timegroup, into = c("Zone", "Time_group"),
              sep = "; ") %>%
@@ -733,6 +740,14 @@ The below plots, rather than using arrows for individual species or vegetation g
 ```{r, fig.width = 6, fig.height = 6}
 spps <- paste0(species.scores$species)
 for(i in seq_along(spps)){
+  # skip it if it's a group or something else that can't be handled right now
+    if (!(spps[i] %in% names(resp_pm))){
+      cat(paste0("Right now, only individual species and not species groups can be used in contour plots. ", spps[i], " is not plotted here. \n\n"))
+      next 
+  }
+    
+    # otherwise make the contour plot
+    
     # Construct formula dynamically with backticks
   formula <- as.formula(paste0("mds_resp ~ `", spps[i], "`"))
   

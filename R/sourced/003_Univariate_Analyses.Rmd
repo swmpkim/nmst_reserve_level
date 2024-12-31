@@ -125,6 +125,7 @@ dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
 
 
 ```{r, results = "asis"}
+# user-identified univariate responses  
 respns <- anaSpec_list$univar$Choice
 for(i in seq_along(respns)){
     respn <- respns[i]
@@ -136,3 +137,70 @@ for(i in seq_along(respns)){
 }
 ```
 
+
+```{r, results = "asis"}
+# custom metrics
+
+# limit these to "if at least one metric is specified" .......
+
+# calculate all necessary columns
+# based on original 'dat'
+
+# first custom metric
+if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom1"])){
+    user_formula1 <- anaSpecs$Choice[anaSpecs$R_varName == "custom1"]
+    user_formula1_parsed <- rlang::parse_expr(user_formula1)
+    terms1 <- extract_terms(user_formula1)
+    dat_custom <- process_custom_metric_terms(terms = terms1,
+                                              dat = dat)
+}
+
+# second custom metric - dat_custom should already exist from custom 1
+if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
+    user_formula2 <- anaSpecs$Choice[anaSpecs$R_varName == "custom2"]
+    user_formula2_parsed <- rlang::parse_expr(user_formula2)
+    
+    terms2 <- extract_terms(user_formula2)
+    dat_custom <- process_custom_metric_terms(terms = terms2,
+                                              dat = dat_custom)
+}
+
+# if at least one custom metric exists,
+# calculate it/them and run the analyses
+if(exists("dat_custom")){
+    # now that all the proper columns exist, do the math
+    # custom metric 1 must exist for dat_custom to exist
+    dat_custom <- dat_custom %>% 
+        mutate(Custom_metric1 = !!user_formula1_parsed)
+    
+    # custom metric 2 may or may not exist, so make it an if statement
+    if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
+        dat_custom <- dat_custom %>% 
+            mutate(Custom_metric2 = !!user_formula2_parsed)
+    }
+    # select proper columns
+    dat_custom <- dat_custom %>% 
+        select(Reserve:Total,
+               starts_with("Custom_metric"))
+    
+    # call analyses here
+    # custom metric columns:
+    respns <- names(dat_custom)[which(str_starts(names(dat_custom), "Custom_metric"))]
+    
+    # join with the univariate data frame
+    # left join so if for some reason there are extra rows in dat_custom
+    # (maybe not enough years of data for some plots?)
+    # they go away, and it matches other data used in univariate analyses
+    dat_univar <- left_join(dat_univar, dat_custom)
+    
+    for(i in seq_along(respns)){
+        respn <- respns[i]
+        cat("\n")
+        cat("##", respn, "\n")
+        dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
+        chld <- knitr::knit_child("003a_model_run.Rmd", quiet = TRUE)
+        cat(chld, sep = "\n")
+    }
+    
+}
+```
