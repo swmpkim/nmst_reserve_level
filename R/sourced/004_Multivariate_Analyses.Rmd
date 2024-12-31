@@ -233,9 +233,12 @@ cat("\n\nH0: community distance between time points is equal across all vegetati
     "\n\nHa: at least one vegetation zone has different community change than at least one other zone"
 )
 
-runZoneByZone <- pval_F <= 0.05 & datEnough == TRUE
-runOverall <- pval_F > 0.05 & datEnough == TRUE
+runZoneByZone <- pval_F <= 0.1 & datEnough == TRUE
+runOverall <- pval_F > 0.1 & datEnough == TRUE
 ```
+
+
+Zone-wise PERMANOVAs are run below if the p-value from the test above is <= 0.10.  
 
 ```{r, eval = datEnough, fig.width = 7, fig.height = 3}
 permtab <- data.frame(a = c("Number of permutations",
@@ -275,20 +278,39 @@ wrap_table(permtabgt) + plot_spacer() + permplot +
 
 #### Check for homogeneity of variance  
 
-Because the permutation test above was performed on a univariate response (multivariate distance between 'start' and 'end' for each plot), a Levene's test is used here to check for homogeneity of variances between groups. If p < 0.05, this assumption is violated and results of the permutational test above should be interpreted with caution.  
+Because the permutation test above was performed on a univariate response (Bray-Curtis distance between 'start' and 'end' for each plot), a Levene's test is used here to check for homogeneity of variances between groups. If p < 0.05, this assumption is violated and results of the permutational test above should be interpreted with caution. A violin plot to visualize distances by vegetation zone is also below, whether or not the Levene's test is significant.    
 
-```{r, eval = datEnough}
+```{r, eval = datEnough, fig.width = 5, fig.height = 4}
 levene_out <- car::leveneTest(distance ~ Vegetation_Zone, data = resp_plotwise)
 kbl_nmst(levene_out,
          digits = c(0, 2, 4),
          caption = "Levene's test for homogeneity of variances; center = median")
+
+
+p_violin <- ggplot(resp_plotwise,
+       aes(x = Vegetation_Zone,
+           y = distance,
+           fill = Vegetation_Zone)) +
+    geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),
+                alpha = 0.7) +
+    scale_fill_manual(values = palcols_zones) +
+    theme_bw() +
+    theme(legend.position = "none") +
+    theme(axis.text.x = element_text(angle = 45,
+                                     hjust = 1)) +
+    labs(title = "Distribution of distance by vegetation zone",
+         subtitle = "horizontal lines represent 25th percentile, median, and 75th percentile for each group",
+         x = NULL,
+         y = "Bray-Curtis distance")
+
+p_violin
 ```
 
 
 
 ### Zone-wise
 
-If the above permutational test for differences in community response between zones was significant, zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
+If the above permutational test for differences in community response between zones was significant or close to it (p <= 0.10), zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
 
 Plots are paired with each other - i.e. time points can only be swapped within a plot.  
 
@@ -421,8 +443,16 @@ for(i in seq_along(dispers_toplo)){
 
 </details>  
 
+---
+
+
+
 ```{r, results = "asis", eval = runOverall}
-cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
+cat("\n\n")
+
+cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\n")
+    
+cat("\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
 
 pmv <- adonis2(resp_pm ~ Time_group, data = expl_pm2,
                control = how(blocks = expl_pm2$StTrnsPlt), # don't move plots, just swap time stamps within where the plot data rows are

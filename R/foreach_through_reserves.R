@@ -2,41 +2,16 @@ library(foreach)
 library(doParallel)
 
 reserves <- c("GND", "CBV", "NIW", "GTM")
-# 
-# # batch one of manual files
-# reserves1 <- c("APA-LSM",  "APA-PC", "CBM-JB", "CBM-MB", "DEL-BCR",
-#                "ELK", "JAC", "NOC-RC", "NOC-ZI", "WEL")
-# 
-# # batch two of manual files
-# reserves2 <- c("CBV", "DEL-SJR", "GTM", "MAR", "NAR", "NIW",
-#               "NOC-MI", "SOS", "TJR")
-# 
-# # batch 3
-# reserves3 <- c("CBM-OPC", "GND", "GRB", "HUD-PIER", "HUD-TIV",
-#                "KAC", "WQB", "ACE")
-# 
-# reserves <- sort(c(reserves1, reserves2, reserves3))
-# 
-# # ACE only
-# reserves <- c("ACE-EIN", "ACE-EIS")
-# 
-# # updated data files, 5/9/24
-# reserves <- sort(c("GRB", "DEL-BCR", "DEL-SJR", "GTM", "JAC", "MAR"))
-# 
-# # updated data files, 6/13/2024
-# reserves <- sort(c("WEL", "ELK", "NOC-RC", "NOC-ZI", "CBM-MB", "CBM-OPC",
-#                    "WQB", "NIW"))
-# 
-# # updated for real, 6/14/24
-# reserves <- c("ELK", "WEL")
-
-# re-run all; 6/14/24
 
 # identify them
 veg_files <- dir(here::here("data"),
                  pattern = "_veg.xlsx$")
 reserves <- stringr::str_remove(veg_files, "_veg.xlsx")
 
+# reserves with updated metadata files
+# as of 12/30/24
+reserves <- c("GND", "GRB", "NOC-RC", "NIW",
+              "ACE-EIN", "ACE-EIS", "APA_LSM", "APA-PC")
 
 # 
 # cl<-makeCluster(8)  
