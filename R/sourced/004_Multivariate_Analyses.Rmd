@@ -724,11 +724,11 @@ p <- plot_nmds()
 girafe(ggobj = p)
 ```
 
-#### Contour plots  
+### Contour plots  
 
-The below plots, rather than using arrows for individual species or vegetation groups, create contours for the specific values of each.    
+The below plots, rather than using arrows for individual species or vegetation groups, create contours for the specific values of each. Contours are labeled with % cover values and are fit as a spline-based surface using `vegan::ordisurf()`.      
 
-<details><summary>Click to expand if you would like to see contour plots.</summary>
+<details><summary>Click to expand contour plots.</summary>
 
 ```{r, fig.width = 6, fig.height = 6}
 spps <- paste0(species.scores$species)
@@ -739,8 +739,8 @@ for(i in seq_along(spps)){
   # Pass the formula to ordisurf
   ordi <- ordisurf(formula, resp_pm, plot = FALSE)
   
-  grid <- with(ordi$grid, expand.grid(x = x, y = y))
-  grid$z <- as.vector(ordi$grid$z)
+  grid.obj <- with(ordi$grid, expand.grid(x = x, y = y))
+  grid.obj$z <- as.vector(ordi$grid$z)
   p_cont <- plot_nmds_contours() +
       labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
   print(p_cont)

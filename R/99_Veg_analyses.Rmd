@@ -92,12 +92,12 @@ eis$Vegetation_Zone <- factor(eis$Vegetation_Zone, levels = zone_factor)
 # if subsets of dat were specified, 
 # that subsetting occurs here
 # start year
-if(!na(addlOptions$Choice[addlOptions$R_param == yrStartOption])){
-    dat <- dat[dat$Year >= addlOptions$Choice[addlOptions$R_param == yrStartOption], ]
+if(!is.na(addlOptions$Choice[addlOptions$R_param == "yrStartOption"])){
+    dat <- dat[dat$Year >= addlOptions$Choice[addlOptions$R_param == "yrStartOption"], ]
 }
 # end year
-if(!na(addlOptions$Choice[addlOptions$R_param == yrEndOption])){
-    dat <- dat[dat$Year <= addlOptions$Choice[addlOptions$R_param == yrEndOption], ]
+if(!is.na(addlOptions$Choice[addlOptions$R_param == "yrEndOption"])){
+    dat <- dat[dat$Year <= addlOptions$Choice[addlOptions$R_param == "yrEndOption"], ]
 }
 
 
