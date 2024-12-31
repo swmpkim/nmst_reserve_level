@@ -141,10 +141,15 @@ for(i in seq_along(respns)){
 ```{r, results = "asis"}
 # custom metrics
 
-# limit these to "if at least one metric is specified" .......
 
-# calculate all necessary columns
-# based on original 'dat'
+# allow for custom names for the custom metrics
+custom_name1 <- addlOptions$Choice[addlOptions$R_param == "Custom_metric1_name"]
+custom_name1 <- ifelse(is.na(custom_name1) | custom_name1 == "", "Custom_metric1", custom_name1)
+
+custom_name2 <- addlOptions$Choice[addlOptions$R_param == "Custom_metric2_name"]
+custom_name2 <- ifelse(is.na(custom_name2) | custom_name2 == "", "Custom_metric2", custom_name2)
+
+# process custom metrics 
 
 # first custom metric
 if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom1"])){
@@ -153,6 +158,10 @@ if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom1"])){
     terms1 <- extract_terms(user_formula1)
     dat_custom <- process_custom_metric_terms(terms = terms1,
                                               dat = dat)
+    
+    # make formulas vector for printing
+    formulas <- user_formula1
+
 }
 
 # second custom metric - dat_custom should already exist from custom 1
@@ -163,6 +172,8 @@ if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
     terms2 <- extract_terms(user_formula2)
     dat_custom <- process_custom_metric_terms(terms = terms2,
                                               dat = dat_custom)
+    
+    formulas <- c(formulas, user_formula2)
 }
 
 # if at least one custom metric exists,
@@ -171,21 +182,24 @@ if(exists("dat_custom")){
     # now that all the proper columns exist, do the math
     # custom metric 1 must exist for dat_custom to exist
     dat_custom <- dat_custom %>% 
-        mutate(Custom_metric1 = !!user_formula1_parsed)
+        mutate(!!custom_name1 := !!user_formula1_parsed)
     
     # custom metric 2 may or may not exist, so make it an if statement
     if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
         dat_custom <- dat_custom %>% 
-            mutate(Custom_metric2 = !!user_formula2_parsed)
+            mutate(!!custom_name2 := !!user_formula2_parsed)
     }
+    
     # select proper columns
     dat_custom <- dat_custom %>% 
         select(Reserve:Total,
-               starts_with("Custom_metric"))
+               starts_with(custom_name1),
+               starts_with(custom_name2))
     
     # call analyses here
     # custom metric columns:
-    respns <- names(dat_custom)[which(str_starts(names(dat_custom), "Custom_metric"))]
+    respns <- names(dat_custom)[which(names(dat_custom) %in% c(custom_name1, custom_name2))]
+    # respns <- names(dat_custom)[which(str_starts(names(dat_custom), "Custom_metric"))]
     
     # join with the univariate data frame
     # left join so if for some reason there are extra rows in dat_custom
@@ -197,6 +211,8 @@ if(exists("dat_custom")){
         respn <- respns[i]
         cat("\n")
         cat("##", respn, "\n")
+        cat("\n", "This custom metric was calculated using the following formula: \n\n", formulas[i], "\n\n")
+ 
         dat_univar$resp <- unlist(dat_univar[which(names(dat_univar) == respn)])
         chld <- knitr::knit_child("003a_model_run.Rmd", quiet = TRUE)
         cat(chld, sep = "\n")
