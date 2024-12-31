@@ -152,7 +152,7 @@ custom_name2 <- ifelse(is.na(custom_name2) | custom_name2 == "", "Custom_metric2
 # process custom metrics 
 
 # first custom metric
-if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom1"])){
+if("custom1" %in% anaSpecs$R_varName){
     user_formula1 <- anaSpecs$Choice[anaSpecs$R_varName == "custom1"]
     user_formula1_parsed <- rlang::parse_expr(user_formula1)
     terms1 <- extract_terms(user_formula1)
@@ -165,7 +165,7 @@ if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom1"])){
 }
 
 # second custom metric - dat_custom should already exist from custom 1
-if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
+if("custom2" %in% anaSpecs$R_varName){
     user_formula2 <- anaSpecs$Choice[anaSpecs$R_varName == "custom2"]
     user_formula2_parsed <- rlang::parse_expr(user_formula2)
     
@@ -185,7 +185,7 @@ if(exists("dat_custom")){
         mutate(!!custom_name1 := !!user_formula1_parsed)
     
     # custom metric 2 may or may not exist, so make it an if statement
-    if(!is.na(anaSpecs$Choice[anaSpecs$R_varName == "custom2"])){
+    if("custom2" %in% anaSpecs$R_varName){
         dat_custom <- dat_custom %>% 
             mutate(!!custom_name2 := !!user_formula2_parsed)
     }
