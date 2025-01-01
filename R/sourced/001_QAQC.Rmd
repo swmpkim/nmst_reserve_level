@@ -6,7 +6,7 @@ output: html_document
 
 ## About  
 
-This section has tables and graphs, in separate tabs.  
+This section contains tables and graphs, in separate tabs.  
 
 To detect errors in data sets, the information in this section should be reviewed by Reserve data practitioners. These results are meant to help you find issues that need to be corrected in the raw data, and decide whether plots or data should be removed from analyses (e.g., “off season” surveys, plots no longer monitored, restoration sites).
 

@@ -5,21 +5,20 @@ output: html_document
 
 ## About  
 
-This section has summary graphics. The color palettes are meant to be colorblind-friendly but please reach out if you are colorblind and it's not working for you.  
+This section contains summary graphics. The color palettes are generated via the `khroma` R package and were developed to be colorblind-friendly.  
 
-These summary figures tell a graphical story about current conditions and trends through time. There are two types:  
+These summary figures tell a graphical story about current conditions and trends through time. There are two types of figure:  
 
--  **Averaged stacked bar graphs** -  show the relative distribution of species and cover classes and how these relationships change over time.  
+-  **Averaged stacked bar charts** -  show the relative distribution of species and cover classes and how these relationships change over time.  
     -  Charts have been created at the Site, Zone, and Site x Zone levels.  
     -  Chart categories feature dominant species or species groups as identified by the Reserve in the "veg-specs.xlsx" file, "Analysis_Specs" sheet.  
 -  **Spatial stacked bar charts** - show the relative distribution of species and cover classes as above, but for each plot. These charts are laid out spatially by site. For ease of interpretation, only 4 evenly-spaced time points are used along the x-axis in each chart.    
 
 
-
 ### Questions addressed  
 
--  What species characterize each site and marsh zone?  
--  How do relative abundances of species/groups fluctuate among years and is there a visual trend with time (e.g., corresponds to severe events, stroms, staff turnover)?  
+-  Which species characterize each site and marsh zone?  
+-  How do relative abundances of species/groups fluctuate among years and is there a visual trend with time (e.g., corresponds to severe events, storms, staff turnover)?  
 -  For QA/QC purposes, does the data make sense?
 
 
@@ -176,7 +175,8 @@ top_3_mean %>%
 
 ## Spatial  
 
-One plot per Site; showing 4 evenly spaced-through-time samples.   
+One plot per Site; showing 4 evenly spaced-through-time samples.  
+
 
 ```{r spatial-option-setup}
 spatOption <- addlOptions$Choice[addlOptions$R_param == "spatOption"]
@@ -219,7 +219,7 @@ stn_tbl$Species_or_Group <- rep_len(unique(anaSpec_dfs$spat$Species_or_Group), l
 
 for(st in unique(stn_tbl$spatOption)){
     
-    # subset to the site
+    # subset to the site or transect
     stn_tmp <- stn_tbl[stn_tbl$spatOption == st, ]
     stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
@@ -242,16 +242,19 @@ for(st in unique(stn_tbl$spatOption)){
         theme(legend.position = "right")
     
     
-    # subset the lumped data to the single site
+    # subset the lumped data to the single site or transect
     dat_tmp <- anaSpec_dfs$spat[anaSpec_dfs$spat$spatOption == st, ]
     # and only keep the plots from above, with lat/long coords
     dat_tmp <- dat_tmp[dat_tmp$StTrnsPlt %in% stn_tmp$PlotID_full, ]
     
     
     
-    # loop through each plot at the site
-    # make a barplot of the top 3 species + other
-    # and add as subplot to the blank canvas, based on lat/long
+    # loop through each plot at the site/transect
+    # make a barplot of the selected species + other 
+    #    (unless other was turned off in Analysis_Specs, 
+    #    in which case the plot will only contain the species,  
+    #    and some panels may be blank)
+    # add barplot as subplot to the blank canvas, based on lat/long
     for (plt in unique(dat_tmp$StTrnsPlt)){
         
         dat_plt <- dat_tmp[dat_tmp$StTrnsPlt==plt, ]
@@ -316,7 +319,7 @@ stn_tbl$Species <- rep_len(unique(top_3_mean$Species), length.out = nrow(stn_tbl
 
 for(st in unique(stn_tbl$spatOption)){
     
-    # subset to the site
+    # subset to the site or transect
     stn_tmp <- stn_tbl[stn_tbl$spatOption == st, ]
     stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
     
@@ -339,14 +342,15 @@ for(st in unique(stn_tbl$spatOption)){
         theme(legend.position = "right")
     
     
-    # subset the lumped data to the single site
+    # subset the lumped data to the single site/transect
     dat_tmp <- top_3_mean[top_3_mean$spatOption == st, ]
     # and only keep the plots from above, with lat/long coords
     dat_tmp <- dat_tmp[dat_tmp$PlotID_full %in% stn_tmp$PlotID_full, ]
  
 
     # loop through each plot at the site
-    # make a barplot of the top 3 species + other
+    # make a barplot of the top 3 species + other 
+    #    (unless other was turned off, then species only)
     # and add as subplot to the blank canvas, based on lat/long
     for (plt in unique(dat_tmp$PlotID_full)){
         

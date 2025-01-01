@@ -21,10 +21,6 @@ if(exists("mod_plts", inherits = FALSE)){
     mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
     sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
-    # mod_trnds <- data.frame(emtrends(mod_plts, 
-    #                                  pairwise ~ Vegetation_Zone, 
-    #                                  var = "Years_sinceStart")$emtrends)
-    
     mod_trnds <- estimate_slopes(mod_plts, trend = "Years_sinceStart",
                                  by = "Vegetation_Zone")
     

@@ -18,10 +18,8 @@ library(metR)
 These tabs are the multivariate analyses.
 
 ```{r mod-multivar-df}
-# use data frame where unvegetated 'species' are grouped by nmst categories
-# dat_multivar <- dat_nmst_cats
-
 # use the entire data frame - only group up for loading factors of interest
+# cut out metrics that don't represent % cover
 dat_multivar <- dat %>% 
     select(-any_of(c("EMI", "swdiv", "richness")))
 ```
@@ -42,9 +40,9 @@ if(!datEnough){
 }
 ```
 
-In this section, we use ordination to visualize and analyze plant communities through plot-level cover data and explanatory variables (e.g., distance to water, elevation, salinity) across sites and marsh zones, when appropriate. Non-metric multidimensional scaling (NMDS) with loading factors (when appropriate) will be used to visualize the data. Loading factors can be key species or groupings (e.g., dominant species, bare, halophytes) or explanatory variables. We also use similarity percentages (SIMPER) to identify which cover categories are contributing to dissimilarity. A PERMANOVA incorporating appropriate explanatory variables (e.g., site, zone) is used to test for differences between the first and last years of monitoring.
+In this section, we use multivariate techniques to ordination to visualize and analyze plant community change through plot-level cover data across marsh zones.  
 
-### Questions addressed
+### Questions and statistical methods  
 
 -   Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?
     -   addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.
@@ -453,7 +451,7 @@ cat("\n\n")
 
 cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\n")
     
-cat("\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n-------------------\n\n")
+cat("\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n\n")
 
 pmv <- adonis2(resp_pm ~ Time_group, data = expl_pm2,
                control = how(blocks = expl_pm2$StTrnsPlt), # don't move plots, just swap time stamps within where the plot data rows are
@@ -631,7 +629,9 @@ Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Spri
 
 
 
-### 3-d NMDS plot
+### 3-d NMDS plot  
+
+This 3-d plot is interactive - you can zoom in and rotate the view. Each point represents a single vegetation plot at a single time point (start, open circles; or end, filled circles). Point color represents the plot's vegetation zone. The red lines and labels represent the coordinates of species or species groups (centroid of comprising species) specified in the Analysis_Specs worksheet of the veg-specs.xlsx file.   
 
 ```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
 # set up zone colors
@@ -689,10 +689,6 @@ for (i in 1:nrow(species.scores)) {
         
 }
 
-# save the plot to another file
-# NMDS_outname <- paste0("NMDS-3d_", params$file_code, "_", Sys.Date(), ".html")
-# saveWidget(fig, file = here::here("output", NMDS_outname), selfcontained = TRUE)
-
 # print the plot
 fig
 ```
@@ -701,12 +697,10 @@ fig
 
 (first two axes only)
 
-#### How to read these NMDS plots
-
--   Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.\
--   Black arrows and text represent Species or Categories of vegetation (e.g. H-Halophyte) identified by the reserve in the 'Analysis_Specs' sheet of the 'veg-specs.xlsx' file. Hovering over the arrow will provide the Species or Category name.\
--   Small points represent individual plots and are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods (shapes and colors match the large points above); hovering does not yield output for points.\
--   Some identified loading factors may not appear as arrows; this is usually because all data points for that species were 0. They may also have been too low to have produced species scores in the NMDS.
+-   Each small point represents a single vegetation plot at a single time point (start, open circles; or end, filled circles), as in the 3-d plot. Point color represents the plot's vegetation zone.    
+-   Large points represent the centroid for each Vegetation Zone/Time period combination. They are labelled with the Vegetation Zone abbreviation and 'Start' or 'End'. Additionally, they are colored by Vegetation Zone and shaped by 'Start' vs. 'End' time periods. Upon hover, the full Vegetation Zone name and year(s) represented will be provided.  
+-   The black lines and labels correspond to the red lines and labels in the 3d graph, and represent the loadings: coordinates of species or species groups (centroid of comprising species) specified in the Analysis_Specs worksheet of the veg-specs.xlsx file. Hovering over an arrow will make the species or group name appear more clearly.  
+-   Some identified loading factors may not appear as arrows; this is usually because all % cover values for that species or group were 0. Cover values may also have been too low to have produced species scores in the NMDS.
 
 ```{r stats-prep-nmds-groups, eval = datEnough}
 # get centroids for each time/zone group
@@ -760,7 +754,6 @@ for(i in seq_along(spps)){
       labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
   print(p_cont)
 
-  # plot(ordi, main = spps[i], xlab = "NMDS1", ylab = "NMDS2")
 }
 ```
 
@@ -769,51 +762,57 @@ for(i in seq_along(spps)){
 
 ### Optional additional loadings  
 
-```{r}
+```{r, results = 'asis'}
 # see if additional loadings were even specified
 # if not, let the user know and stop here.
+
 if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
-    cat("No additional loadings specified. If you would like to graph additional environmental factors on the NMDS plot, please specify them in the 'NMDS additional loadings' section of 'More_Options' sheet in the veg-specs.xlsx file.")
+    
+    cat("No additional loadings specified. If you would like to graph additional environmental factors on the NMDS plot, please specify them in the 'NMDS additional loadings' section of the 'More_Options' sheet in the veg-specs.xlsx file.")
+    
 } else {
+    
     # if additional loadings were specified, check them and make sure at least one is in the data frame. If not, print a message.
     if(run_envfit_addl == FALSE){
         cat("It looks like additional loadings were specified in the veg-specs.xlsx file, but none of them were present in the input data. Please check and make sure you used column names that exist in the 'Cover' sheet of the vegetation data file. Make sure the options in the veg-specs file are spelled and capitalized in a way that exactly matches the column names in the data file. If there is more than one column specified, make sure to separate multiples by a comma (no other punctuation or special characters).")
+        
     } else {
-        # run it and do the things.
+        # if something can be run, do it.
+        
         # join addl columns to the explanatory df
         # only keeping rows in the explanatory df and response matrix
-    expl_addl <- left_join(expl_pm, dat_addl)
-    # make sure to only use columns that are in the data (in case one was misspecified)
-    cols_to_match <- nmds_addl[which(nmds_addl %in% names(expl_addl))]
-    envfit_addl <- envfit(mds_resp, expl_addl[cols_to_match])
-    
-    scores.envfit_addl <- data.frame(scores(envfit_addl, display = "vectors"))
-    scores.envfit_addl$species <- rownames(scores.envfit_addl)
-    
-    # plot with arrows
-    p_addl <- plot_nmds(scores = data.scores,
-              species = scores.envfit_addl,
-              env.vars = en_coord_cat,
-              axes = c(1, 2)) +
-        labs(subtitle = "Large points: Zone/Time centroids. Arrows: Additional environmental loading factors.")
-    print(p_addl)
-    
-    # contour plots
-    spps <- scores.envfit_addl$species
-    for(i in seq_along(spps)){
-        formula <- as.formula(paste0("mds_resp ~ `", spps[i], "`"))
+        expl_addl <- left_join(expl_pm, dat_addl)
+        # make sure to only use columns that are in the data (in case one was misspecified)
+        cols_to_match <- nmds_addl[which(nmds_addl %in% names(expl_addl))]
+        # run envfit and extract the scores
+        envfit_addl <- envfit(mds_resp, expl_addl[cols_to_match])
+        scores.envfit_addl <- data.frame(scores(envfit_addl, display = "vectors"))
+        scores.envfit_addl$species <- rownames(scores.envfit_addl)
         
-        # Pass the formula to ordisurf
-        ordi <- ordisurf(formula, expl_addl, plot = FALSE)
+        # plot with arrows
+        p_addl <- plot_nmds(scores = data.scores,
+                            species = scores.envfit_addl,
+                            env.vars = en_coord_cat,
+                            axes = c(1, 2)) +
+            labs(subtitle = "Large points: Zone/Time centroids. Arrows: Additional environmental loading factors.")
+        print(p_addl)
         
-        grid.obj <- with(ordi$grid, expand.grid(x = x, y = y))
-        grid.obj$z <- as.vector(ordi$grid$z)
-        p_cont <- plot_nmds_contours() +
-            labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
-        print(p_cont)
+        # contour plots
+        spps <- scores.envfit_addl$species
+        for(i in seq_along(spps)){
+            formula <- as.formula(paste0("mds_resp ~ `", spps[i], "`"))
+            
+            # Pass the formula to ordisurf
+            ordi <- ordisurf(formula, expl_addl, plot = FALSE)
+            
+            grid.obj <- with(ordi$grid, expand.grid(x = x, y = y))
+            grid.obj$z <- as.vector(ordi$grid$z)
+            p_cont <- plot_nmds_contours() +
+                labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
+            print(p_cont)
+            
+        }
         
-    }
-    
     }
 }
 ```

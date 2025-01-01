@@ -135,11 +135,11 @@ find_suspect_values <- function(data, flags){
     
     # there may or may not be an F_Record column somewhere before 'Total'
     # so pick the first F_ column after the 'Total' column
-    # what are all the ones that start with F_
+    # first find all the ones that start with F_
     qaqc_cols <- which(str_starts(names(data), "F_"))
-    # where is the "Total" column
+    # find the index of the "Total" column
     total_col <- which(names(data) == "Total")
-    # what's the value of the first qaqc_col after Total
+    # find the index of the first qaqc_col after Total
     qaqc_cols_start <- qaqc_cols[min(which(qaqc_cols > total_col))]
     
     # now get the data; should end right before the first qaqc col
@@ -196,12 +196,12 @@ remove_suspect_values <- function(data,
     
     # there may or may not be an F_Record column somewhere before 'Total'
     # so pick the first F_ column after the 'Total' column
-    # what are all the ones that start with F_
+    # first find all the ones that start with F_
     qaqc_cols <- which(str_starts(names(data), "F_"))
-    # where is the "Total" column
+    # find the index of the "Total" column
     total_col <- which(names(data) == "Total")
-    # what's the value of the first qaqc_col after Total
-    qaqc_cols_start <- qaqc_cols[min(which(qaqc_cols > total_col))]  
+    # find the index of the first qaqc_col after Total
+    qaqc_cols_start <- qaqc_cols[min(which(qaqc_cols > total_col))]
     
     # now get the data; should end right before the first qaqc col
     data_alone <- data[, 1:(qaqc_cols_start-1)]
@@ -291,9 +291,9 @@ lump_species <- function(data, summ_fun, n){
 }
 
 
-# Ecotone Invader species - get list by plant category  
+# Ecotone Indicator (Migrator) species - get list by plant category  
 get_ei_spps_from_groups <- function(data){
-    # input is previously created 'eis' data frame
+    # input is eis' data frame created from get_eis()
     ei_groups <- data %>% filter(Group == TRUE)
     
     to_add <- list()
@@ -355,7 +355,11 @@ relevel_spps <- function(data){
         data <- forcats::fct_relevel(data, "unvegetated", after = Inf)
     }
     
-    out <- forcats::fct_relevel(data, "Other", after = Inf)
+    if("Other" %in% data){
+        out <- forcats::fct_relevel(data, "Other", after = Inf)
+    } else {
+        out <- forcats::fct_relevel(data)
+    }
     
     return(out)
 }
