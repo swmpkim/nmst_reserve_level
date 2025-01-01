@@ -323,8 +323,8 @@ set.seed(1223)
 # smaller data frame
 expl_pm2 <- expl_pm %>% 
     select(Vegetation_Zone, StTrnsPlt, Time_group)
-# set up veg zones
-veg_zones <- levels(expl_pm2$Vegetation_Zone)
+# set up veg zones - grab the levels, but only the ones that are in the data frame
+veg_zones <- levels(expl_pm2$Vegetation_Zone)[which(levels(expl_pm2$Vegetation_Zone) %in% unique(expl_pm2$Vegetation_Zone))]
 
 pmvs <- list()
 simps <- list()
@@ -764,4 +764,57 @@ for(i in seq_along(spps)){
 }
 ```
 
-</details>
+</details>  
+
+
+### Optional additional loadings  
+
+```{r}
+# see if additional loadings were even specified
+# if not, let the user know and stop here.
+if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
+    cat("No additional loadings specified. If you would like to graph additional environmental factors on the NMDS plot, please specify them in the 'NMDS additional loadings' section of 'More_Options' sheet in the veg-specs.xlsx file.")
+} else {
+    # if additional loadings were specified, check them and make sure at least one is in the data frame. If not, print a message.
+    if(run_envfit_addl == FALSE){
+        cat("It looks like additional loadings were specified in the veg-specs.xlsx file, but none of them were present in the input data. Please check and make sure you used column names that exist in the 'Cover' sheet of the vegetation data file. Make sure the options in the veg-specs file are spelled and capitalized in a way that exactly matches the column names in the data file. If there is more than one column specified, make sure to separate multiples by a comma (no other punctuation or special characters).")
+    } else {
+        # run it and do the things.
+        # join addl columns to the explanatory df
+        # only keeping rows in the explanatory df and response matrix
+    expl_addl <- left_join(expl_pm, dat_addl)
+    # make sure to only use columns that are in the data (in case one was misspecified)
+    cols_to_match <- nmds_addl[which(nmds_addl %in% names(expl_addl))]
+    envfit_addl <- envfit(mds_resp, expl_addl[cols_to_match])
+    
+    scores.envfit_addl <- data.frame(scores(envfit_addl, display = "vectors"))
+    scores.envfit_addl$species <- rownames(scores.envfit_addl)
+    
+    # plot with arrows
+    p_addl <- plot_nmds(scores = data.scores,
+              species = scores.envfit_addl,
+              env.vars = en_coord_cat,
+              axes = c(1, 2)) +
+        labs(subtitle = "Large points: Zone/Time centroids. Arrows: Additional environmental loading factors.")
+    print(p_addl)
+    
+    # contour plots
+    spps <- scores.envfit_addl$species
+    for(i in seq_along(spps)){
+        formula <- as.formula(paste0("mds_resp ~ `", spps[i], "`"))
+        
+        # Pass the formula to ordisurf
+        ordi <- ordisurf(formula, expl_addl, plot = FALSE)
+        
+        grid.obj <- with(ordi$grid, expand.grid(x = x, y = y))
+        grid.obj$z <- as.vector(ordi$grid$z)
+        p_cont <- plot_nmds_contours() +
+            labs(subtitle = paste0("Contours for: ", spps[i], "\nLarge points represent Zone/Time centroids"))
+        print(p_cont)
+        
+    }
+    
+    }
+}
+```
+

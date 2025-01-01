@@ -543,9 +543,7 @@ make_spec_df <- function(data, specs){
         summarize(Cover = sum(Cover, na.rm = TRUE)) %>% 
         ungroup() 
 }
-# would like to figure out how to look at the provided Plant_Categories
-# and see if any species were removed because they were named separately
-# and if so, rename it to "Other [category]"
+
 
 
 # Tables ----
@@ -628,9 +626,6 @@ plot_nmds <- function(scores = data.scores,
                                    shape = Time_group,
                                    fill = Zone_abbrev,
                                    col = Zone_abbrev), 
-                               # shape = "diamond", 
-                               # colour = "navy",
-                               # col = "black",
                                size = 4)  +
         geom_label_repel2(data = species,  # species labels
                           aes(x = !!ensym(xax), y = !!ensym(yax)),

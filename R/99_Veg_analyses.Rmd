@@ -6,7 +6,7 @@ output:
         toc_float: true
         toc_depth: 2
 params: 
-    file_code: "ACE-EIN"
+    file_code: "GND"
 ---
 
 # About this Document  
@@ -33,6 +33,7 @@ knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE,
                       warning = FALSE,
                       error = TRUE)
+
 ```
 
 
@@ -70,6 +71,7 @@ source(here::here("R", "sourced", "functions.R"))
 ```{r import-data-meta}
 # read data, metadata, and analysis specifications
 dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
+
 stn_tbl <- get_stn_table(file_dat)
 stn_tbl <- stn_tbl %>% 
     mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
@@ -80,6 +82,32 @@ anaSpecs <- get_anaSpecs(file = file_specs) |>
 anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
 addlOptions <- get_addlOptions(file = file_specs)
 zone_factor <- get_zone_ordering(file_specs)
+
+# read in Cover sheet again, keeping only columns
+# specified as additional loadings in NMDS
+# keeping separate because I don't want to interfere with other
+# parts of the code where I use these columns from the station table
+# station table representing "at establishment", whereas in the data
+# sheet, these values can change through time (or be mis-copied;
+# always a potential issue to watch out for)
+# using cover_only = TRUE gets rid of the Height_Relative_to_MLLW column - but we want it here
+run_envfit_addl <- FALSE
+if(!is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
+    # split the input
+    nmds_addl <- trimws(unlist(str_split(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"], ",")))
+    
+    # grab the data frame
+    dat_addl <- get_data(file_dat, cover_only = FALSE, keep_all_cols = TRUE) %>% 
+        select(Reserve:PlotID, 
+               any_of(nmds_addl))
+    
+    # make sure there are actually additional columns in it;
+    # if not, there will not be anything to use with envfit
+    # so only change run_envfit_addl to TRUE if those addl columns exist
+    if(sum(nmds_addl %in% names(dat_addl)) > 0){
+        run_envfit_addl <- TRUE
+    }
+}
 
 # remove vegetation zones from eis data frame that don't appear in the station table
 eis <- eis[eis$Vegetation_Zone %in% unique(stn_tbl$Vegetation_Zone), ]
@@ -99,9 +127,19 @@ if(!is.na(addlOptions$Choice[addlOptions$R_param == "yrStartOption"])){
 if(!is.na(addlOptions$Choice[addlOptions$R_param == "yrEndOption"])){
     dat <- dat[dat$Year <= addlOptions$Choice[addlOptions$R_param == "yrEndOption"], ]
 }
+# single site to analyze
+if(!is.na(addlOptions$Choice[addlOptions$R_param == "singleSiteOption"])){
+    dat <- dat[dat$SiteID == addlOptions$Choice[addlOptions$R_param == "singleSiteOption"], ]
+}
+# single site to exclude
+if(!is.na(addlOptions$Choice[addlOptions$R_param == "excludeSiteOption"])){
+    dat <- dat[dat$SiteID != addlOptions$Choice[addlOptions$R_param == "excludeSiteOption"], ]
+}
+
 
 
 # add some columns to dat
+# Years_sinceStart is relative to the earliest date in the dataset, regardless of when a plot was first sampled
 dat <- dat %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
                   Years_sinceStart = round(Date - min(Date), 4),
@@ -162,6 +200,15 @@ rm(dat_live, swdiv, rich)
 # generate a list of data frames based on user's analysis specs
 anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
 
+# 'Other' gets designated during the make_spec_df step
+# so here is where we remove it, if that is the selected option
+if(addlOptions$Choice[addlOptions$R_param == "lumpOtherOption"] == "No"){
+    anaSpec_dfs <- purrr::map(anaSpec_dfs,
+                              function(x) dplyr::filter(x, 
+                                                        Species_or_Group != "Other")
+    )
+}
+
 # move unvegetated (if present) and other to end of species-as-factors
 # for all anaSpec_dfs
 for(i in 1:length(anaSpec_dfs)){
@@ -213,7 +260,15 @@ emi_spps <- eis %>%
 # combine species  
 
 # top 3, for use in exploratory/spatial graphics
-top_3_mean <- lump_species(dat_long, "mean", 3) %>% 
+top_3_mean <- lump_species(dat_long, "mean", 3) 
+
+# also remove 'Other' here if indicated
+if(addlOptions$Choice[addlOptions$R_param == "lumpOtherOption"] == "No"){
+   top_3_mean <- dplyr::filter(top_3_mean, Species != "Other") 
+}
+
+# finish the data frame
+top_3_mean <- top_3_mean %>% 
     dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
                   Years_sinceStart = round(Date - min(Date), 4),
                   PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"),
