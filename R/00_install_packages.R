@@ -23,12 +23,13 @@ install.packages("leaflet")
 # nice graphing
 install.packages("ggplot2")
 install.packages("ggrepel")
-install.packages("ggiraph")
-install.packages("khroma") 
-install.packages("plotly")
+install.packages("ggiraph")  # interactive graphs
+install.packages("plotly")   # interactive graphs
+install.packages("khroma")   # colorblind-friendly palettes
+install.packages("scico")    # colorblind-friendly palettes
 install.packages("scales")
 install.packages("viridis") 
-install.packages("patchwork")
+install.packages("patchwork") # putting plots and tables together nicely
 
 
 # nice tables
