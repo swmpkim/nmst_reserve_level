@@ -1,17 +1,14 @@
 library(foreach)
 library(doParallel)
 
-reserves <- c("GND", "CBV", "NIW", "GTM")
-
 # identify them
 veg_files <- dir(here::here("data"),
                  pattern = "_veg.xlsx$")
 reserves <- stringr::str_remove(veg_files, "_veg.xlsx")
 
 # reserves with updated metadata files
-# as of 12/30/24
-reserves <- c("GND", "GRB", "NOC-RC", "NIW",
-              "ACE-EIN", "ACE-EIS", "APA_LSM", "APA-PC")
+# 1/1/25
+reserves <- c("GND", "CBM-JB", "GRB", "GTM")
 
 # 
 # cl<-makeCluster(8)  

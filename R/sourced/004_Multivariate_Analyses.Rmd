@@ -817,3 +817,53 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 }
 ```
 
+
+## NMDS2  
+
+Experimental.  
+
+```{r, eval = FALSE}
+# expl and resp have all values
+# expl_pm and resp_pm are subsetted to first and last years only
+
+
+big_mds <- metaMDS(resp, distance = "bray", k = 3,
+                        autotransform = FALSE, trace = 0)
+
+data.scores <- as.data.frame(scores(big_mds)$sites)
+species.scores <- as.data.frame(scores(big_mds)$species)
+species.scores$species <- rownames(species.scores) 
+
+# zone-year combos are in env
+data.scores <- cbind(data.scores, env) %>% 
+    mutate(Year = as.numeric(as.character(Year)))
+
+# calculate centroids for zone-year
+data.centroids <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Year, data = data.scores, FUN = mean) %>% 
+    mutate(Year = as.numeric(str_sub(Zone_Year, start = -4L)),
+           Vegetation_Zone = str_sub(Zone_Year, end = -6L))
+
+n_colors <- max(data.scores$Year) - min(data.scores$Year) + 1
+yrs <- seq(min(data.scores$Year), max(data.scores$Year))
+palcols <- as.vector(color("roma")(n_colors))
+names(palcols) <- yrs
+
+p <- ggplot(data.centroids,
+       aes(x = NMDS1,
+           y = NMDS2,
+           col = as.factor(Year))) +
+    geom_point(data = data.scores, 
+               alpha = 0.3) +
+    # geom_label(aes(label = Year),
+    #           fontface = "bold",
+    #           alpha = 0.5) +
+    geom_text(aes(label = Year),
+              fontface = "bold") + 
+    facet_wrap(~Vegetation_Zone) +
+    scale_color_manual(values = palcols) +
+    theme_bw() +
+    theme(legend.position = "none")
+ggplotly(p)
+
+```
+
