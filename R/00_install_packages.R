@@ -12,6 +12,7 @@ install.packages("stringr")
 install.packages("forcats")
 install.packages("lubridate")
 install.packages("rlang")
+install.packages("xfun")
 
 
 # interactive apps
