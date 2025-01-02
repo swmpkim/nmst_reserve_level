@@ -11,6 +11,7 @@ library(plotly)
 library(gt)
 library(patchwork)
 library(metR)
+library(scico)
 ```
 
 ## About
@@ -537,7 +538,9 @@ for(i in seq_along(simps)){
 }
 ```
 
-## NMDS  
+## NMDS - start/end  
+
+In this section, NMDS is performed on data from only the starting and ending years for each vegetation zone. This tab essentially illustrates the PERMANOVA results. For NMDS with all years, see the tab 'NMDS - all years'.  
 
 Non-metric multidimensional scaling is an ordination method that preserves ranked dissimilarities between observations. Exact calculated distances are *not* preserved in this type of ordination. Points that are closer together on the graphs are more similar than points that are further away, so NMDS is good for seeing groupings and gradients when present. For more information, see the sources referenced below.  
 
@@ -818,11 +821,13 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 ```
 
 
-## NMDS2  
+## NMDS - all years  
 
-Experimental.  
+Experimental.   
 
-```{r, eval = FALSE}
+All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales, to emphasize within-zone differences between years.   
+
+```{r, eval = TRUE}
 # expl and resp have all values
 # expl_pm and resp_pm are subsetted to first and last years only
 set.seed(2025)
@@ -833,6 +838,22 @@ big_mds <- metaMDS(resp, distance = "bray", k = 3,
 data.scores <- as.data.frame(scores(big_mds)$sites)
 species.scores <- as.data.frame(scores(big_mds)$species)
 species.scores$species <- rownames(species.scores) 
+
+species.scores <- species.scores %>% 
+        left_join(species_info, by = c("species" = "Species")) %>% 
+        mutate(Species_or_Group = case_when(species %in% choices ~ species,
+                                            Plant_Categories %in% choices ~ Plant_Categories,
+                                            NMST_Groupings %in% choices ~ NMST_Groupings,
+                                            Cover_Categories %in% choices ~ Cover_Categories,
+                                            .default = "Other")) %>% 
+        filter(Species_or_Group %in% choices) %>% 
+        select(species = Species_or_Group,
+               NMDS1,
+               NMDS2,
+               NMDS3)
+    
+    # then find centroids for the species-or-groups
+    species.scores <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ species, data = species.scores, FUN = mean)
 
 # zone-year combos are in env
 data.scores <- cbind(data.scores, env) %>% 
@@ -845,7 +866,7 @@ data.centroids <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Year, data = data.
 
 n_colors <- max(data.scores$Year) - min(data.scores$Year) + 1
 yrs <- seq(min(data.scores$Year), max(data.scores$Year))
-palcols <- scico(n_colors, palette = "corkO")
+palcols <- scico(n_colors, palette = "romaO")
 names(palcols) <- yrs
 
 p_bignmds <- ggplot(data.centroids,
@@ -871,6 +892,22 @@ ggplotly(p)
 p2 <- p_bignmds + 
     facet_wrap(~Vegetation_Zone, scales = "free") 
 ggplotly(p2)
+
+
+# make a separate plot for the loadings - applies across all zones
+ggplot(species.scores) +
+    geom_segment(aes(x = 0, y = 0,
+                     xend = NMDS1, yend = NMDS2),
+                 col = "black",
+                                 arrow = arrow(length = unit(0.15, "inches")),
+                                 linewidth = 0.4) +
+    geom_text_repel(aes(x = NMDS1,
+                  y = NMDS2,
+                  label = species)) +
+    theme_bw() +
+    labs(title = "Loadings",
+         x = "NMDS1",
+         y = "NMDS2")
 
 ```
 
