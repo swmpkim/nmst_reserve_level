@@ -825,7 +825,7 @@ Experimental.
 ```{r, eval = FALSE}
 # expl and resp have all values
 # expl_pm and resp_pm are subsetted to first and last years only
-
+set.seed(2025)
 
 big_mds <- metaMDS(resp, distance = "bray", k = 3,
                         autotransform = FALSE, trace = 0)
@@ -845,25 +845,32 @@ data.centroids <- aggregate(cbind(NMDS1, NMDS2, NMDS3) ~ Zone_Year, data = data.
 
 n_colors <- max(data.scores$Year) - min(data.scores$Year) + 1
 yrs <- seq(min(data.scores$Year), max(data.scores$Year))
-palcols <- as.vector(color("roma")(n_colors))
+palcols <- scico(n_colors, palette = "corkO")
 names(palcols) <- yrs
 
-p <- ggplot(data.centroids,
+p_bignmds <- ggplot(data.centroids,
        aes(x = NMDS1,
            y = NMDS2,
            col = as.factor(Year))) +
-    geom_point(data = data.scores, 
-               alpha = 0.3) +
-    # geom_label(aes(label = Year),
-    #           fontface = "bold",
-    #           alpha = 0.5) +
+    geom_point(data = data.scores,
+               alpha = 0.3,
+               size = 0.5) +
     geom_text(aes(label = Year),
-              fontface = "bold") + 
-    facet_wrap(~Vegetation_Zone) +
+              fontface = "bold") +
     scale_color_manual(values = palcols) +
     theme_bw() +
     theme(legend.position = "none")
+
+# fixed axes, so you can see how zones compare to each other
+p <- p_bignmds + 
+    facet_wrap(~Vegetation_Zone) 
 ggplotly(p)
+
+
+# free axes, so you can look more closely within a zone
+p2 <- p_bignmds + 
+    facet_wrap(~Vegetation_Zone, scales = "free") 
+ggplotly(p2)
 
 ```
 
