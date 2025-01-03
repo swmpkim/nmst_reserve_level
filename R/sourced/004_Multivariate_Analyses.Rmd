@@ -28,6 +28,10 @@ dat_multivar <- dat %>%
 ```{r}
 # remove any plots without at least 3 distinct years of data
 dat_multivar <- filter(dat_multivar, !(StTrnsPlt %in% not_enough$StTrnsPlt))
+
+# for the proper restricted permutations to occur, the data frame needs to be organized properly: keep the plots together.  
+dat_multivar <- dat_multivar %>% 
+    arrange(StTrnsPlt, Date)
 ```
 
 ```{r, results = "asis"}
@@ -86,6 +90,7 @@ env <- expl %>%
 
 ```{r mod-first-last-years, eval = datEnough}
 # find first and last years by zone
+# change the Year in summarize to Date
 start_ends <- dat_multivar %>% 
     group_by(Vegetation_Zone, Year) %>% 
     tally() %>% 
@@ -99,15 +104,31 @@ keeps <- start_ends %>%
                  values_to = "Year") 
 
 # subset data frames to first and last years by Zone
+# also have another data frame to deal with, so find row numbers
+# rather than filtering directly
 expl <- expl %>% 
     left_join(keeps)
-fl_index <- !is.na(expl$Time_group)
 
-# make sure we've got enough plots that were sampled in both the start and end years
-expl2 <- expl %>% 
-    select(StTrnsPlt, Year, Time_group) %>% 
-    janitor::tabyl(StTrnsPlt, Time_group)
-# sum(expl2$Start) == sum(expl2$End)
+# generate row numbers and find min and max per plot x time_Group
+expl_indexing <- expl %>% 
+    mutate(original_rownum = row_number()) %>% 
+    group_by(StTrnsPlt, Time_group) %>% 
+    mutate(group_seq = 1:n()) %>% 
+    summarize(Start_keep = min(original_rownum),
+              End_keep = max(original_rownum))
+
+# pull out the row numbers we want
+# when Time_group == Start, keep the number in "Start_keep" column
+# when Time_group == End, keep the number in "End_keep" column
+fl_index_startkeep <- expl_indexing %>% 
+    filter(Time_group == "Start") %>% 
+    pull(Start_keep)
+fl_index_endkeep <- expl_indexing %>% 
+    filter(Time_group == "End") %>% 
+    pull(End_keep)
+fl_index <- sort(c(fl_index_startkeep, fl_index_endkeep))
+# expl[fl_index, ] %>% View()
+
 
 expl_pm <- expl[fl_index, ]
 resp_pm <- resp[fl_index, ]
