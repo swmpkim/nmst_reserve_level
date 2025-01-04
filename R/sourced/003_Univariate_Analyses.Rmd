@@ -5,7 +5,7 @@ output: html_document
 
 ## About  
 
-Each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, plus EMI (Ecotone Migration Index), species richness, and Shannon-Weiner Diversity Index, will have results appear in its own tab. You will see the same tables and graphics for each.  
+A tab will be generated for results of each response variable. The response variables consist of each of the (up to) 4 response variables identified in the Analysis Specs spreadsheet, (up to) 2 custom metrics identified in the Analysis Specs spreadsheet, EMI (Ecotone Migration Index), Species Richness, and Shannon-Weiner Diversity Index. You will see the same tables and graphics for each.  
 
 ### Questions addressed  
 
@@ -16,7 +16,9 @@ Each of the (up to) 4 response variables identified in the Analysis Specs spread
 
 ### Statistical Model  
 
-The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Plot`, where `y` is the response variable given in the tab, and each individual plot has a random intercept.  
+The main statistical model used is a linear mixed model, via `lme4::lmer()`, with the form `y ~ Vegetation Zone + Time + Zone*Time + 1|Plot`, where `y` is the response variable given in the tab, and each individual plot has a random intercept.   
+
+If only one vegetation zone is present in the data file, Vegetation Zone is removed and the statistical model is simplified to `y ~ Time + 1|Plot`.  
 
 
 ### Reserve-identified response variables:  
@@ -137,13 +139,7 @@ univar_outputs <- list()
 
 EMI, Ecotone Migration Index, is the proportional cover of species/covers or species/cover groupings that are expected to increase within a vegetation zone as sea level rises. These species were identified by reserve staff, for each zone, in the 'veg-specs.xlsx' file. 
 
-Species considered to be 'migrators' within each zone are denoted by 'x' in the following table:  
-
-```{r show-eir-spps}
-kableExtra::kable(emi_spps, align = "c") %>% 
-    kable_styling("striped") %>%
-    scroll_box(width = "800px", height = "200px") 
-```
+See the 'EMI' tab in the 'Exploratory and QA/QC' section of this document for a table of species considered to be 'ecotone migrators' for each zone.  
 
 
 ```{r define-univar-EMI}

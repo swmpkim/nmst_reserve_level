@@ -16,7 +16,7 @@ veg_files <- dir(here::here("data"),
 files <- stringr::str_remove(veg_files, "_veg.xlsx")
 
 # to test -
-files <- c("ACE-EIN", "MAR", "GND", "GRB")
+files <- c("ACE-EIN", "MAR", "JAC", "GND", "GRB")
 
 # List of files to process
 failed_files <- c() # Create a log for failed files

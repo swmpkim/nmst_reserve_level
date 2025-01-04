@@ -175,7 +175,9 @@ top_3_mean %>%
 
 ## Spatial  
 
-One plot per Site; showing 4 evenly spaced-through-time samples.  
+One spatial graph was generated for each `r addlOptions$Choice[addlOptions$R_param == "spatOption"]`. This can be changed between the options of Site and Transect in the "More_Options" sheet of the "veg-specs.xlsx" file.  
+
+Each panel on the graphs represents an individual vegetation plot, showing 4 evenly spaced-through-time samples, of the species choices from the "Analysis_Specs" sheet of the "veg-specs.xlsx" file.    
 
 
 ```{r spatial-option-setup}

@@ -191,9 +191,17 @@ ggplot(top_3_mean, aes(x = Year, y = Cover,
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-## EMI graphics  
+## EMI  
 
-A table of which species were counted as "ecotone migrators" for each vegetation zone - as specified in the "Ecotone_Migrators" sheet of the "veg-specs.xlsx" workbook is below the graphics.  
+EMI, Ecotone Migration Index, is the proportional cover of species/covers or species/cover groupings that are expected to increase within a vegetation zone as sea level rises. These species were identified by reserve staff, for each zone, in the 'veg-specs.xlsx' file. 
+
+Species considered to be 'migrators' within each zone are denoted by 'x' in the following table:  
+
+```{r show-emi-table}
+kableExtra::kable(emi_spps, align = "c") %>% 
+    kable_styling("striped") %>%
+    scroll_box(width = "800px", height = "200px") 
+```
 
 ```{r graph-time-EMI}
 ggplot(dat, aes(x = Year, y = EMI, color = Vegetation_Zone)) +
@@ -240,13 +248,7 @@ ggplot(dat) +
     theme(legend.position = "none")
 ```
 
-Species considered to be 'migrators' within each zone are denoted by 'x' in the following table:  
 
-```{r show-emi-table}
-kableExtra::kable(emi_spps, align = "c") %>% 
-    kable_styling("striped") %>%
-    scroll_box(width = "800px", height = "200px") 
-```
 
 
 
