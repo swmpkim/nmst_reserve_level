@@ -53,8 +53,8 @@ In this section, we use multivariate techniques to ordination to visualize and a
 
 -   Are there shifts in the vegetation community (as defined by the entire percent-cover matrix) over time? Do these shifts vary by vegetation zone?
     -   addressed with PERMANOVA, comparing first year of monitoring to the 'last' (most recent) year of monitoring.
-    -   the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, a single Bray-Curtis dissimilarity was calculated for each vegetation plot and used as the response. Vegetation Zones were then permuted to answer the question of whether community differences between the first and last year were equal across vegetation zones.
-    -   if the above test indicated significant differences between Vegetation Zones (p \$ \leq 0.05 \$), the species matrix was split by Vegetation Zone. For each Vegetation Zone, a PERMANOVA was run comparing the community in the first vs. last years. Permutations were restricted so that times (first vs. last) were permuted only within individual plots.
+    -   the first and last year of monitoring at a specific vegetation plot should be considered together. To do this, permutations were restricted to allow swapping of time point within a vegetation plot, but keep both time points of a plot together as plots are permuted across vegetation zones.
+    -   if the above test indicated that differences in time between vegetation zones were significant or nearly so (p <= 0.10), the species matrix was split by Vegetation Zone. A PERMANOVA was run for each vegetation zone, again with restricted permutations to allow only permutation of tiem point within vegetation plot.  
 -   Which species/groups contribute most to these shifts?
     -   addressed using SIMPER, comparing first and last year of monitoring data within each zone. SIMPER is only used to follow up on vegetation zones that indicated a significant community difference in the PERMANOVA.
 -   Where is the plant community changing, and what characteristics do those areas have in common (e.g. site, zone, distance from water, elevation)?
@@ -522,6 +522,8 @@ The p-values determining the above logic are *unadjusted*. Due to the explorator
 The top 6 species in output are below.
 
 "average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.  
+
+### Results  
 
 ```{r, results = 'asis', eval = datEnough}
 if(exists("simp_overall")){

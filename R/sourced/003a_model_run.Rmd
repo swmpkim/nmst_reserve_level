@@ -11,7 +11,7 @@ if(length(unique(dat_univar$Vegetation_Zone)) > 1){
     modyes <- exists("mod_plts", inherits = FALSE)
     modSingleZone <- FALSE
     
-    cat("\n\n **The current file contains multiple vegetation zones, and vegetation zone will be one of the predictors in the statistical model.** \n\n")
+    cat("\n\n **The current file contains multiple vegetation zones, and vegetation zone will be one of the predictors in the statistical model.** Results are presented for each vegetation zone independently because the marginal effects are of interest to the project team. However, be careful interpreting zone-wise results if the interaction term (`Years_sinceStart:Vegetation_Zone`) is not significant (p > 0.05). \n\n")
     
 } else {
     
