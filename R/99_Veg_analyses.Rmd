@@ -1,12 +1,13 @@
 ---
-title: "Veg Analysis: `r params$file_code`"
-output: 
-    html_document:
-        toc: true
-        toc_float: true
-        toc_depth: 2
-params: 
-    file_code: "JAC"
+title: 'Veg Analysis: `r params$file_code`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+self_contained: true
+params:
+  file_code: "GND"
 ---
 
 # About this Document  

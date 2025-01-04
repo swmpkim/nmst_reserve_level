@@ -1,6 +1,8 @@
 ---
 title: ''
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r}
@@ -130,8 +132,26 @@ fl_index <- sort(c(fl_index_startkeep, fl_index_endkeep))
 # expl[fl_index, ] %>% View()
 
 
+# subset
 expl_pm <- expl[fl_index, ]
 resp_pm <- resp[fl_index, ]
+
+# now find the plots that only have start or end
+plts_to_exclude <- expl_pm %>% 
+    janitor::tabyl(StTrnsPlt, Time_group) %>% 
+    mutate(present = Start + End) %>% 
+    filter(present < 2) %>% 
+    pull(StTrnsPlt)
+
+# find their row numbers, and remove them
+# from both expl_pm and resp_pm
+fl_index2 <- which(expl_pm$StTrnsPlt %in% plts_to_exclude)
+
+# if that's not an empty vector, remove those rows
+if(length(fl_index2) > 0){
+    expl_pm <- expl_pm[-fl_index2, ]
+    resp_pm <- resp_pm[-fl_index2, ]
+}
 
 expl_pm$Zone_Timegroup <- paste(expl_pm$Vegetation_Zone, expl_pm$Time_group, sep = "; ")
 
@@ -169,9 +189,13 @@ kbl_nmst(resp_names,
     scroll_box(width = "300px", height = "400px") 
 ```
 
-## PERMANOVA
+## PERMANOVA  
 
-```{r, results = "asis"}
+### Overall  
+
+**_H0: Community change (if any) between start and end is consistent across vegetation zones._**  
+
+```{r, results = "asis", fig.width = 7, fig.height = 3}
 # if there weren't enough years of data, can't do the rest.
 # set up to NOT evaluate code chunks, and spit out a message.
 datEnough <- nrow(dat_multivar) > 0
@@ -180,164 +204,107 @@ if(!datEnough){
     cat("### **Multivariate analyses were not run.**")
     cat("\n \nThere were not enough rows of data.")
 }
+
+
+datEnoughZones <- length(unique(expl_pm$Vegetation_Zone)) > 1
+
+if(!datEnoughZones){
+    cat("**Only one vegetation zone present in data; proceed to Zone-wise section below.** \n\n")
+    runZoneByZone <- TRUE     # run zone-by-zone PERMANOVA; will only run on the single zone
+    runOverallSimp <- FALSE   # don't run overall SIMPER; will be eval'd with zone-by-zone stuff
+}
+
+runOverall <- (datEnough + datEnoughZones) == 2
+
 ```
 
-```{r, eval = datEnough}
-# response matrix and data frame
-resp_mat <- vegdist(resp_pm, method = "bray")
-resp_mat.df <- as.data.frame(as.matrix(resp_mat))
+The interaction p-value (`Vegetation_Zone:Time_group`) is what to look at here:  
 
-# attach names that are plot x time - as both columns and rows
-# because it is a symmetric matrix
-nms <- paste(expl_pm$StTrnsPlt, expl_pm$Time_group, sep = "_")
-names(resp_mat.df) <- nms
-resp_mat.df$vegPlot_time <- nms
+-   If the interaction is significant, then something different happened through time in at least one vegetation zone. Do not interpret the main effects; proceed to the zone-wise tables below. If the interaction is significant or close to it (p <= 0.10), separate PERMANOVAs will be run for each vegetation zone to determine whether community change occurred in each zone separately.  
+-   If the interaction is not significant, look at the main effect of `Time_group` to determine whether, across all zones, the community was different at the end of monitoring than at the beginning.   
 
-# pivot and filter out duplicate rows
-resp_mat.pivoted <- resp_mat.df %>% 
-    pivot_longer(-vegPlot_time,
-                 names_to = "vegPlot_time2",
-                 values_to = "distance") %>% 
-    filter(vegPlot_time != vegPlot_time2)
-# split out plots and times, reduce to one row per plot
-resp_plotwise <- resp_mat.pivoted %>% 
-    separate(vegPlot_time,
-             into = c("vegPlot", "time"),
-             sep = "_") %>% 
-    separate(vegPlot_time2,
-             into = c("vegPlot2", "time2"),
-             sep = "_") %>% 
-    filter(vegPlot == vegPlot2,
-           time == "Start",
-           time2 == "End") %>% 
-    select(vegPlot, distance)
+Permutations have been restricted so that time points are only permuted within a vegetation plot, and both time points for a plot are permuted together across vegetation zones.  
 
-# reattach veg zone
-resp_plotwise <- left_join(resp_plotwise,
-                           select(stn_tbl, Vegetation_Zone, PlotID_full),
-                           by = c("vegPlot" = "PlotID_full")) %>% 
-    relocate(Vegetation_Zone)
-```
+If only one vegetation zone is present in the data file, the overall PERMANOVA will be skipped; look in the zone-wise PERMANOVA section below for results.  
 
-```{r, eval = datEnough}
-lm_zonedist <- lm(distance ~ Vegetation_Zone, data = resp_plotwise)
 
-# overall F for model (same as F for Vegetation_Zone, since it's one-way - really this is our interaction, if we would have kept start/end separate) 
-# are there differences between zones in their response to time?
-observed_F <- summary(lm_zonedist)$fstatistic[["value"]]
-```
 
-```{r, eval = datEnough}
-nperm <- 999
-permuted_F <- numeric(nperm)
+```{r, eval = runOverall, results = 'asis'}
+# set up restricted permutations
+ctrl_pm <- how(
+    plots = Plots(strata = expl_pm$StTrnsPlt, type = "free"),   # permute veg plot samples as a unit (both time groups for a plot together get permuted to the same zone; this brings veg_zone along with the plot)
+    within = Within(type = "free"),  # samples (time group) can be permuted within the veg plot
+    nperm = 999
+    )
 
-set.seed(1223)
-shuffledSet <- shuffleSet(nrow(resp_plotwise), nperm)
 
-for(i in seq_len(nperm)){
-    shuffled <- resp_plotwise %>% 
-        mutate(Vegetation_Zone = resp_plotwise$Vegetation_Zone[shuffledSet[i,]])
-    
-    lm_shuffled <- lm(distance ~ Vegetation_Zone, data = shuffled)
+# uncomment the line below and run a few times if you want to convince yourself it's shuffling properly
 
-    # overall F
-    permuted_F[i] <- summary(lm_shuffled)$fstatistic[[1]]
+# head(expl_pm[shuffle(expl_pm, control = ctrl_pm), c("Vegetation_Zone", "StTrnsPlt", "Time_group")], 10)
+
+
+# run the permanova
+set.seed(2024)
+pmvt <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
+                    control = ctrl_pm,
+                    method = "bray",
+                    by = "terms")
+
+# print the results
+kbl_nmst(pmvt,
+         digits = 4,
+         caption = "Overall PERMANOVA results")
+
+# run zone-by-zone PERMANOVAs and SIMPERs if interaction was significant or close
+runZoneByZone <- pmvt$`Pr(>F)`[3] <= 0.1 & datEnough == TRUE
+
+# run across-all-zones SIMPER if interaction was not significant but 
+# main effect p-val was <= 0.2
+runOverallSimp <- pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[2] <= 0.2 & datEnough == TRUE
+
+# deal with situation where interaction was not significant and
+# main effect p-val was > 0.2
+if(pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[2] > 0.2 & datEnough == TRUE){
+    simp_overall <- data.frame("None" = "SIMPER not run")
 }
 ```
 
-```{r, results = 'asis', eval = datEnough}
-permuted_F <- c(observed_F, permuted_F)
+```{r, results = "asis", eval = runOverallSimp}
+# This chunk conducts a SIMPER across all zones if:
+# the interaction wasn't significant and the main effect of time had
+# p-val <= 0.2
 
-pval_F <- sum(permuted_F >= observed_F) / length(permuted_F)
+# run simper
+simp <- simper(resp_pm, expl_pm$Time_group)
 
-cat("\n\nH0: community distance between time points is equal across all vegetation zones",
-    "\n\nHa: at least one vegetation zone has different community change than at least one other zone"
-)
+# format output
+simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
+# in case there are fewer than 6 species, get rid of empty rows
+simp_df <- janitor::remove_empty(simp_df, "rows")
+simp_overall <- data.frame(lapply(simp_df, round, 4))
+simp_overall$ava <- round(simp_overall$ava, 1)
+simp_overall$avb <- round(simp_overall$avb, 1)
+row.names(simp_overall) <- row.names(simp_df)
+names(simp_overall) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
 
-runZoneByZone <- pval_F <= 0.1 & datEnough == TRUE
-runOverall <- pval_F > 0.1 & datEnough == TRUE
+# later, if simp_overall exists, print it out with kbl_nmst before the zone-wise SIMPERs
 ```
-
-
-Zone-wise PERMANOVAs are run below if the p-value from the test above is <= 0.10.  
-
-```{r, eval = datEnough, fig.width = 7, fig.height = 3}
-permtab <- data.frame(a = c("Number of permutations",
-                            "Observed F statistic",
-                            "Permutation-based p-value"),
-                      b = c(nperm, round(observed_F, 3), round(pval_F, 4)))
-
-permtabgt <- gt(permtab) %>% 
-    cols_label(
-        a = "PERMANOVA output",
-        b = ""
-    ) %>% 
-    fmt_number(rows = 1, decimals = 0) %>% 
-    fmt_number(rows = c(2:3), decimals = 3)
-
-permutedFdf <- data.frame(rep = 1:length(permuted_F),
-                          permF = permuted_F)
-
-permplot <- ggplot(permutedFdf) +
-    geom_histogram(aes(x = permuted_F),
-                   fill = "gray80",
-                   col = "gray30",
-                   bins = 30) +
-    geom_vline(xintercept = observed_F, 
-               col = "red", 
-               linetype = "dashed", 
-               size = 1) +
-    theme_bw() +
-    labs(title = "Permutation distribution",
-         subtitle = "red line = observed F value",
-         x = "F")
-
-# patchwork to display together
-wrap_table(permtabgt) + plot_spacer() + permplot +
-    plot_layout(widths = c(3, 1, 4))
-```
-
-#### Check for homogeneity of variance  
-
-Because the permutation test above was performed on a univariate response (Bray-Curtis distance between 'start' and 'end' for each plot), a Levene's test is used here to check for homogeneity of variances between groups. If p < 0.05, this assumption is violated and results of the permutational test above should be interpreted with caution. A violin plot to visualize distances by vegetation zone is also below, whether or not the Levene's test is significant.    
-
-```{r, eval = datEnough, fig.width = 5, fig.height = 4}
-levene_out <- car::leveneTest(distance ~ Vegetation_Zone, data = resp_plotwise)
-kbl_nmst(levene_out,
-         digits = c(0, 2, 4),
-         caption = "Levene's test for homogeneity of variances; center = median")
-
-
-p_violin <- ggplot(resp_plotwise,
-       aes(x = Vegetation_Zone,
-           y = distance,
-           fill = Vegetation_Zone)) +
-    geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),
-                alpha = 0.7) +
-    scale_fill_manual(values = palcols_zones) +
-    theme_bw() +
-    theme(legend.position = "none") +
-    theme(axis.text.x = element_text(angle = 45,
-                                     hjust = 1)) +
-    labs(title = "Distribution of distance by vegetation zone",
-         subtitle = "horizontal lines represent 25th percentile, median, and 75th percentile for each group",
-         x = NULL,
-         y = "Bray-Curtis distance")
-
-p_violin
-```
-
 
 
 ### Zone-wise
 
-If the above permutational test for differences in community response between zones was significant or close to it (p <= 0.10), zone-wise tests are below. Otherwise, all zones were combined for one test of start vs. end community change.
+**_H0: No community difference between 'start' and 'end' within a vegetation zone._**  
 
-Plots are paired with each other - i.e. time points can only be swapped within a plot.  
+Permutations have been restricted so time points are only permuted within a vegetation plot. 
 
-As above, a test for homogeneity of group variances is conducted, this time for start vs. end within each vegetation zone, controlling for plot. Because the response in this instance is multivariate, the `vegan::betadisper()` function, the R analogue to the PERMDISP test, is used. PERMDISP is the multivariate analogue of Levene's test for homogeneity of variances.  
+```{r, results = 'asis', eval = datEnough}
+if(!runZoneByZone){
+    cat("**Zone-wise analyses not performed** because the zone/time interaction in the overall PERMANOVA was not significant. Your results should be interpreted across all zones, not by vegetation zone. \n\n")
+}
+```
 
-```{r, results = 'asis'}
+
+```{r, eval = runZoneByZone, results = 'asis'}
 set.seed(1223)
 
 # smaller data frame
@@ -428,6 +395,7 @@ for(i in seq_along(veg_zones)){
 }
 ```
 
+
 ```{r, results = 'asis', eval = runZoneByZone}
 
 # PERMANOVA outputs
@@ -440,7 +408,65 @@ pmvs_summ <- bind_rows(pmvs, .id = "Vegetation Zone") %>%
 print(kbl_nmst(pmvs_summ,
                digits = 4,
                caption = "Summary of pairwise PERMANOVAs testing community difference between first and most recent years of monitoring"))
+```
 
+
+### Check for homogeneity of dispersion  
+
+**_H0: No difference in dispersion between groups._**  
+
+This is important to check because one of the assumptions of PERMANOVA is homogeneity of dispersion. Dispersion is the multivariate equivalent of variance. If this assumption is violated, caution should be used in interpreting PERMANOVA results. 
+
+The test used here is PERMDISP, implemented with the `betadisper` function of the `vegan` package.  
+
+
+```{r, results = 'asis', eval = runOverall}
+# PERMDISP
+disper.obj <- betadisper(vegdist(resp_pm, method = "bray"),
+                         group = expl_pm$Zone_Timegroup)
+# same permutation structure as PERMANOVA
+disper.test <- permutest(disper.obj, control = ctrl_pm)
+
+disper.test2 <- disper.test$tab
+
+disper.df <- data.frame(
+    NumDf = disper.test2[1, "Df"],
+    DenDf = disper.test2[2, "Df"],
+    F.val = disper.test2[1, "F"],
+    N.Perm = disper.test2[1, "N.Perm"],
+    p.val = disper.test2[1, "Pr(>F)"])
+
+disper.group.distances <- data.frame(disper.obj$group.distances) %>% 
+    purrr::set_names("Mean Distance") %>% 
+    tibble::rownames_to_column("Group") %>% 
+    mutate(`Mean Distance` = round(`Mean Distance`, 3))
+disper.dist.df <- data.frame(Group = disper.obj$group,
+                             Distance = disper.obj$distances)
+
+kbl_nmst(disper.test2,
+         digits = c(0, 2, 2, 2, 0, 3),
+         caption = "Results of dispersion test, overall PERMANOVA")
+
+
+p_disper <- ggplot(disper.dist.df,
+       aes(x = Group,
+           y = Distance,
+           fill = Group)) +
+    geom_boxplot() +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45,
+                                     hjust = 1),
+          legend.position = "none") +
+    labs(title = "Distances to group centroids",
+         subtitle = "Ideally these are similar across groups")
+
+wrap_table(disper.group.distances) + plot_spacer() + p_disper + plot_layout(widths = c(3, 1, 5))
+```
+
+***  
+
+
+```{r, results = 'asis', eval = runZoneByZone}
 
 # PERMDISP outputs
 betadispers_summ <- bind_rows(betadispers, .id = "Vegetation Zone")
@@ -448,7 +474,7 @@ rownames(betadispers_summ) <- NULL
 
 print(kbl_nmst(betadispers_summ,
       digits = c(0, 3, 3, 0, 0, 1, 0, 4),
-      caption = "Summary of PERMDISP outputs for each zone"))
+      caption = "Summary of dispersion test outputs for each zone"))
 
 
 ```
@@ -468,70 +494,9 @@ for(i in seq_along(dispers_toplo)){
 
 
 
-```{r, results = "asis", eval = runOverall}
-cat("\n\n")
-
-cat("\n\nNO DIFFERENCE BETWEEN VEGETATION ZONES\n")
-    
-cat("\nCONDUCTING START vs. END ANALYSIS ACROSS ALL ZONES\n\n")
-
-pmv <- adonis2(resp_pm ~ Time_group, data = expl_pm2,
-               control = how(blocks = expl_pm2$StTrnsPlt), # don't move plots, just swap time stamps within where the plot data rows are
-               method = "bray",
-               by = "margin")
-
-# save output to proper list for printing later
-pmvs_summ <- broom::tidy(pmv)
-
-# PERMDISP
-disper.obj <- betadisper(vegdist(resp_pm, method = "bray"),
-                         group = expl_pm2$Time_group)
-disper.test <- permutest(disper.obj, control = how(blocks = expl_pm2$StTrnsPlt))
-disper.test2 <- disper.test$tab
-disper.df <- data.frame(
-    Start.dispersion = disper.obj$group.distances["Start"],
-    End.dispersion = disper.obj$group.distances["End"],
-    NumDf = disper.test2[1, "Df"],
-    DenDf = disper.test2[2, "Df"],
-    F.val = disper.test2[1, "F"],
-    N.Perm = disper.test2[1, "N.Perm"],
-    p.val = disper.test2[1, "Pr(>F)"])
-rownames(disper.df) <- NULL
-
-print(kbl_nmst(pmv,
-               digits = c(0, 2, 4, 2, 4),
-               caption = "PERMANOVA table, community difference at start vs. end across all zones") )
-
-print(kbl_nmst(disper.df,
-      digits = c(3, 3, 0, 0, 1, 0, 4),
-      caption = "PERMDISP output, start vs. end across all zones"))
 
 
-# run a simper if this PERMANOVA had p <= 0.02
-if(pmv$`Pr(>F)`[row.names(pmv) == "Time_group"] <= 0.200){
-    # run simper
-    simp <- simper(resp_pm, expl_pm$Time_group)
-    
-    # format output
-    simp_df <- summary(simp, ordered = TRUE)$Start_End[1:6, c("average", "sd", "cumsum", "p", "ava", "avb")]
-    # in case there are fewer than 6 species, get rid of empty rows
-    simp_df <- janitor::remove_empty(simp_df, "rows")
-    simp_smaller <- data.frame(lapply(simp_df, round, 4))
-    simp_smaller$ava <- round(simp_smaller$ava, 1)
-    simp_smaller$avb <- round(simp_smaller$avb, 1)
-    row.names(simp_smaller) <- row.names(simp_df)
-    names(simp_smaller) <- c("average", "sd", "cumulative", "p", "mean_start", "mean_end")
-    
-    # save output to list
-    simps[[1]] <- simp_smaller
-} else {
-    simps[[1]] <- data.frame("None" = "SIMPER not run")
-}
-
-names(simps)[[1]] <- "Across all zones"
-```
-
-## SIMPER
+## SIMPER  
 
 ```{r, results = "asis"}
 # if there weren't enough years of data, can't do the rest.
@@ -544,18 +509,36 @@ if(!datEnough){
 }
 ```
 
-If the PERMANOVA for a single zone had p-value \< 0.2; *not* adjusted for multiple comparisons due to exploratory nature of these analyses, and note this does **not** represent a significant difference, a SIMPER was performed. **Please check the 'Zone-wise' table in the PERMANOVA tab for the p-value, and be cautious in interpretation.**
+**SIMPER was run if:**  
+
+-  Across all zones: the interaction term in the overall PERMANOVA was not significant (p > 0.05) and the main effect for time was significant or close to it (p <= 0.2).  
+-  Zone-wise: the interaction term in the overall PERMANOVA was significant or close to it (p <= 0.1) and the within-zone effect for time in the zone-wise PERMANOVA was significant or close to it (p <= 0.2).  
+-  Generally only one version of the SIMPER will be run (across all zones vs. zone-wise), but when the interaction term was near significance (0.05 < p < 0.1), SIMPER was run both ways.  
+
+The p-values determining the above logic are *unadjusted*. Due to the exploratory nature of these analyses, we did not adjust p-values for multiple comparisons
+
+**SIMPER output explanation:**  
 
 The top 6 species in output are below.
 
-"average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.
+"average" is the average contribution of that species to the Bray-Curtis distance between the two groups (note, this is *not* expressed in % and the column does not total to 1); "sd" is the standard deviation of the species' contribution. "cumulative" is the cumulative % contribution for this species and all those above it in the table. Typically people only report species up to the one that brings "cumulative" over 0.7. "p" is a p-value for that species based on permutation tests. "mean_start" is the mean cover of that species in the starting year(s), and "mean_end" is the mean cover of the species in the last year(s) of monitoring.  
+
+```{r, results = 'asis', eval = datEnough}
+if(exists("simp_overall")){
+    kbl_nmst(simp_overall,
+             caption = paste0("Across-all-zones SIMPER results; PERMANOVA p = ", round(pmvt$`Pr(>F)`[2], 3)))
+}
+```
+
 
 ```{r show-simper, results = 'asis', eval = datEnough}
-for(i in seq_along(simps)){
-    print(kbl_nmst(x = simps[[i]], 
-                   caption = paste0(names(simps)[i], " SIMPER results; PERMANOVA p = ", round(pmvs_summ$p.value[i], 3)),
-                   digits = 4)
-    )
+if(exists("simps")){
+    for(i in seq_along(simps)){
+        print(kbl_nmst(x = simps[[i]], 
+                       caption = paste0(names(simps)[i], " SIMPER results; PERMANOVA p = ", round(pmvs_summ$p.value[i], 3)),
+                       digits = 4)
+        )
+    }
 }
 ```
 
@@ -653,70 +636,6 @@ Zuur, A. F., Ieno, E. N., & Smith, G. M. (2007). Analysing ecological data. Spri
 
 
 
-### 3-d NMDS plot  
-
-This 3-d plot is interactive - you can zoom in and rotate the view. Each point represents a single vegetation plot at a single time point (start, open circles; or end, filled circles). Point color represents the plot's vegetation zone. The red lines and labels represent the coordinates of species or species groups (centroid of comprising species) specified in the Analysis_Specs worksheet of the veg-specs.xlsx file.   
-
-```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
-# set up zone colors
-zone_cols <- as.vector(palcols_zones)
-names(zone_cols) <- NULL
-
-# main plot - points for each zone
-# (no centroids)
-fig <- plot_ly() %>% 
-    add_trace(data = data.scores,
-              type = "scatter3d",
-              mode = "markers",
-              x = ~NMDS1,
-              y = ~NMDS2,
-              z = ~NMDS3,
-              color = ~Zone_abbrev,
-              colors = zone_cols,
-              symbol = ~Time_group,
-              symbols = c("circle", "circle-open"),
-              marker = list(size = 5,
-                            opacity = 0.7)
-    ) 
-
-# now add lines, text, and cross-hatches for each identified loading
-for (i in 1:nrow(species.scores)) {
-    fig <- fig %>% 
-        add_paths(
-            x = c(0, species.scores$NMDS1[i]),
-            y = c(0, species.scores$NMDS2[i]),
-            z = c(0, species.scores$NMDS3[i]),
-            # type = "scatter3d",
-            mode = "lines",
-            line = list(color = "red", width = 4),
-            showlegend = FALSE
-        )  |>
-        add_text(
-            x = species.scores$NMDS1[i],
-            y = species.scores$NMDS2[i],
-            z = species.scores$NMDS3[i],
-            text = species.scores$species[i],
-            textfont = list(color = "red", size = 12),
-            showlegend = FALSE
-        )  %>% 
-        add_trace(
-            type = "scatter3d",
-            mode = "markers",
-            x = species.scores$NMDS1[i],
-            y = species.scores$NMDS2[i],
-            z = species.scores$NMDS3[i],
-            marker = list(size = 6,
-                          color = "red",
-                          symbol = "cross"),
-            showlegend = FALSE
-        )
-        
-}
-
-# print the plot
-fig
-```
-
 ### 2-dimensional NMDS plot
 
 (first two axes only)
@@ -783,6 +702,70 @@ for(i in seq_along(spps)){
 
 </details>  
 
+### 3-d NMDS plot  
+
+This 3-d plot is interactive - you can zoom in and rotate the view. Each point represents a single vegetation plot at a single time point (start, open circles; or end, filled circles). Point color represents the plot's vegetation zone. The red lines and labels represent the coordinates of species or species groups (centroid of comprising species) specified in the Analysis_Specs worksheet of the veg-specs.xlsx file.   
+
+```{r plot-nmds-3d, eval = datEnough, fig.width = 6, fig.height = 6}
+# set up zone colors
+zone_cols <- as.vector(palcols_zones)
+names(zone_cols) <- NULL
+
+# main plot - points for each zone
+# (no centroids)
+fig <- plot_ly() %>% 
+    add_trace(data = data.scores,
+              type = "scatter3d",
+              mode = "markers",
+              x = ~NMDS1,
+              y = ~NMDS2,
+              z = ~NMDS3,
+              color = ~Zone_abbrev,
+              colors = zone_cols,
+              symbol = ~Time_group,
+              symbols = c("circle", "circle-open"),
+              marker = list(size = 5,
+                            opacity = 0.7)
+    ) 
+
+# now add lines, text, and cross-hatches for each identified loading
+for (i in 1:nrow(species.scores)) {
+    fig <- fig %>% 
+        add_paths(
+            x = c(0, species.scores$NMDS1[i]),
+            y = c(0, species.scores$NMDS2[i]),
+            z = c(0, species.scores$NMDS3[i]),
+            # type = "scatter3d",
+            mode = "lines",
+            line = list(color = "red", width = 4),
+            showlegend = FALSE
+        )  |>
+        add_text(
+            x = species.scores$NMDS1[i],
+            y = species.scores$NMDS2[i],
+            z = species.scores$NMDS3[i],
+            text = species.scores$species[i],
+            textfont = list(color = "red", size = 12),
+            showlegend = FALSE
+        )  %>% 
+        add_trace(
+            type = "scatter3d",
+            mode = "markers",
+            x = species.scores$NMDS1[i],
+            y = species.scores$NMDS2[i],
+            z = species.scores$NMDS3[i],
+            marker = list(size = 6,
+                          color = "red",
+                          symbol = "cross"),
+            showlegend = FALSE
+        )
+        
+}
+
+# print the plot
+fig
+```
+
 
 ### Optional additional loadings  
 
@@ -819,7 +802,12 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
                             env.vars = en_coord_cat,
                             axes = c(1, 2)) +
             labs(subtitle = "Large points: Zone/Time centroids. Arrows: Additional environmental loading factors.")
+        
+        cat("\n\n#### Add'l loadings 2-d NMDS plot \n\n This plot is like the 2-d plot above, but non-interactive. \n\n")
+        
         print(p_addl)
+        
+        cat("\n\n#### Add'l loadings contour plots \n\n")
         
         # contour plots
         spps <- scores.envfit_addl$species
@@ -848,7 +836,7 @@ Experimental.
 
 All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales, to emphasize within-zone differences between years.   
 
-```{r, eval = TRUE}
+```{r, eval = FALSE}
 # expl and resp have all values
 # expl_pm and resp_pm are subsetted to first and last years only
 set.seed(2025)

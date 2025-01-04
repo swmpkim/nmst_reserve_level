@@ -111,6 +111,8 @@ pmvt <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
                     method = "bray",
                     by = "margin")
 
+pmvt
+
 # veg zone main effect
 pmvt2 <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
                     control = ctrl_pm,
