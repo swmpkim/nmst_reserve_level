@@ -460,7 +460,7 @@ p_disper <- ggplot(disper.dist.df,
     labs(title = "Distances to group centroids",
          subtitle = "Ideally these are similar across groups")
 
-wrap_table(disper.group.distances) + plot_spacer() + p_disper + plot_layout(widths = c(3, 1, 5))
+wrap_table(disper.group.distances) + p_disper 
 ```
 
 ***  
@@ -836,9 +836,9 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 
 Experimental.   
 
-All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales, to emphasize within-zone differences between years.   
+All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales and does not show individual points, to emphasize within-zone differences between years.   
 
-```{r, eval = FALSE}
+```{r, eval = datEnough}
 # expl and resp have all values
 # expl_pm and resp_pm are subsetted to first and last years only
 set.seed(2025)
@@ -884,7 +884,7 @@ p_bignmds <- ggplot(data.centroids,
        aes(x = NMDS1,
            y = NMDS2,
            col = as.factor(Year))) +
-    geom_point(data = data.scores,
+        geom_point(data = data.scores,
                alpha = 0.3,
                size = 0.5) +
     geom_text(aes(label = Year),

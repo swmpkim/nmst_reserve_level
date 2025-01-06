@@ -37,9 +37,14 @@ if(exists("mod_plts", inherits = FALSE)){
     
     mod_anov <- anova(mod_plts, ddf = "Kenward-Roger")
     tidied <- broom::tidy(mod_anov)
-    sig_int <- tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05
+    sig_int <- as.vector(tidied[tidied$term == "Years_sinceStart:Vegetation_Zone", "p.value"] < 0.05)
     mod_trnds <- estimate_slopes(mod_plts, trend = "Years_sinceStart",
                                  by = "Vegetation_Zone")
+    
+    # if the interaction wasn't significant, get an overall estimated slope
+    if(!sig_int){
+        mod_trnds_nonsig <- estimate_slopes(mod_plts, trend = "Years_sinceStart")
+    }
     
     # save outputs
     univar_outputs[[respn]] <- mod_trnds
@@ -162,6 +167,21 @@ kbl_nmst(mod_anov,
 cat("\n \n \n")
 cat("\n \n \n")
 
+if(exists("mod_trnds_nonsig", inherits = FALSE)){
+    cat("**Change through time (or the lack thereof) was not significantly different between vegetation zones.** The overall trend, across vegetation zones, is described in this table:  \n\n")
+    
+    print(kbl_nmst(mod_trnds_nonsig[, -3],
+             digits = c(4, 4, 3, 3, 1, 1, 4), 
+             col.names = c("Trend (per year)",
+                           "SE", "CI lower", "CI upper", "t",
+                           "df", "p.val"),
+             caption = paste(respn, " - Estimated slope (change per year) across all vegetation zones")))
+    
+    cat(" \n\n **Estimated marginal slopes per zone are provided because of general interest in them; but keep in mind any seeming differences may not be meaningful. ** \n\n")
+    
+    rm(mod_trnds_nonsig)
+}
+
 if(modyes){
     kbl_nmst(mod_trnds[, -4], 
              digits = c(4, 4, 4, 3, 3, 1, 1, 4), 
@@ -182,7 +202,7 @@ if(modSingleZone){
 
 cat("\n \n \n")
 
-cat("Marginal R^2 represents the variance explained by the fixed effects. Conditional R^2 represents the variance explained by the entire model, which includes both fixed and random effects.")
+cat("Marginal R^2 (R2m) represents the variance explained by the fixed effects. Conditional R^2 (R2c) represents the variance explained by the entire model, which includes both fixed and random effects.")
 
 kbl_nmst(rsqds,
          caption = paste(respn, " - Margn'l and Cond'l R^2 values"),

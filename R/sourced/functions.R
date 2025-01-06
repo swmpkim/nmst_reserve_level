@@ -474,6 +474,11 @@ process_custom_metric_terms <- function(terms,
             # Make sure those columns exist in dat
             valid_columns <- matching_species[matching_species %in% colnames(data)]
             
+            # if any of them are other terms in the custom metric,
+            # remove them from the grouping in the equation
+            valid_columns <- valid_columns[!(valid_columns %in% terms)]
+            
+            
             if(length(valid_columns) > 0) {
                 # Dynamically create the new column name and sum valid columns
                 data[[term]] <- rowSums(data[valid_columns], na.rm = TRUE)
