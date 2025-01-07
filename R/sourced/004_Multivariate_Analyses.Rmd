@@ -245,7 +245,7 @@ ctrl_pm <- how(
 
 # run the permanova
 set.seed(2024)
-pmvt <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
+pmvt <- adonis2(resp_pm ~ Time_group*Vegetation_Zone, data = expl_pm,
                     control = ctrl_pm,
                     method = "bray",
                     by = "terms")
@@ -253,18 +253,18 @@ pmvt <- adonis2(resp_pm ~ Vegetation_Zone*Time_group, data = expl_pm,
 # print the results
 kbl_nmst(pmvt,
          digits = 4,
-         caption = "Overall PERMANOVA results")
+         caption = "Overall PERMANOVA results, terms treated sequentially")
 
 # run zone-by-zone PERMANOVAs and SIMPERs if interaction was significant or close
 runZoneByZone <- pmvt$`Pr(>F)`[3] <= 0.1 & datEnough == TRUE
 
 # run across-all-zones SIMPER if interaction was not significant but 
-# main effect p-val was <= 0.2
-runOverallSimp <- pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[2] <= 0.2 & datEnough == TRUE
+# main effect for time p-val was <= 0.2
+runOverallSimp <- pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[1] <= 0.2 & datEnough == TRUE
 
 # deal with situation where interaction was not significant and
 # main effect p-val was > 0.2
-if(pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[2] > 0.2 & datEnough == TRUE){
+if(pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[1] > 0.2 & datEnough == TRUE){
     simp_overall <- data.frame("None" = "SIMPER not run")
 }
 ```
@@ -299,7 +299,7 @@ Permutations have been restricted so time points are only permuted within a vege
 
 ```{r, results = 'asis', eval = datEnough}
 if(!runZoneByZone){
-    cat("**Zone-wise analyses not performed** because the zone/time interaction in the overall PERMANOVA was not significant. Your results should be interpreted across all zones, not by vegetation zone. \n\n")
+    cat("**Zone-wise analyses not performed** because the zone/time interaction in the overall PERMANOVA was not significant. Your results should be interpreted across all zones using the `Time_group` line of the above output table, not by vegetation zone. \n\n")
 }
 ```
 
@@ -834,9 +834,8 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 
 ## NMDS - all years  
 
-Experimental.   
 
-All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales and does not show individual points, to emphasize within-zone differences between years.   
+All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales, to emphasize within-zone differences between years. There may not be much difference between these visually, depending on the spread of points within each zone. Zooming works differently in each. The loadings plot below applies to both graphs (the entire NDMS).     
 
 ```{r, eval = datEnough}
 # expl and resp have all values
