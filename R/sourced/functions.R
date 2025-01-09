@@ -613,7 +613,11 @@ plot_nmds <- function(scores = data.scores,
     yax <- paste0("NMDS", axes[2])
     
     pals_zone_abbrev <- palcols_zones
-    names(pals_zone_abbrev) <- NULL
+    names(pals_zone_abbrev) <- data.frame(zone = names(palcols_zones)) %>% 
+        separate(zone, into = c("zone_abbrev", "zone_full"),
+                 sep = "-") %>% 
+        pull(zone_abbrev)
+    # names(pals_zone_abbrev) <- NULL
     
     ggplot() +
         geom_point(data = scores,

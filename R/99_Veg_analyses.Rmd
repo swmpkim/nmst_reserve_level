@@ -7,7 +7,7 @@ output:
     toc_depth: 2
 self_contained: true
 params:
-  file_code: "GRB"
+  file_code: "GND"
 ---
 
 # About this Document  
@@ -116,6 +116,13 @@ eis <- eis[eis$Vegetation_Zone %in% unique(stn_tbl$Vegetation_Zone), ]
 # get zones in the same order in stn_tbl and eis, for later use
 stn_tbl$Vegetation_Zone <- factor(stn_tbl$Vegetation_Zone, levels = zone_factor)
 eis$Vegetation_Zone <- factor(eis$Vegetation_Zone, levels = zone_factor)
+
+# need factors for multivariate start/end too
+# Create the desired order
+ordered_groups <- expand.grid(Time = c("Start", "End"),
+                              Zone = levels(zone_factor))
+ordered_groups$Group <- paste(ordered_groups$Zone, ordered_groups$Time, sep = "; ")
+zoneTime_factor <- factor(ordered_groups$Group, levels = ordered_groups$Group)
 
 
 # if subsets of dat were specified, 
@@ -339,7 +346,6 @@ names(palcols_multivar) <- levels(anaSpec_dfs$multivar$Species_or_Group)
 n <- length(zone_factor)
 palcols_zones <- color("muted")(n)
 names(palcols_zones) <- levels(zone_factor)
-
 
 # and site id
 # bright color palette only supports 7 colors,

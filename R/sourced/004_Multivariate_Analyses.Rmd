@@ -427,7 +427,7 @@ disper.obj <- betadisper(vegdist(resp_pm, method = "bray"),
 # same permutation structure as PERMANOVA
 disper.test <- permutest(disper.obj, control = ctrl_pm)
 
-disper.test2 <- disper.test$tab
+disper.test2 <- disper.test$tab 
 
 disper.df <- data.frame(
     NumDf = disper.test2[1, "Df"],
@@ -439,20 +439,37 @@ disper.df <- data.frame(
 disper.group.distances <- data.frame(disper.obj$group.distances) %>% 
     purrr::set_names("Mean Distance") %>% 
     tibble::rownames_to_column("Group") %>% 
-    mutate(`Mean Distance` = round(`Mean Distance`, 3))
+    mutate(`Mean Distance` = round(`Mean Distance`, 3)) %>% 
+    mutate(Group = factor(Group, levels = levels(zoneTime_factor)))  %>% 
+    arrange(Group)
+
 disper.dist.df <- data.frame(Group = disper.obj$group,
-                             Distance = disper.obj$distances)
+                             Distance = disper.obj$distances) %>% 
+    tidyr::separate(Group, into = c("Vegetation_Zone",
+                                    "Time_group"),
+                    sep = "; ",
+                    remove = FALSE) %>% 
+    mutate(Group = factor(Group, levels = levels(zoneTime_factor)))
 
 kbl_nmst(disper.test2,
          digits = c(0, 2, 2, 2, 0, 3),
          caption = "Results of dispersion test, overall PERMANOVA")
+```
+
+If the PERMDISP indicated significant difference in dispersions, you should further investigate the following outputs:  
 
 
+```{r, results = 'asis', eval = runOverall}
 p_disper <- ggplot(disper.dist.df,
        aes(x = Group,
-           y = Distance,
-           fill = Group)) +
-    geom_boxplot() +
+           y = Distance)) +
+    geom_boxplot(outliers = FALSE,
+                 col = "gray40") +
+    geom_jitter(aes(col = Vegetation_Zone,
+                    shape = Time_group),
+                size = 2) +
+    scale_color_manual(values = palcols_zones) +
+    scale_shape_manual(values = c(16, 10)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45,
                                      hjust = 1),
@@ -460,7 +477,9 @@ p_disper <- ggplot(disper.dist.df,
     labs(title = "Distances to group centroids",
          subtitle = "Ideally these are similar across groups")
 
-wrap_table(disper.group.distances) + p_disper 
+p_disper 
+
+kbl_nmst(disper.group.distances)
 ```
 
 ***  
