@@ -853,10 +853,23 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 
 ## NMDS - all years  
 
+By default, this analysis is not run because it may take more computing power than is available to perform ordination on many years worth of data points.  
+
+```{r, results = 'asis', eval = datEnough}
+runBigNMDS <- TRUE
+
+if(runBigNMDS){
+    cat("The all-years NMDS *was* attempted. If the results are not below, it simply didn't work with your computer.")
+} else {
+    cat("**The all-years NMDS was not run.** If you would like to run it, change the option in the 'More_Options' sheet of the 'veg-specs.xlsx' file.")
+}
+```
+
+
 
 All measurements at all veg plots (with 3+ years of data) are represented. Centroids are calculated for each zone x year combination. Plots are zoomable. Two plots are provided: the first uses fixed axis scales, to emphasize where zone centroids are relative to each other in ordination space. The second uses free axis scales, to emphasize within-zone differences between years. There may not be much difference between these visually, depending on the spread of points within each zone. Zooming works differently in each. The loadings plot below applies to both graphs (the entire NDMS).     
 
-```{r, eval = datEnough}
+```{r, eval = runBigNMDS}
 # expl and resp have all values
 # expl_pm and resp_pm are subsetted to first and last years only
 set.seed(2025)

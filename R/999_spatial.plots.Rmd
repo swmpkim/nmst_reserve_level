@@ -1,0 +1,252 @@
+---
+title: 'Spatial plots: `r params$file_code`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+self_contained: true
+params:
+  file_code: "GND"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      error = TRUE)
+
+```
+
+
+```{r pkgs-paths, message = FALSE, warning = FALSE}
+# library(Hmisc)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(stringr)
+library(ggplot2)
+library(khroma)  # for colorblind-friendly palettes
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+
+file_dat <- here::here("data", paste0(params$file_code, "_veg.xlsx"))
+file_specs <- here::here("metadata", paste0(params$file_code, "_veg-specs.xlsx"))
+
+options(knitr.kable.NA = '')
+```
+
+```{r source-fns}
+source(here::here("R", "sourced", "functions.R"))
+```
+
+
+```{r import-data-meta}
+# read data, metadata, and analysis specifications
+dat <- get_data(file_dat, cover_only = TRUE) # gets rid of density and height columns; keeps F_ columns
+
+stn_tbl <- get_stn_table(file_dat)
+stn_tbl <- stn_tbl %>% 
+    mutate(PlotID_full = paste(SiteID, TransectID, PlotID, sep = "-"))
+species_info <- get_species_info(file_dat)
+eis <- get_ecotone_migrators(file = file_specs)
+anaSpecs <- get_anaSpecs(file = file_specs) |> 
+    filter(!is.na(Choice))
+anaSpec_list <- split(anaSpecs, anaSpecs$R_anaName)
+addlOptions <- get_addlOptions(file = file_specs)
+zone_factor <- get_zone_ordering(file_specs)
+
+# remove vegetation zones from eis data frame that don't appear in the station table
+eis <- eis[eis$Vegetation_Zone %in% unique(stn_tbl$Vegetation_Zone), ]
+
+# get zones in the same order in stn_tbl and eis, for later use
+stn_tbl$Vegetation_Zone <- factor(stn_tbl$Vegetation_Zone, levels = zone_factor)
+eis$Vegetation_Zone <- factor(eis$Vegetation_Zone, levels = zone_factor)
+
+
+# add some columns to dat
+# Years_sinceStart is relative to the earliest date in the dataset, regardless of when a plot was first sampled
+dat <- dat %>% 
+    dplyr::mutate(Date = lubridate::decimal_date(lubridate::ymd(paste(Year, Month, Day, sep = "-"))),
+                  Years_sinceStart = round(Date - min(Date), 4),
+                  StTrns = paste(SiteID, TransectID, sep = "-"),
+                  StTrnsPlt = paste(SiteID, TransectID, PlotID, sep = "-")) %>% 
+    dplyr::relocate(c(Date, Years_sinceStart), .before = Year) %>% 
+    dplyr::relocate(c(StTrns, StTrnsPlt), .after = PlotID)
+```
+
+
+```{r mod-clean-data}
+# clean up data but keep some remnants for QA/QC tables
+unsampds <- find_unsampleds(dat)
+# find suspect data for later reporting
+# NEED TO MAKE FLAG VALUES FLEXIBLE
+susps <- find_suspect_values(dat, "-3")
+
+
+dat <- remove_suspect_values(dat, flags = c("-3"))  # remove suspect values. also removes F_columns.
+dat <- remove_unsampleds(dat)  # get rid of any dates where a plot was not sampled or was entirely rejected. 
+
+
+dat <- na_to_0(dat)  # turn remaining NAs into 0s - this first makes sure all species columns are numeric
+
+# remove 'Other layer' species
+otherLayers <- unlist(species_info[species_info$Cover_Categories == "Other layer", "Species"])
+dat <- dat %>% 
+    select(-any_of(otherLayers))
+rm(otherLayers)
+
+dat <- join_zones(dat, stn_tbl)  # add vegetation zones to each row
+dat_long <- dat %>%
+    pivot_longer(-(Reserve:Total),
+                 names_to = "Species",
+                 values_to = "Cover")
+```
+
+```{r define-user-choices}
+# generate a list of data frames based on user's analysis specs
+anaSpec_dfs <- purrr::map(anaSpec_list, function(x) make_spec_df(dat_long, x$Choice))
+
+# 'Other' gets designated during the make_spec_df step
+# so here is where we remove it, if that is the selected option
+if(addlOptions$Choice[addlOptions$R_param == "lumpOtherOption"] == "No"){
+    anaSpec_dfs <- purrr::map(anaSpec_dfs,
+                              function(x) dplyr::filter(x, 
+                                                        Species_or_Group != "Other")
+    )
+}
+
+# move unvegetated (if present) and other to end of species-as-factors
+# for all anaSpec_dfs
+for(i in 1:length(anaSpec_dfs)){
+    tmp <- anaSpec_dfs[[i]]
+    tmp$Species_or_Group <- relevel_spps(tmp$Species_or_Group)
+    anaSpec_dfs[[i]] <- tmp
+}
+```
+
+
+```{r define-color-pals-tol}
+# spatial barplots: up to 3 species/groups + other
+n <- min(4, length(unique(anaSpec_dfs$spat$Species_or_Group)))
+palcols_spec <- color("muted")(n)
+names(palcols_spec) <- levels(anaSpec_dfs$spat$Species_or_Group)
+```
+
+
+
+# Spatial graphs   
+
+```{r}
+get_legend <- function(plot) {
+  tmp <- ggplot_gtable(ggplot_build(plot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  tmp$grobs[[leg]]
+}
+```
+
+
+```{r graph-spatial-userChosen, fig.width = 8, fig.height = 4}
+# add user-chosen species into station table for the sole purpose of generating a legend.  
+stn_tbl$Species_or_Group <- rep_len(unique(anaSpec_dfs$spat$Species_or_Group), length.out = nrow(stn_tbl))
+
+# keeping "_tmp" structure so there's less to change, but we're not subsetting the data frame anymore
+stn_tmp <- stn_tbl
+stn_tmp <- stn_tmp[!is.na(stn_tmp$Latitude), ]
+dat_tmp <- anaSpec_dfs$spat
+
+# only keep plots with lat/longs
+dat_tmp <- dat_tmp[dat_tmp$StTrnsPlt %in% stn_tmp$PlotID_full, ]
+dat_tmp <- dat_tmp %>% 
+    mutate(StTrnsPlt = paste(Reserve, SiteID, TransectID, PlotID, sep = "_"))
+
+# lat/long offsets
+long_offset <- (max(stn_tmp$Longitude) - min(stn_tmp$Longitude)) * 0.05
+lat_offset <- (max(stn_tmp$Latitude) - min(stn_tmp$Latitude)) * 0.11
+
+# write out lat/longs for suz
+coords_df <- stn_tmp %>% 
+    mutate(uniqueID = paste(Reserve, SiteID, TransectID, PlotID, sep = "_")) %>% 
+    select(uniqueID, Latitude, Longitude)
+write.csv(coords_df, here::here("spatial_plots", "spreadsheets",
+                                paste0(params$file_code, "_coords.csv")),
+          row.names = FALSE, na = "")
+
+
+    # blank plot canvas
+    base <- ggplot(stn_tmp, aes(x = Longitude, y = Latitude, 
+                                group = Species_or_Group,
+                                fill = Species_or_Group)) +
+        geom_col(na.rm = TRUE) +  # necessary to make legend show up
+        labs(title = paste(params$file_code),
+             x = "Longitude",
+             y = "Latitude",
+             fill = "Species or \nVegetation Group") +
+        scale_x_continuous(limits = c(min(stn_tmp$Longitude) - long_offset, max(stn_tmp$Longitude) + long_offset)) +
+        scale_y_continuous(limits = c(min(stn_tmp$Latitude) - lat_offset, max(stn_tmp$Latitude) + lat_offset)) +
+        scale_fill_manual(values = palcols_spec) +
+        theme_bw() +
+        theme(legend.position = "right")
+    
+    
+    # extract and save the legend
+    legend <- get_legend(base)
+    ggsave(here::here("spatial_plots", "legends",
+                      paste0(params$file_code, "_legend.png")), 
+           plot = ggdraw(legend), width = 4, height = 4, dpi = 300)
+    
+    
+    # loop through each plot at the site/transect
+    # make a barplot of the selected species + other 
+    #    (unless other was turned off in Analysis_Specs, 
+    #    in which case the plot will only contain the species,  
+    #    and some panels may be blank)
+    # add barplot as subplot to the blank canvas, based on lat/long
+    for (plt in unique(dat_tmp$StTrnsPlt)){
+        
+        dat_plt <- dat_tmp[dat_tmp$StTrnsPlt==plt, ]
+        yrs <- dat_plt$Years_sinceStart
+        
+        # subset the years: min, max, and as close as possible to the difference/3  
+        
+        un_yrs <- unique(yrs)
+        div <- (max(un_yrs) - min(un_yrs)) / 3
+        divs_to_keep <- c(min(un_yrs) + div,
+                          max(un_yrs) - div)
+        
+        
+        # figure out what to keep by finding the closest actual measurement to each, using absolute values
+        keeps2 <- un_yrs[which(abs(un_yrs - divs_to_keep[1]) == min(abs(un_yrs - divs_to_keep[1])))]
+        keeps3 <- un_yrs[which(abs(un_yrs - divs_to_keep[2]) == min(abs(un_yrs - divs_to_keep[2])))]
+        
+        keeps <- c(min(un_yrs), keeps2, keeps3, max(un_yrs))
+        
+        # re-subset the data frame to only those years
+        dat_plt <- dat_plt[dat_plt$Years_sinceStart %in% keeps, ]
+        
+        # make the subplot
+        subplo <- ggplot(dat_plt) +
+                                 geom_col(aes(x = as.factor(Years_sinceStart),
+                                              y = Cover,
+                                              fill = Species_or_Group),
+                                          # width = 0.8,
+                                          position = "stack",
+                                          alpha = 0.8,
+                                          show.legend = FALSE) +
+                                 scale_fill_manual(values = palcols_spec) +
+                                 theme_void() + 
+                                 theme(panel.border = element_rect(linetype = "dashed", fill = NA),
+                                       panel.background = element_rect(fill = "white"))
+        
+        ggsave(plot = subplo, 
+               filename = here::here("spatial_plots", "plot-level-graphs",
+                                     paste0(plt, ".png")),
+               width = 4, height = 4)
+        
+       
+    
+}
+
+```
+
