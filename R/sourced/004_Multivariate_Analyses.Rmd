@@ -203,12 +203,12 @@ datEnough <- nrow(dat_multivar) > 0
 if(!datEnough){
     cat("### **Multivariate analyses were not run.**")
     cat("\n \nThere were not enough rows of data.")
+    datEnoughZones <- FALSE
+} else {
+    datEnoughZones <- length(unique(expl_pm$Vegetation_Zone)) > 1
 }
 
-
-datEnoughZones <- length(unique(expl_pm$Vegetation_Zone)) > 1
-
-if(!datEnoughZones){
+if(datEnough & !datEnoughZones){
     cat("**Only one vegetation zone present in data; proceed to Zone-wise section below.** \n\n")
     runZoneByZone <- TRUE     # run zone-by-zone PERMANOVA; will only run on the single zone
     runOverallSimp <- FALSE   # don't run overall SIMPER; will be eval'd with zone-by-zone stuff
@@ -269,6 +269,13 @@ if(pmvt$`Pr(>F)`[3] > 0.05 & pmvt$`Pr(>F)`[1] > 0.2 & datEnough == TRUE){
 }
 ```
 
+```{r}
+if(!exists("runOverallSimp")){
+    runOverallSimp <- FALSE
+}
+```
+
+
 ```{r, results = "asis", eval = runOverallSimp}
 # This chunk conducts a SIMPER across all zones if:
 # the interaction wasn't significant and the main effect of time had
@@ -296,6 +303,13 @@ names(simp_overall) <- c("average", "sd", "cumulative", "p", "mean_start", "mean
 **_H0: No community difference between 'start' and 'end' within a vegetation zone._**  
 
 Permutations have been restricted so time points are only permuted within a vegetation plot. 
+
+```{r}
+if(!exists("runZoneByZone")){
+    runZoneByZone <- FALSE
+}
+```
+
 
 ```{r, results = 'asis', eval = datEnough}
 if(!runZoneByZone){
@@ -695,7 +709,7 @@ The below plots, rather than using arrows for individual species or vegetation g
 
 <details><summary>Click to expand contour plots.</summary>
 
-```{r, fig.width = 6, fig.height = 6}
+```{r, eval = datEnough, fig.width = 6, fig.height = 6}
 spps <- paste0(species.scores$species)
 for(i in seq_along(spps)){
   # skip it if it's a group or something else that can't be handled right now
@@ -790,7 +804,7 @@ fig
 
 ### Optional additional loadings  
 
-```{r, results = 'asis'}
+```{r, results = 'asis', eval = datEnough}
 # see if additional loadings were even specified
 # if not, let the user know and stop here.
 
@@ -855,8 +869,12 @@ if(is.na(addlOptions$Choice[addlOptions$R_param == "addlNMDSoption"])){
 
 By default, this analysis is not run because it may take more computing power than is available to perform ordination on many years worth of data points.  
 
-```{r, results = 'asis', eval = datEnough}
-runBigNMDS <- TRUE
+```{r, results = 'asis'}
+runBigNMDS <- TRUE  # really make this the choice in the options file
+
+if(!datEnough){
+    runBigNMDS <- FALSE
+}
 
 if(runBigNMDS){
     cat("The all-years NMDS *was* attempted. If the results are not below, it simply didn't work with your computer.")

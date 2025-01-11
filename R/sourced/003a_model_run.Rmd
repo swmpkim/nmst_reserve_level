@@ -13,7 +13,7 @@ if(length(unique(dat_univar$Vegetation_Zone)) > 1){
     
     cat("\n\n **The current file contains multiple vegetation zones, and vegetation zone will be one of the predictors in the statistical model.** Results are presented for each vegetation zone independently because the marginal effects are of interest to the project team. However, be careful interpreting zone-wise results if the interaction term (`Years_sinceStart:Vegetation_Zone`) is not significant (p > 0.05). \n\n")
     
-} else {
+} else if(nrow(dat_univar) > 0 ){
     
     mod_singleZone <- lmer(resp ~ Years_sinceStart + (1|StTrnsPlt),
                      data = dat_univar)
@@ -21,6 +21,11 @@ if(length(unique(dat_univar$Vegetation_Zone)) > 1){
     modSingleZone <- TRUE
     
     cat("\n\n **The current file only contains one vegetation zone. Results presented apply to this zone.** \n\n")
+} else {
+    cat("\n\n **This file does not contain enough data to run univariate analyses. A minimum of 3 years is required.** \n\n")
+    
+    modyes <- FALSE
+    modSingleZone <- FALSE
 }
 ```
 
@@ -141,12 +146,12 @@ if(exists("mod_singleZone", inherits = FALSE)){
 } 
 ```
 
-```{r}
+```{r, results = 'asis'}
 # if one of the models ran, we'll print out results below. But if not, print this message:
 
 if((modyes + modSingleZone) == 0){
     cat("### **This statistical model did not run.**")
-    cat("\n \nPlease make sure the species or response variable is spelled and capitalized correctly, and that there is adequate data in the file to calculate a trend. \n \nIf that does not help, please copy the error message that appeared above when reaching out to someone else, as it may be useful.")
+    cat("\n \nPlease make sure the species or response variable is spelled and capitalized correctly, and that there is adequate data in the file to calculate a trend. \n \n")
     
     printMod <- FALSE
 } else {
@@ -225,7 +230,7 @@ print(p3)
 
 ```{r, results = 'asis'}
 if(length(unique(dat_univar$Vegetation_Zone)) <= 1){
-    cat("\n\n **This section only applies to files where more than one vegetation zone is present. Your file only had one vegetation zone, and it was analyzed above.** \n\n")
+    cat("\n\n **This section only applies to files where more than one vegetation zone is present. Your file either had a single vegetation zone, analyzed above, or not enough data for univariate modeling.** \n\n")
 }
 ```
 
