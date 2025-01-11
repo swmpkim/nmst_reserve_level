@@ -59,7 +59,7 @@ library(vegan)
 
 
 file_dat <- here::here("data", paste0(params$file_code, "_veg.xlsx"))
-file_specs <- here::here("metadata", paste0(params$file_code, "_veg-specs.xlsx"))
+file_specs <- here::here("data", paste0(params$file_code, "_veg-specs.xlsx"))
 
 options(knitr.kable.NA = '')
 ```
